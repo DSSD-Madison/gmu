@@ -1,0 +1,101 @@
+<!-- Page Boilerplate -->
+{{ block "index" . }}
+<!DOCTYPE html>
+<html lang="en" style="overscroll-behavior: none;">
+    <head>
+        <title></title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src="https://unpkg.com/htmx.org/dist/htmx.min.js"></script>
+    </head>
+    <body style="margin: 0;">
+        <div id="root">
+            {{ template "search-page" . }}
+        </div>
+    </body>
+</html>
+{{end}}
+
+<!-- Search Page -->
+{{ block "search-page" . }}
+<div class="search-container"
+    style="
+    display: flex; 
+    padding: 25px; 
+    place-items: center; 
+    place-content: center;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    left: 50%;
+    flex-wrap: wrap;
+    flex-direction: column;">
+    <h2 style="position: relative; left: -40%">Search</h2>
+    <form hx-post="/search" hx-swap="innerHTML" hx-target="#root">
+        <div>
+            <input placeholder="Begin Your Search Here..." type="text" name="query" value="" style="border: 2px solid gray; width=50%; padding: 12px 20px; font-size: 2rem">
+        </div>
+    </form>
+</div>
+{{end}}
+
+<!-- Results Page -->
+{{ block "results-page" . }}
+<div style="display: grid; place-items: center; height: 300px">
+    <img src="images/Banner.jpeg" style="width: 100%; top: 0; position: absolute; max-width: 100%; height: auto; display: block; z-index: -1;">
+    <form hx-post="/search" hx-swap="innerHTML" hx-target="#root">
+        <div id="searchbar">
+            <input type="text" name="query" value="{{ .Query }}" style="border: 2px solid gray; width=50%; padding: 12px 20px; font-size: 2rem">
+        </div>
+    </form>
+</div>
+<div style="display: grid; grid-template-columns: 1fr 3fr; background-color: white">
+    {{ template "sidecolumn" . }}
+    {{ template "results" . }}
+</div>
+{{end}}
+
+<!-- Filters Section -->
+{{ block "sidecolumn" . }}
+<div id="sidecolumn" class="sidecolumn" style="margin-top: 50px; margin-left: 50px">
+    <p>{{ .ResultsCount }} Results</p>
+    <div class="filters" style="display: flex; flex-direction: column;">
+        {{ range .Filters }}
+        <div>
+            <input {{ if .Active }} checked {{ end }} type="checkbox" name="{{ .Name }}" id="{{ .Name }}" hx-post="/filter/{{.ID}}" hx-swap="innerHTML" hx-target="#results-container" hx-trigger="click" hx-select-oob="#sidecolumn">
+            <label for="{{ .Name }}">{{ .Name }}</label>
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}
+
+<!-- Results Section -->
+{{ block "results" . }}
+<div id="results-container" class="results-container">
+    {{ range .Results }}
+        {{ template "result" . }}
+    {{end}}
+</div>
+{{end}}
+
+<!-- Individual Result Partial -->
+{{ block "result" . }}
+<div class="result-container" style="display: flex; margin: 40px;">
+    <img class="result-image" src="{{ .ImgPath }}" style="width: 200px">
+    <div class="result" style="margin-left: 25px">
+        <h3 class="result-title">{{ .Title }}</h3>
+        <p class="result-description">{{ .Description }}</p>
+        <a href="/page/{{ .Id }}">Link</a>
+    </div>
+</div>
+{{end}}
+
+<!-- Book Page -->
+{{ block "book-page" . }}
+<div>
+    <h2>{{ .Title }}</h2>
+    <p>{{ .Description }}</p>
+    <p>{{ .Id }}</p>
+</div>
+{{end}}
