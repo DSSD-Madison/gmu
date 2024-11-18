@@ -1,25 +1,27 @@
 package main
 
 import (
-	"fmt"
-	"html/template"
-	"io"
-	"net/http"
-	"strconv"
-
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+
+	"github.com/DSSD-Madison/gmu/models"
+	"github.com/DSSD-Madison/gmu/routes"
 )
 
 func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 
-	e.GET("/", func(e echo.Context) error {
-		return e.String(200, "Hello")
-	})
+	// Static file handlers
+	e.Static("/images", "static/images")
+	e.Static("/css", "static/css")
 
-	e.GET("/test", func(e echo.Context) error {
-		return e.String(200, "New element")
-	})
+	// Renderer
+	e.Renderer = models.NewTemplate()
+
+	// Routes
+	routes.InitRoutes(e)
+
+	// Start server
+	e.Logger.Fatal(e.Start(":8080"))
 }

@@ -1,0 +1,17 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+bin = "./tmp/main"
+preload_cmd = "./tailwindcss -i ./static/css/input.css -o ./static/css/output.css --watch"
+cmd = "go build -o ./tmp/main main.go"
+exclude_dir = ["tmp"]
+include_dir = ["cmd", "views", "static"]
+include_ext = ["go", "html"]
+
+[misc]
+clean_on_exit = false
+
+[screen]
+clear_on_rebuild = false
+keep_scroll = true
