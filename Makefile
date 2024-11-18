@@ -12,3 +12,13 @@ install-tailwind:
 install-air:
 	@echo "Installing Air..."
 	go install github.com/air-verse/air@latest
+
+dev:
+	@echo "Starting watchers..."
+	trap 'kill 0' SIGINT; \
+	$(MAKE) tailwind-watch & \
+	air & \
+	wait
+
+tailwind-watch:
+	./tailwindcss -i static/css/input.css -o static/css/output.css --watch
