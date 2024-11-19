@@ -61,6 +61,6 @@ func NewBook() Book {
 		Title:       "Title",
 		Author:      "Author",
 		Description: Ipsum,
-		Img:         "images/cptt.jpg",
+		Img:         "images/placeholder.jpg",
 	}
 }
