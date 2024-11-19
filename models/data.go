@@ -40,8 +40,8 @@ type DataStruct struct {
 func NewData() DataStruct {
 	return DataStruct{
 		Results: []Result{
-			NewResult("MyTitle2", Ipsum, "images/cptt.jpg"),
-			NewResult("MyTitle3", Ipsum, "images/crafting_interpreters.jpg"),
+			NewResult("MyTitle2", Ipsum, "images/placeholder.jpg"),
+			NewResult("MyTitle3", Ipsum, "images/placeholder.jpg"),
 		},
 		Filters: []Filter{NewFilter(0, "Filter1", "Description1")},
 		Query:   "",
@@ -61,6 +61,6 @@ func NewBook() Book {
 		Title:       "Title",
 		Author:      "Author",
 		Description: Ipsum,
-		Img:         "images/cptt.jpg",
+		Img:         "images/placeholder.jpg",
 	}
 }
