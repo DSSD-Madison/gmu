@@ -15,7 +15,6 @@ var opts = kendra.Options{
 var client = kendra.New(opts)
 
 type KendraResult struct {
-	ImgPath string
 	Title   string
 	Link    string
 	Excerpt string
@@ -35,7 +34,6 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 
 	for _, item := range out.ResultItems {
 		res := KendraResult{
-			ImgPath: "images/placeholder.jpg",
 			Title:   *item.DocumentTitle.Text,
 			Excerpt: *item.DocumentExcerpt.Text,
 			Link:    *item.DocumentURI,
