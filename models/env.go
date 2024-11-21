@@ -1,8 +1,9 @@
 package models
 
 import (
-	"github.com/joho/godotenv"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 var gdenverr = godotenv.Load()
