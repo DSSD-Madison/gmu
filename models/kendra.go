@@ -48,11 +48,11 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 }
 
 func MakeQuery(query string) KendraResults {
-	kendra_query := kendra.QueryInput{
+	kendraQuery := kendra.QueryInput{
 		IndexId:   &index_id,
 		QueryText: &query,
 	}
-	out, err := client.Query(context.TODO(), &kendra_query)
+	out, err := client.Query(context.TODO(), &kendraQuery)
 
 	// TODO: this needs to be fixed to a proper error
 	if err != nil {
