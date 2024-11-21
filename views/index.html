@@ -11,91 +11,9 @@
 </head>
 <body class="m-0">
 <div id="root">
-    {{ template "search-page" . }}
+    {{ template "search-home" . }}
 </div>
 </body>
 </html>
 {{end}}
-`
-<!-- Search Page -->
-{{ block "search-page" . }}
-<div class="flex flex-col items-center justify-center absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 space-y-4 p-6">
-    <h2 class="text-xl font-semibold">Search</h2>
-    <form hx-post="/search" hx-swap="innerHTML" hx-target="#root">
-        <div>
-            <input class="border-2 border-gray-400 px-6 py-3 text-2xl w-full" placeholder="Begin Your Search Here..." type="text" name="query" value="">
-        </div>
-    </form>
-</div>
-{{end}}
 
-<!-- Results Page -->
-{{ block "results-page" . }}
-<div class="relative h-[300px]">
-    <img src="images/Banner.jpeg" class="absolute top-0 w-full h-auto max-w-full z-[-1]">
-    <form hx-post="/search" hx-swap="innerHTML" hx-target="#root" class="grid place-items-center h-full">
-        <div id="searchbar">
-            <input class="border-2 border-gray-400 px-6 py-3 text-2xl w-full" type="text" name="query" value="{{ .Query }}">
-        </div>
-    </form>
-</div>
-<div class="grid grid-cols-[1fr_3fr] bg-white">
-    {{ template "sidecolumn" . }}
-    {{ template "results" . }}
-</div>
-{{end}}
-
-<!-- Filters Section -->
-{{ block "sidecolumn" . }}
-<div id="sidecolumn" class="mt-12 ml-12">
-    <p>{{ .ResultsCount }} Results</p>
-    <div class="flex flex-col space-y-2">
-        {{ range .Filters }}
-        <div class="flex items-center space-x-2">
-            <input
-                    {{ if .Active }} checked {{ end }}
-                    type="checkbox"
-                    name="{{ .Name }}"
-                    id="{{ .Name }}"
-                    hx-post="/filter/{{.ID}}"
-                    hx-swap="innerHTML"
-                    hx-target="#results-container"
-                    hx-trigger="click"
-                    hx-select-oob="#sidecolumn"
-            >
-            <label for="{{ .Name }}" class="text-gray-700">{{ .Name }}</label>
-        </div>
-        {{end}}
-    </div>
-</div>
-{{end}}
-
-<!-- Results Section -->
-{{ block "results" . }}
-<div id="results-container" class="space-y-6">
-    {{ range .Results }}
-    {{ template "result" . }}
-    {{end}}
-</div>
-{{end}}
-
-<!-- Individual Result Partial -->
-{{ block "result" . }}
-<div class="flex items-start space-x-6 p-4">
-    <img class="w-[200px]" src="{{ .ImgPath }}">
-    <div>
-        <h3 class="text-lg font-semibold">{{ .Title }}</h3>
-        <p class="text-gray-600">{{ .Description }}</p>
-        <a href="/page/{{ .Id }}" class="text-blue-500 hover:underline">Link</a>
-    </div>
-</div>
-{{end}}
-
-<!-- Book Page -->
-{{ block "book-page" . }}
-<div class="p-6">
-    <h2 class="text-2xl font-bold">{{ .Title }}</h2>
-    <p class="text-gray-700">{{ .Description }}</p>
-    <p class="text-sm text-gray-500">{{ .Id }}</p>
-</div>
-{{end}}
