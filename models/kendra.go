@@ -54,7 +54,7 @@ func MakeQuery(query string) KendraResults {
 	}
 	out, err := client.Query(context.TODO(), &kendra_query)
 
-	// WARN: this needs to be fixed to a proper error
+	// TODO: this needs to be fixed to a proper error
 	if err != nil {
 		log.Printf("Kendra Query Failed %+v", err)
 	}
