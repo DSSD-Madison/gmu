@@ -1,0 +1,37 @@
+<!-- Filters Section -->
+{{ block "sidecolumn" . }}
+<div id="sidecolumn" class="mt-12 ml-12">
+    <p>{{ .Count }} Results</p>
+    <div class="flex flex-col space-y-2">
+        {{ range .Filters }}
+        <div class="flex items-center space-x-2">
+            <input
+                    {{ if .Active }} checked {{ end }}
+                    type="checkbox"
+                    name="{{ .Name }}"
+                    id="{{ .Name }}"
+                    hx-post="/filter/{{.ID}}"
+                    hx-swap="innerHTML"
+                    hx-target="#results-container"
+                    hx-trigger="click"
+                    hx-select-oob="#sidecolumn"
+            >
+            <label for="{{ .Name }}" class="text-gray-700">{{ .Name }}</label>
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}
+
+{{ block "sidecolumn-nohtmx" . }}
+<div id="sidecolumn" class="mt-12 ml-12">
+    <p>{{ .Count }} Results</p>
+    <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-2">
+            <input type="checkbox">
+            <label class="text-gray-700">Filter</label>
+        </div>
+    </div>
+</div>
+{{end}}
+

@@ -1,0 +1,35 @@
+<!-- Results Page -->
+{{ block "results-page" . }}
+<div class="relative h-[300px]">
+    <img src="images/Banner.jpeg" class="absolute top-0 w-full h-auto max-w-full z-[-1]">
+    <form hx-post="/search" hx-swap="innerHTML" hx-target="#root" class="grid place-items-center h-full">
+        <div id="searchbar">
+            <input class="border-2 border-gray-400 px-6 py-3 text-2xl w-full" type="text" name="query" value="{{ .Query }}">
+        </div>
+    </form>
+</div>
+<div class="grid grid-cols-[1fr_3fr] bg-white">
+    {{  template "sidecolumn-nohtmx" . }}
+    {{ template "results" . }}
+</div>
+{{end}}
+
+<!-- Results Section -->
+{{ block "results" . }}
+<div id="results-container" class="space-y-6">
+    {{ range .Results }}
+    {{ template "result" . }}
+    {{end}}
+</div>
+{{end}}
+
+<!-- Individual Result Partial -->
+{{ block "result" . }}
+<div class="flex items-start space-x-6 p-4">
+    <div>
+        <h3 class="text-lg font-semibold">{{ .Title }}</h3>
+        <p class="text-gray-600">{{ .Excerpt }}</p>
+    </div>
+</div>
+{{end}}
+

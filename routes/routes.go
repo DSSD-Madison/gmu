@@ -11,10 +11,4 @@ func InitRoutes(e *echo.Echo) {
 
 	// Search Route
 	e.POST("/search", Search)
-
-	// Book Route
-	e.GET("/page/:id", Book)
-
-	// Filter Route
-	e.POST("/filter/:id", Filter)
 }

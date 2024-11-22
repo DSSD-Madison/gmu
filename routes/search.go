@@ -9,7 +9,10 @@ import (
 )
 
 func Search(c echo.Context) error {
-	models.Data.ResultsCount = len(models.Data.Results)
-	models.Data.Query = c.FormValue("query")
-	return c.Render(http.StatusOK, "results-page", models.Data)
+	query := c.FormValue("query")
+	if len(query) < 3 {
+		return c.String(http.StatusBadRequest, "Error 400, could not get query from request.")
+	}
+	results := models.MakeQuery(query)
+	return c.Render(http.StatusOK, "results-page", results)
 }
