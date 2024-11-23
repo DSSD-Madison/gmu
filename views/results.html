@@ -4,22 +4,23 @@
     <img src="images/Banner.jpeg" class="absolute top-0 w-full h-auto max-w-full z-[-1]">
     <form hx-post="/search" hx-swap="innerHTML" hx-target="#root" class="grid place-items-center h-full">
         <div id="searchbar">
-            <input class="border-2 border-gray-400 px-6 py-3 text-2xl w-full" type="text" name="query" value="{{ .Query }}">
+            <input class="border-2 border-gray-400 px-6 py-3 text-2xl w-full" type="text" name="query" value="{{ . }}">
         </div>
     </form>
 </div>
-<div class="grid grid-cols-[1fr_3fr] bg-white">
-    {{  template "sidecolumn-nohtmx" . }}
-    {{ template "results" . }}
+<div id="grid-container" class="grid grid-cols-[1fr_3fr] bg-white" hx-include="#searchbar" hx-post="/search" hx-trigger="load">
 </div>
 {{end}}
 
 <!-- Results Section -->
 {{ block "results" . }}
-<div id="results-container" class="space-y-6">
-    {{ range .Results }}
-    {{ template "result" . }}
-    {{end}}
+<div id="grid-container" hx-swap-oob="true" class="grid grid-cols-[1fr_3fr] bg-white">
+    {{ template "sidecolumn-nohtmx" . }}
+    <div id="results-container" class="space-y-6">
+        {{ range .Results }}
+        {{ template "result" . }}
+        {{end}}
+    </div>
 </div>
 {{end}}
 
