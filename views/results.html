@@ -2,19 +2,35 @@
 {{ block "results-page" . }}
 <div class="relative h-[300px]">
     <img src="images/Banner.jpeg" class="absolute top-0 w-full h-auto max-w-full z-[-1]">
-    <form hx-post="/search" hx-swap="innerHTML" hx-target="#root" class="grid place-items-center h-full">
-        <div id="searchbar">
-            <input class="border-2 border-gray-400 px-6 py-3 text-2xl w-full" type="text" name="query" value="{{ . }}">
-        </div>
-    </form>
+    <div id="formwrapper" hx-trigger="load" hx-post="/search" class="grid place-items-center h-full" hx-include="#searchquery">
+        <form hx-post="/search" hx-swap="innerHTML" hx-target="#root">
+            <div id="searchbar" class="flex relative">
+                <input id="searchquery" class="border-2 border-gray-400 px-6 py-3 text-2xl w-full" type="text" name="query" value="{{ . }}">
+                {{ template "indicator" . }}
+            </div>
+        </form>
+    </div>
 </div>
-<div id="grid-container" class="grid grid-cols-[1fr_3fr] bg-white" hx-include="#searchbar" hx-post="/search" hx-trigger="load">
+<div id="grid-container" class="grid grid-cols-[1fr_3fr] bg-white">
 </div>
+{{end}}
+
+{{ block "indicator" . }}
+<img id="indicator" src="images/bars.svg" class="htmx-indicator inline absolute self-center right-8">
 {{end}}
 
 <!-- Results Section -->
 {{ block "results" . }}
-<div id="grid-container" hx-swap-oob="true" class="grid grid-cols-[1fr_3fr] bg-white">
+<div id="formwrapper" class="grid place-items-center h-full" hx-swap-oob="true">
+    <form id="searchform" hx-post="/search">
+        <div id="searchbar" class="flex relative">
+            <input class="border-2 border-gray-400 px-6 py-3 text-2xl w-full" type="text" name="query" value="{{ .Query }}">
+            {{ template "indicator" . }}
+        </div>
+    </form>
+</div>
+
+<div id="grid-container" class="grid grid-cols-[1fr_3fr] bg-white" hx-swap-oob="true">
     {{ template "sidecolumn-nohtmx" . }}
     <div id="results-container" class="space-y-6">
         {{ range .Results }}
