@@ -5,6 +5,8 @@ import (
 	"log"
 
 	"github.com/aws/aws-sdk-go-v2/service/kendra"
+
+	"github.com/DSSD-Madison/gmu/internal"
 )
 
 var opts = kendra.Options{
@@ -33,7 +35,7 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 
 	for _, item := range out.ResultItems {
 		res := KendraResult{
-			Title:   *item.DocumentTitle.Text,
+			Title:   internal.TrimExtension(*item.DocumentTitle.Text),
 			Excerpt: *item.DocumentExcerpt.Text,
 		}
 		results.Results = append(results.Results, res)
