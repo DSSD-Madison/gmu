@@ -1,0 +1,6 @@
+{{ block "suggestions" . }}
+    {{ range .Suggestions }}
+		<p class="cursor-pointer hover:underline" hx-trigger="click" hx-post="/search" hx-vals='{"query": "{{.}}"}'>{{ . }}</p>
+    {{end}}
+{{end}}
+

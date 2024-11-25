@@ -18,6 +18,19 @@ func fetchSearchPage(c echo.Context) error {
 	return c.Render(http.StatusOK, "search", query)
 }
 
+func SearchSuggestions(c echo.Context) error {
+	query := c.FormValue("query")
+	if len(query) == 0 {
+		return nil
+	}
+	suggestions, err := models.GetSuggestions(query)
+	// TODO: add error status code
+	if err != nil {
+		return nil
+	}
+	return c.Render(http.StatusOK, "suggestions", suggestions)
+}
+
 func Search(c echo.Context) error {
 	query := c.FormValue("query")
 	if len(query) < MinQueryLength {
