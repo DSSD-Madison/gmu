@@ -10,5 +10,6 @@ func InitRoutes(e *echo.Echo) {
 	e.GET("/", Home)
 
 	// Search Route
+	e.POST("/loadsearch", fetchSearchPage)
 	e.POST("/search", Search)
 }

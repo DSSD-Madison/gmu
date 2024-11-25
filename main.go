@@ -24,6 +24,7 @@ func main() {
 	// Static file handlers
 	e.Static("/images", "static/images")
 	e.Static("/css", "static/css")
+	e.Static("/svg", "static/svg")
 
 	// Renderer
 	e.Renderer = models.NewTemplate()
