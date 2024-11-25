@@ -1,5 +1,35 @@
+# ========================
+# Generated Build Files
+# ========================
+# Ignoring generated CSS output file (built dynamically by TailwindCSS)
 static/css/output.css
-.env
+
+# Ignoring compiled binaries and executables
+/bin
+
+# Ignoring temporary build files
 tmp
+
+# ========================
+# Configuration Files
+# ========================
+# Ignoring environment file containing sensitive information like API keys
+.env
+
+# ========================
+# Editor/IDE Metadata
+# ========================
+# Ignoring JetBrains IDEs (e.g., IntelliJ IDEA, WebStorm) project-specific metadata
 .idea
+
+# ========================
+# System Files
+# ========================
+# Ignoring macOS-specific metadata files
+*.DS_Store
+
+# ========================
+# Tools and Utilities
+# ========================
+# Ignoring TailwindCSS binary or local executable directory
 tailwindcss
