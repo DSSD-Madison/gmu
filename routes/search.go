@@ -8,7 +8,7 @@ import (
 	"github.com/DSSD-Madison/gmu/models"
 )
 
-func LoadSearch(c echo.Context) error {
+func fetchSearchPage(c echo.Context) error {
 	query := c.FormValue("query")
 	if len(query) < 3 {
 		return c.String(http.StatusBadRequest, "Error 400, could not get query from request.")
