@@ -2,7 +2,7 @@
 {{ block "search-home" . }}
 <div class="flex flex-col items-center justify-center absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 space-y-4 p-6">
     <h2 class="text-xl font-semibold">Search</h2>
-    <form hx-post="/loadsearch" hx-swap="innerHTML" hx-target="#root">
+    <form hx-post="/fetchSearchPage" hx-swap="innerHTML" hx-target="#root">
         <div>
             <input class="border-2 border-gray-400 px-6 py-3 text-2xl w-full" placeholder="Begin Your Search Here..." type="text" name="query" value="">
         </div>
