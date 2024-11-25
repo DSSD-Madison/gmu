@@ -13,7 +13,7 @@ func LoadSearch(c echo.Context) error {
 	if len(query) < 3 {
 		return c.String(http.StatusBadRequest, "Error 400, could not get query from request.")
 	}
-	return c.Render(http.StatusOK, "results-page", query)
+	return c.Render(http.StatusOK, "results-init", query)
 }
 
 func Search(c echo.Context) error {
