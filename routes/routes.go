@@ -16,6 +16,8 @@ func InitRoutes(e *echo.Echo) {
 
 	e.GET("/results", pages.Results)
 
+	e.GET("/test", pages.Test)
+
 	/*
 		API
 	*/

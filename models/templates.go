@@ -37,6 +37,10 @@ func NewTemplate() *Templates {
 		"views/components/results/results-list.html",
 		"views/components/results/result-card.html"))
 
+	tmpl["test"] = template.Must(template.ParseFiles(
+		"views/layouts/base.html",
+		"views/pages/test.html"))
+
 	return &Templates{
 		templates: tmpl,
 	}
