@@ -2,13 +2,13 @@
 {{ define "content" }}
 
 <div class="min-h-screen flex flex-col items-center justify-center text-white" 
-    style="background-image: url('/images/header.png'); background-repeat: no-repeat; background-size: cover;">
+    style="background-image: url('/images/banner.jpeg'); background-repeat: no-repeat; background-size: cover;">
   <div class="text-center mt-10">
     <!-- Search Title -->
     <h1 class="text-3xl font-bold">Search</h1>
     {{ block "search-bar" . }} Search bar {{ end }}
     <!-- Suggestions -->
-    <div id="suggestions" class="mt-2 bg-gray-100 text-black text-left border p-2 w-1/2 mx-auto">
+    <div id="suggestions" class="mt-2 text-white text-left text-2xl p-2 mx-auto">
       <p>Some Search Examples:</p>
       <p>"Women Mediators"</p>
       <p>"How effective are ceasefire monitoring arrangements?"</p>

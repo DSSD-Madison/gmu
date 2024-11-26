@@ -1,7 +1,13 @@
 <!-- Results Page -->
 {{ define "content" }}
-<div class="container mx-auto">
-    <h1 class="text-3xl font-bold">Results Page</h1>
+<div class="relative h-[300px]">
+  <img src="images/banner.jpeg" class="absolute top-0 w-full h-auto max-w-full z-[-1]">
+  <div class="grid place-items-center h-full">
     {{ block "search-bar" . }} Search bar {{ end }}
+  </div>
+</div>
+<div class="grid grid-cols-[1fr_3fr] bg-white">
+    {{ template "filter-sidebar" . }}
+    {{ template "results-list" . }}
 </div>
 {{ end }}

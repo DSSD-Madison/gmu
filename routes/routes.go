@@ -15,7 +15,6 @@ func InitRoutes(e *echo.Echo) {
 	e.GET("/search", pages.Search)
 
 	e.GET("/results", pages.Results)
-	// e.POST("/results", Result)
 
 	/*
 		API

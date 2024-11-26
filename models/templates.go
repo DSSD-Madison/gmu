@@ -21,9 +21,8 @@ func (t *Templates) Render(w io.Writer, name string, data interface{}, c echo.Co
 func NewTemplate() *Templates {
 	tmpl := make(map[string]*template.Template)
 	tmpl["home"] = template.Must(template.ParseFiles(
-		"views/layouts/base.html", 
-		"views/pages/home.html",
-		"views/components/home/search-home.html"))
+		"views/layouts/base.html",
+		"views/pages/home.html"))
 
 	tmpl["search"] = template.Must(template.ParseFiles(
 		"views/layouts/base.html",
@@ -32,7 +31,11 @@ func NewTemplate() *Templates {
 
 	tmpl["results"] = template.Must(template.ParseFiles(
 		"views/layouts/base.html",
-		"views/pages/results.html"))
+		"views/pages/results.html",
+		"views/components/search/search-bar.html",
+		"views/components/results/filters-sidebar.html",
+		"views/components/results/results-list.html",
+		"views/components/results/result-card.html"))
 
 	return &Templates{
 		templates: tmpl,
