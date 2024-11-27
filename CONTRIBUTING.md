@@ -29,25 +29,27 @@ To work on this project, you’ll need the following dependencies:
 ## Setting Up the Development Environment
 
 1.	Clone the repository:
-```bash
-git clone https://github.com/DSSD-Madison/gmu.git
-cd project-name
-```
+	```bash
+	git clone https://github.com/DSSD-Madison/gmu.git
+	cd project-name
+	```
 2.	Install dependencies:
 	- Go (v1.19+): Install Go
 	- Echo: Already included via Go modules (see go.mod).
 	- TailwindCSS: Set up through tailwind.config.js in the static/css directory.
 	- Flowbite: Integrated directly into views/layouts/base.html.
 3.	Run the development server:
-```bash
-go run main.go
-```
+	```bash
+	go run main.go
+	```
 4.	Optional: Run Air for hot reloads (if installed):
 	- [Install Air](https://github.com/air-verse/air)
-```bash
-curl -sSfL https://raw.githubusercontent.com/air-verse/air/master/install.sh | sh -s
-```
+	```bash
+	curl -sSfL https://raw.githubusercontent.com/air-verse/air/master/install.sh | sh -s
+	```
+
 	- Run air
-```bash
-./bin/air
-```
+
+	```bash
+	./bin/air
+	```
