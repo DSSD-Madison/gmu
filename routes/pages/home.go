@@ -1,4 +1,4 @@
-package routes
+package pages
 
 import (
 	"net/http"
@@ -7,5 +7,5 @@ import (
 )
 
 func Home(c echo.Context) error {
-	return c.Render(http.StatusOK, "index", nil)
+	return c.Render(http.StatusOK, "home", nil)
 }

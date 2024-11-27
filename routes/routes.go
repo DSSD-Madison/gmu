@@ -2,13 +2,23 @@ package routes
 
 import (
 	"github.com/labstack/echo/v4"
+	"github.com/DSSD-Madison/gmu/routes/api"
+	"github.com/DSSD-Madison/gmu/routes/pages"
 )
 
 // InitRoutes registers all the application routes
 func InitRoutes(e *echo.Echo) {
-	// Home Route
-	e.GET("/", Home)
+	/*
+		Frontend
+	*/
+	e.GET("/", pages.Home)
+	e.GET("/search", pages.Search)
 
-	// Search Route
-	e.POST("/search", Search)
+	e.GET("/results", pages.Results)
+
+	/*
+		API
+	*/
+	apiGroup := e.Group("/api")
+	api.RegisterFiltersRoutes(apiGroup)
 }

@@ -1,0 +1,46 @@
+{{ define "filter-sidebar" }}
+<aside id="sidecolumn" class="mt-12 ml-12">
+  {{ range $index, $filter := .Filters }}
+  <div id="accordion-collapse-{{ $index }}" data-accordion="collapse">
+    <!-- Dynamic Section for FilterCategory -->
+    <div id="accordion-collapse-heading-{{ $index }}">
+      <button 
+        type="button"
+        class="flex items-center justify-between w-full p-2"
+        data-accordion-target="#accordion-collapse-body-{{ $index }}"
+        aria-expanded="false"
+        aria-controls="accordion-collapse-body-{{ $index }}"
+        aria-label="Toggle {{ $filter.Category }} Filters"
+        role="button">
+        <span class="text-black font-bold">{{ $filter.Category }}</span>
+        <svg data-accordion-icon class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 8">
+          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="m1 1 5.326 5.7a.909.909 0 0 0 1.348 0L13 1"/>
+        </svg>
+      </button>
+    </div>
+    <div 
+      id="accordion-collapse-body-{{ $index }}"
+      class="hidden"
+      aria-labelledby="accordion-collapse-heading-{{ $index }}"
+      role="region">
+      <div class="p-3">
+        <!-- Dynamic Content with Checkboxes -->
+        {{ range $optionIndex, $option := $filter.Options }}
+        <div class="flex items-center justify-between mb-2">
+          <label for="filter-{{ $index }}-{{ $optionIndex }}" class="flex items-center space-x-2 cursor-pointer">
+            <input 
+              id="filter-{{ $index }}-{{ $optionIndex }}" 
+              type="checkbox" 
+              class="form-checkbox h-4 w-4 text-blue-600 focus:ring focus:ring-blue-300"
+              aria-labelledby="filter-label-{{ $index }}-{{ $optionIndex }}">
+            <span id="filter-label-{{ $index }}-{{ $optionIndex }}">{{ $option.Label }}</span>
+          </label>
+          <span>{{ $option.Count }}</span>
+        </div>
+        {{ end }}
+      </div>
+    </div>
+  </div>
+  {{ end }}
+</aside>
+{{ end }}
