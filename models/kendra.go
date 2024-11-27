@@ -19,6 +19,7 @@ var client = kendra.New(opts)
 type KendraResult struct {
 	Title   string
 	Excerpt string
+	Link    string
 }
 
 type KendraResults struct {
@@ -37,6 +38,7 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 		res := KendraResult{
 			Title:   internal.TrimExtension(*item.DocumentTitle.Text),
 			Excerpt: *item.DocumentExcerpt.Text,
+			Link:    *item.DocumentURI,
 		}
 		results.Results = append(results.Results, res)
 		results.Count = int(*out.TotalNumberOfResults)
@@ -47,7 +49,7 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 
 func MakeQuery(query string) KendraResults {
 	kendraQuery := kendra.QueryInput{
-		IndexId:   &index_id,
+		IndexId:   &indexId,
 		QueryText: &query,
 	}
 	out, err := client.Query(context.TODO(), &kendraQuery)
