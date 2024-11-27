@@ -7,8 +7,8 @@ import (
 )
 
 var creds = aws.Credentials{
-	AccessKeyID:     access_key,
-	SecretAccessKey: secret_key,
+	AccessKeyID:     accessKey,
+	SecretAccessKey: secretKey,
 }
 
 type Provider struct {
