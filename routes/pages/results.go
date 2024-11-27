@@ -1,56 +1,36 @@
 package pages
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/DSSD-Madison/gmu/models"
 )
 
-type FilterOption struct {
-	Label	string
-	Count	int
-}
-
-type FilterCategory struct {
-	Category	string
-	Options	[]FilterOption
-}
-
 type PageData struct {
-	Where	string
-	Filters	[]FilterCategory
+	Filters	[]models.FilterCategory
 }
 
 func Results(c echo.Context) error {
-	filters := []FilterCategory{
-		{
-			Category: "Authors",
-			Options: []FilterOption{
-				{Label: "Search for Common Ground (SFCG)", Count: 35},
-				{Label: "The United States Agency for International Development (USAID)", Count: 32},
-				{Label: "Mercy Corps", Count: 8},
-			},
-		},
-		{
-			Category: "File Type",
-			Options: []FilterOption{
-				{Label: "PDF", Count: 391},
-				{Label: "MS_WORD", Count: 71},
-			},
-		},
-		{
-			Category: "Region",
-			Options: []FilterOption{
-				{Label: "Global", Count: 391},
-				{Label: "Nepal", Count: 71},
-			},
-		},
+	// Fetch filter data from the API
+	resp, err := http.Get("http://localhost:8080/api/filters")
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "Failed to load filters")
+	}
+	defer resp.Body.Close()
+
+	// Decode JSON response
+	var filterResponse struct {
+		Filters []models.FilterCategory `json:"Filters"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&filterResponse); err != nil {
+		return c.String(http.StatusInternalServerError, "Failed to decode filters")
 	}
 
-
+	// Prepare page data
 	data := PageData{
-		Where: "Over here",
-		Filters: filters,
+		Filters: filterResponse.Filters,
 	}
 
 	return c.Render(http.StatusOK, "results", data)

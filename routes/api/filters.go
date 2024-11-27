@@ -25,15 +25,15 @@ func GetFilters(c echo.Context) error {
 			{
 				Category: "File Type",
 				Options: []models.FilterOption{
-					{Label: "PDF", Count: 391},
+					{Label: "PDF", Count: 1},
 					{Label: "MS_WORD", Count: 71},
 				},
 			},
 			{
 				Category: "Region",
 				Options: []models.FilterOption{
-					{Label: "Global", Count: 391},
-					{Label: "Nepal", Count: 71},
+					{Label: "Global", Count: 843},
+					{Label: "Japan", Count: 71},
 				},
 			},
 		},
