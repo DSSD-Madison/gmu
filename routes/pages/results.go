@@ -1,8 +1,8 @@
 package pages
 
 import (
-	"encoding/json"
 	"net/http"
+	"encoding/json"
 
 	"github.com/labstack/echo/v4"
 	"github.com/DSSD-Madison/gmu/models"

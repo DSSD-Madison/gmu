@@ -2,8 +2,8 @@ package routes
 
 import (
 	"github.com/labstack/echo/v4"
-	"github.com/DSSD-Madison/gmu/routes/pages"
 	"github.com/DSSD-Madison/gmu/routes/api"
+	"github.com/DSSD-Madison/gmu/routes/pages"
 )
 
 // InitRoutes registers all the application routes
