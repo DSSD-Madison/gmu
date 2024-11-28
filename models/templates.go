@@ -3,7 +3,6 @@ package models
 import (
 	"html/template"
 	"io"
-	"log"
 
 	"github.com/labstack/echo/v4"
 )
@@ -13,8 +12,6 @@ type Templates struct {
 }
 
 func (t *Templates) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	// DEBUG: REMOVE
-	log.Println("Rendering template:", name)
 	return t.templates[name].Execute(w, data)
 }
 
