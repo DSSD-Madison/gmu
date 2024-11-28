@@ -15,7 +15,7 @@ func fetchSearchPage(c echo.Context) error {
 	if len(query) < MinQueryLengh {
 		return c.String(http.StatusBadRequest, "Error 400, could not get query from request.")
 	}
-	return c.Render(http.StatusOK, "results-init", query)
+	return c.Render(http.StatusOK, "search", query)
 }
 
 func Search(c echo.Context) error {
@@ -24,5 +24,6 @@ func Search(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "Error 400, could not get query from request.")
 	}
 	results := models.MakeQuery(query)
+
 	return c.Render(http.StatusOK, "results", results)
 }
