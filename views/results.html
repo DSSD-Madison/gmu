@@ -1,4 +1,4 @@
-<!-- Results Page -->
+<!-- Search Page -->
 {{ block "results-page" . }}
 <div class="relative h-[300px]">
     <img src="images/Banner.jpeg" class="absolute top-0 w-full h-auto max-w-full z-[-1]">
@@ -9,22 +9,23 @@
     </form>
 </div>
 <div class="grid grid-cols-[1fr_3fr] bg-white">
-    {{  template "sidecolumn-nohtmx" . }}
-    {{ template "results" . }}
+    {{ block "sidecolumn-nohtmx" . }} Sidecolumn {{ end }}
+    {{ template "results-list" . }}
 </div>
 {{end}}
 
+
 <!-- Results Section -->
-{{ block "results" . }}
+{{ define "results-list" }}
 <div id="results-container" class="space-y-6">
     {{ range .Results }}
-    {{ template "result" . }}
+        {{ template "result-card" . }}
     {{end}}
 </div>
 {{end}}
 
 <!-- Individual Result Partial -->
-{{ block "result" . }}
+{{ define "result-card" }}
 <div class="flex items-start space-x-6 p-4">
     <div>
         <h3 class="text-lg font-semibold">{{ .Title }}</h3>
@@ -32,4 +33,3 @@
     </div>
 </div>
 {{end}}
-

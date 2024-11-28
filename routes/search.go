@@ -14,5 +14,5 @@ func Search(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "Error 400, could not get query from request.")
 	}
 	results := models.MakeQuery(query)
-	return c.Render(http.StatusOK, "results-page", results)
+	return c.Render(http.StatusOK, "search", results)
 }

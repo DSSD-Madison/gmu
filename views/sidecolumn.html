@@ -1,5 +1,5 @@
 <!-- Filters Section -->
-{{ block "sidecolumn" . }}
+{{ define "sidecolumn" }}
 <div id="sidecolumn" class="mt-12 ml-12">
     <p>{{ .Count }} Results</p>
     <div class="flex flex-col space-y-2">
@@ -23,7 +23,7 @@
 </div>
 {{end}}
 
-{{ block "sidecolumn-nohtmx" . }}
+{{ define "sidecolumn-nohtmx" }}
 <div id="sidecolumn" class="mt-12 ml-12">
     <p>{{ .Count }} Results</p>
     <div class="flex items-center space-x-2">
@@ -34,4 +34,3 @@
     </div>
 </div>
 {{end}}
-
