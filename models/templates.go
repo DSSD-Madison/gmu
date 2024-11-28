@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"html/template"
 	"io"
 
@@ -12,7 +13,17 @@ type Templates struct {
 }
 
 func (t *Templates) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	return t.templates[name].Execute(w, data)
+	tmpl, ok := t.templates[name]
+	if !ok {
+		return fmt.Errorf("template %s not found", name)
+	}
+
+	err := tmpl.Execute(w, data)
+	if err != nil {
+		return fmt.Errorf("failed to render template %s: %w", name, err)
+	}
+
+	return nil
 }
 
 func NewTemplate() *Templates {
