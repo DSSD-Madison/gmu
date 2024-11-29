@@ -1,19 +1,18 @@
 <!-- Page Boilerplate -->
-{{ block "index" . }}
 <!DOCTYPE html>
 <html lang="en" class="overscroll-none">
-<head>
-    <title></title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <head>
+    <title>Better Evidence Project</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/images/logo.ico" type="image/x-icon">
     <script src="https://unpkg.com/htmx.org/dist/htmx.min.js"></script>
-    <link href="/css/output.css" rel="stylesheet">
-</head>
-<body class="m-0">
-<div id="root">
-    {{ template "search-home" . }}
-</div>
-</body>
+    <link href="/css/output.css" rel="stylesheet" />
+  </head>
+  <body class="m-0">
+    <div id="root">
+      {{ block "search-home" . }} Default content {{ end }}
+    </div>
+  </body>
 </html>
-{{end}}
 

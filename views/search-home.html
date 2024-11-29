@@ -1,5 +1,5 @@
-<!-- Search Page -->
-{{ block "search-home" . }}
+<!-- Home Page -->
+{{ define "search-home" }}
 <div class="flex flex-col items-center justify-center absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 space-y-4 p-6">
     <h2 class="text-xl font-semibold">Search</h2>
     <form hx-post="/fetchSearchPage" hx-swap="innerHTML" hx-target="#root">

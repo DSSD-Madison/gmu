@@ -1,0 +1,23 @@
+<!-- Loading Indicator -->
+{{ block "indicator" . }}
+<img id="indicator" src="svg/bars.svg" class="htmx-indicator inline absolute self-center right-8">
+{{end}}
+
+
+<!-- Search Page -->
+{{ block "results-init" . }}
+<div class="relative h-[300px]">
+    <img src="images/Banner.jpeg" class="absolute top-0 w-full h-auto max-w-full z-[-1]">
+    <div id="formwrapper" class="grid place-items-center h-full">
+        <form hx-post="/search" hx-target="#results-container" hx-swap="innerHTML" hx-trigger="load">
+            <div id="searchbar" class="flex relative">
+                <input id="searchquery" class="border-2 border-gray-400 px-6 py-3 text-2xl w-full" type="text" name="query" value="{{ . }}">
+                {{ template "indicator" . }}
+            </div>
+        </form>
+    </div>
+    <div id="results-container">
+        <!-- Search results will be dynamically populated here -->
+    </div>
+</div>
+{{end}}

@@ -1,56 +1,17 @@
-<!-- Results Page -->
-{{ block "results-init" . }}
-<div class="relative h-[300px]">
-    <img src="images/Banner.jpeg" class="absolute top-0 w-full h-auto max-w-full z-[-1]">
-    <div
-        id="formwrapper"
-        hx-trigger="load"
-        hx-post="/search"
-        class="grid place-items-center h-full"
-        hx-include="#searchquery"
-        hx-target="#root"
-        hx-swap="innerHTML">
-        <form hx-post="/search">
-            <div id="searchbar" class="flex relative">
-                <input id="searchquery" class="border-2 border-gray-400 px-6 py-3 text-2xl w-full" type="text" name="query" value="{{ . }}">
-                {{ template "indicator" . }}
-            </div>
-        </form>
-    </div>
-</div>
-<div id="grid-container" class="grid grid-cols-[1fr_3fr] bg-white"></div>
-{{end}}
-
-{{ block "indicator" . }}
-<img id="indicator" src="svg/bars.svg" class="htmx-indicator inline absolute self-center right-8">
-{{end}}
-
 <!-- Results Section -->
-{{ block "results" . }}
-<div class="relative h-[300px]">
-    <img src="images/Banner.jpeg" class="absolute top-0 w-full h-auto max-w-full z-[-1]">
-    <div id="formwrapper" class="grid place-items-center h-full">
-        <form id="searchform" hx-post="/search">
-            <div id="searchbar" class="flex relative">
-                <input class="border-2 border-gray-400 px-6 py-3 text-2xl w-full" type="text" name="query" value="{{ .Query }}">
-                {{ template "indicator" . }}
-            </div>
-        </form>
-    </div>
-</div>
-
-<div id="grid-container" class="grid grid-cols-[1fr_3fr] bg-white">
+{{ block "results-list" . }}
+<div id="grid-container" class="grid grid-cols-[1fr_3fr] bg-white w-full">
     {{ template "sidecolumn-nohtmx" . }}
     <div id="results-container" class="space-y-6">
         {{ range .Results }}
-        {{ template "result" . }}
+        {{ template "result-card" . }}
         {{end}}
     </div>
 </div>
 {{end}}
 
 <!-- Individual Result Partial -->
-{{ block "result" . }}
+{{ define "result-card" }}
 <div class="flex items-start space-x-6 p-4">
     <div>
         <a href="{{ .Link }}" target="_blank" rel="noopener noreferrer" class="text-lg font-semibold underline">
@@ -60,4 +21,3 @@
     </div>
 </div>
 {{end}}
-
