@@ -1,8 +1,8 @@
 <!-- Results Section -->
 {{ block "results-list" . }}
-<div id="grid-container" class="grid w-full grid-cols-1 gap-6 p-6 md:grid-cols-4 bg-green">
-    {{ template "sidecolumn-nohtmx" . }}
-    <div id="results-container" class="col-span-3 space-y-6">
+<div id="grid-container" class="grid grid-cols-[1fr_3fr] bg-white w-full">
+    {{ template "sidecolumn" . }}
+    <div id="results-container" class="space-y-6">
         {{ range .Results }}
         {{ template "result-card" . }}
         {{ end }}

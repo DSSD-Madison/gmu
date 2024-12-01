@@ -27,6 +27,7 @@ type KendraResults struct {
 	Results     []KendraResult
 	Query       string
 	Count       int
+	Filters     []FilterCategory
 }
 
 func queryOutputToResults(out kendra.QueryOutput) KendraResults {
@@ -61,5 +62,6 @@ func MakeQuery(query string) KendraResults {
 
 	results := queryOutputToResults(*out)
 	results.Query = query
+	results.Filters = Filters()
 	return results
 }
