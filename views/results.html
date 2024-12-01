@@ -1,23 +1,22 @@
 <!-- Results Section -->
 {{ block "results-list" . }}
-<div id="grid-container" class="grid grid-cols-[1fr_3fr] bg-white w-full">
+<div id="grid-container" class="grid w-full grid-cols-1 gap-6 p-6 md:grid-cols-4 bg-green">
     {{ template "sidecolumn-nohtmx" . }}
-    <div id="results-container" class="space-y-6">
+    <div id="results-container" class="col-span-3 space-y-6">
         {{ range .Results }}
         {{ template "result-card" . }}
-        {{end}}
+        {{ end }}
     </div>
 </div>
 {{end}}
 
 <!-- Individual Result Partial -->
 {{ define "result-card" }}
-<div class="flex items-start space-x-6 p-4">
-    <div>
-        <a href="{{ .Link }}" target="_blank" rel="noopener noreferrer" class="text-lg font-semibold underline">
-            {{ .Title }}
-        </a>
-        <p class="text-gray-600">{{ .Excerpt }}</p>
-    </div>
+<div class="p-4 bg-white border rounded-md shadow-md">
+    <a href="{{ .Link }}" target="_blank" rel="noopener noreferrer" class="text-lg font-semibold underline">
+        {{ .Title }}
+    </a>
+    <p class="text-gray-600">{{ .Excerpt }}</p>
 </div>
 {{end}}
+
