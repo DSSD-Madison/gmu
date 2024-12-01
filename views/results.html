@@ -1,6 +1,6 @@
 <!-- Results Section -->
 {{ block "results-list" . }}
-<div id="grid-container" class="grid grid-cols-[1fr_3fr] bg-white w-full">
+<div id="grid-container" class="grid grid-cols-[1fr_3fr] bg-green w-full">
     {{ template "sidecolumn-nohtmx" . }}
     <div id="results-container" class="space-y-6">
         {{ range .Results }}
@@ -12,7 +12,7 @@
 
 <!-- Individual Result Partial -->
 {{ define "result-card" }}
-<div class="flex items-start space-x-6 p-4">
+<div class="flex items-start p-4 space-x-6">
     <div>
         <a href="{{ .Link }}" target="_blank" rel="noopener noreferrer" class="text-lg font-semibold underline">
             {{ .Title }}

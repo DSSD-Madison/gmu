@@ -4,7 +4,14 @@ module.exports = {
         "./views/*.html"
     ],
     theme: {
-        extend: {},
+        extend: {
+            colors: {
+                dark_green: '#005239', // dark green
+                green: '#EFF0E7', // green 
+                yellow: '#FEBE10', // yellow
+                white: '#FFFFFF', // white
+              },
+        },
     },
     plugins: [],
 }
