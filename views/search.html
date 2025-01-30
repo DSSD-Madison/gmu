@@ -11,7 +11,7 @@
     <div id="formwrapper" class="z-10 grid h-full place-items-center">
         <form hx-post="/search" hx-target="#results-container" hx-swap="innerHTML" hx-trigger="load, submit">
             <div id="searchbar" class="relative flex">
-                <input id="searchquery" class="w-full px-6 py-3 text-2xl border-2 border-gray-400" type="text" name="query" value="{{ . }}">
+                <input id="searchquery" autocomplete="off" class="w-full px-6 py-3 text-2xl border-2 border-gray-400" type="text" name="query" value="{{ . }}">
                 {{ template "indicator" . }}
             </div>
         </form>

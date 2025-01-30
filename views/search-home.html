@@ -4,7 +4,7 @@
     <h2 class="text-xl font-semibold">Search</h2>
     <form hx-post="/fetchSearchPage" hx-swap="innerHTML" hx-target="#root">
         <div>
-            <input class="border-2 border-gray-400 px-6 py-3 text-2xl w-full" placeholder="Begin Your Search Here..." type="text" name="query" value="">
+            <input class="border-2 border-gray-400 px-6 py-3 text-2xl w-full" autocomplete="off" placeholder="Begin Your Search Here..." type="text" name="query" value="">
         </div>
     </form>
 </div>
