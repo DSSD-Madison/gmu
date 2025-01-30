@@ -1,14 +1,18 @@
 <!-- Results Section -->
 {{ block "results-list" . }}
-<div id="grid-container" class="grid grid-cols-[1fr_3fr] bg-white w-full">
+<div id="grid-container" class="pt-10 pr-10 grid grid-cols-[1fr_3fr] bg-white w-full">
     {{ template "sidecolumn" . }}
-    <div id="results-container" class="space-y-6">
-        {{ range .Results }}
-        {{ template "result-card" . }}
-        {{ end }}
-    </div>
+    {{ template "results-container" . }}
 </div>
 {{end}}
+
+{{ define "results-container" }}
+<div id="results-content-container" class="space-y-6">
+    {{ range .Results }}
+    {{ template "result-card" . }}
+    {{ end }}
+</div>
+{{ end }}
 
 <!-- Individual Result Partial -->
 {{ define "result-card" }}

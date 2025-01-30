@@ -5,9 +5,14 @@ import (
 	"log"
 
 	"github.com/aws/aws-sdk-go-v2/service/kendra"
+	"github.com/aws/aws-sdk-go-v2/service/kendra/types"
 
 	"github.com/DSSD-Madison/gmu/internal"
 )
+
+func Ptr[T any](p T) *T {
+	return &p
+}
 
 var opts = kendra.Options{
 	Credentials: prov,
@@ -32,26 +37,60 @@ type KendraResults struct {
 
 func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	results := KendraResults{
-		Results: []KendraResult{},
+		Results: make([]KendraResult, len(out.ResultItems)),
+		Filters: make([]FilterCategory, len(out.FacetResults)),
 	}
 
-	for _, item := range out.ResultItems {
+	for i, item := range out.ResultItems {
 		res := KendraResult{
 			Title:   internal.TrimExtension(*item.DocumentTitle.Text),
 			Excerpt: *item.DocumentExcerpt.Text,
 			Link:    *item.DocumentURI,
 		}
-		results.Results = append(results.Results, res)
+		results.Results[i] = res
 		results.Count = int(*out.TotalNumberOfResults)
+
+	}
+
+	for i, f := range out.FacetResults {
+		filterCategory := FilterCategory{
+			Category: *f.DocumentAttributeKey,
+			Options:  make([]FilterOption, len(f.DocumentAttributeValueCountPairs)),
+		}
+		for j, p := range f.DocumentAttributeValueCountPairs {
+			filterCategory.Options[j] = FilterOption{
+				Label: *p.DocumentAttributeValue.StringValue,
+				Count: *p.Count,
+			}
+		}
+		results.Filters[i] = filterCategory
 	}
 
 	return results
 }
 
-func MakeQuery(query string) KendraResults {
+func MakeQuery(query string, filters map[string][]string) KendraResults {
+	kendraFilters := types.AttributeFilter{
+		AndAllFilters: make([]types.AttributeFilter, len(filters)),
+	}
+	if filters != nil {
+		i := 0
+		for k, v := range filters {
+			kendraFilters.AndAllFilters[i] = types.AttributeFilter{
+				ContainsAll: &types.DocumentAttribute{
+					Key: &k,
+					Value: &types.DocumentAttributeValue{
+						StringListValue: v,
+					},
+				},
+			}
+			i += 1
+		}
+	}
 	kendraQuery := kendra.QueryInput{
-		IndexId:   &indexId,
-		QueryText: &query,
+		AttributeFilter: &kendraFilters,
+		IndexId:         &indexId,
+		QueryText:       &query,
 	}
 	out, err := client.Query(context.TODO(), &kendraQuery)
 
@@ -62,6 +101,5 @@ func MakeQuery(query string) KendraResults {
 
 	results := queryOutputToResults(*out)
 	results.Query = query
-	results.Filters = Filters()
 	return results
 }

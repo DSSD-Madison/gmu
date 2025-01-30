@@ -8,11 +8,11 @@ import (
 	"github.com/DSSD-Madison/gmu/models"
 )
 
-const MinQueryLengh = 3
+const MinQueryLength = 3
 
 func fetchSearchPage(c echo.Context) error {
 	query := c.FormValue("query")
-	if len(query) < MinQueryLengh {
+	if len(query) < MinQueryLength {
 		return c.String(http.StatusBadRequest, "Error 400, could not get query from request.")
 	}
 	return c.Render(http.StatusOK, "search", query)
@@ -20,10 +20,10 @@ func fetchSearchPage(c echo.Context) error {
 
 func Search(c echo.Context) error {
 	query := c.FormValue("query")
-	if len(query) < MinQueryLengh {
+	if len(query) < MinQueryLength {
 		return c.String(http.StatusBadRequest, "Error 400, could not get query from request.")
 	}
-	results := models.MakeQuery(query)
+	results := models.MakeQuery(query, nil)
 
 	return c.Render(http.StatusOK, "results", results)
 }
