@@ -77,6 +77,7 @@ func MakeQuery(query string, filters map[string][]string) KendraResults {
 	}
 	i := 0
 	for k, v := range filters {
+		// _file_type is a string so we can't use ContainsAny
 		if k == "_file_type" {
 			kendraFilters.AndAllFilters[i] = types.AttributeFilter{
 				OrAllFilters: make([]types.AttributeFilter, len(v)),

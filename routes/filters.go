@@ -20,6 +20,7 @@ func Filters(c echo.Context) error {
 	selectedFilters := make(map[string][]string)
 	query := ""
 	for key, values := range c.Request().Form {
+		// All form values get collapsed into a key. We need to put the query string into the URL
 		if key == "query" {
 			query = values[0]
 			continue

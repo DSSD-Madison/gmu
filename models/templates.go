@@ -33,7 +33,7 @@ func (t *Templates) Render(w io.Writer, name string, data interface{}, c echo.Co
 
 	// usingSubTemplate is when we want to use a specific block within a template
 	// For example the sidebar block within the results-list
-	// We would pass in a name like results-list:sidebar
+	// We would pass in a name like results:sidebar
 	if usingSubTemplate {
 		err := tmpl.ExecuteTemplate(w, part, data)
 		if err != nil {
