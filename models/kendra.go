@@ -14,6 +14,8 @@ func Ptr[T any](p T) *T {
 	return &p
 }
 
+//var
+
 var opts = kendra.Options{
 	Credentials: prov,
 	Region:      region,
@@ -73,19 +75,33 @@ func MakeQuery(query string, filters map[string][]string) KendraResults {
 	kendraFilters := types.AttributeFilter{
 		AndAllFilters: make([]types.AttributeFilter, len(filters)),
 	}
-	if filters != nil {
-		i := 0
-		for k, v := range filters {
+	i := 0
+	for k, v := range filters {
+		if k == "_file_type" {
 			kendraFilters.AndAllFilters[i] = types.AttributeFilter{
-				ContainsAll: &types.DocumentAttribute{
+				OrAllFilters: make([]types.AttributeFilter, len(v)),
+			}
+			for j, s := range v {
+				kendraFilters.AndAllFilters[i].OrAllFilters[j] = types.AttributeFilter{
+					EqualsTo: &types.DocumentAttribute{
+						Key: &k,
+						Value: &types.DocumentAttributeValue{
+							StringValue: &s,
+						},
+					},
+				}
+			}
+		} else {
+			kendraFilters.AndAllFilters[i] = types.AttributeFilter{
+				ContainsAny: &types.DocumentAttribute{
 					Key: &k,
 					Value: &types.DocumentAttributeValue{
 						StringListValue: v,
 					},
 				},
 			}
-			i += 1
 		}
+		i += 1
 	}
 	kendraQuery := kendra.QueryInput{
 		AttributeFilter: &kendraFilters,

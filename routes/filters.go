@@ -2,11 +2,12 @@ package routes
 
 import (
 	"fmt"
-	"github.com/DSSD-Madison/gmu/models"
 	"net/http"
 	"strings"
 
 	"github.com/labstack/echo/v4"
+
+	"github.com/DSSD-Madison/gmu/models"
 )
 
 func Filters(c echo.Context) error {
@@ -32,5 +33,5 @@ func Filters(c echo.Context) error {
 
 	results := models.MakeQuery(query, selectedFilters)
 
-	return c.Render(http.StatusOK, "results", results)
+	return c.Render(http.StatusOK, "results:results-container", results)
 }
