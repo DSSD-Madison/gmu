@@ -31,6 +31,9 @@ func (t *Templates) Render(w io.Writer, name string, data interface{}, c echo.Co
 		return fmt.Errorf("template %s not found", name)
 	}
 
+	// usingSubTemplate is when we want to use a specific block within a template
+	// For example the sidebar block within the results-list
+	// We would pass in a name like results-list:sidebar
 	if usingSubTemplate {
 		err := tmpl.ExecuteTemplate(w, part, data)
 		if err != nil {
