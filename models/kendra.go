@@ -10,12 +10,6 @@ import (
 	"github.com/DSSD-Madison/gmu/internal"
 )
 
-func Ptr[T any](p T) *T {
-	return &p
-}
-
-//var
-
 var opts = kendra.Options{
 	Credentials: prov,
 	Region:      region,
