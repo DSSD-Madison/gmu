@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"log/slog"
+	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
@@ -16,11 +17,19 @@ import (
 
 func main() {
 
-	logger := slog.New(internal.NewHandler(nil))
+	var logger *slog.Logger
 
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
+	}
+
+	mode := os.Getenv("MODE")
+	switch mode {
+	case "dev":
+		logger = slog.New(internal.NewPrettyHandler(nil))
+	case "prod":
+		logger = slog.New(internal.NewHandler(nil))
 	}
 
 	e := echo.New()

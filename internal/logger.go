@@ -39,6 +39,7 @@ type Handler struct {
 	h slog.Handler
 	b *bytes.Buffer
 	m *sync.Mutex
+	p bool // pretty?
 }
 
 func (h *Handler) Enabled(ctx context.Context, level slog.Level) bool {
@@ -60,15 +61,17 @@ const (
 func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 	level := r.Level.String() + ":"
 
-	switch r.Level {
-	case slog.LevelDebug:
-		level = colorize(darkGray, level)
-	case slog.LevelInfo:
-		level = colorize(cyan, level)
-	case slog.LevelWarn:
-		level = colorize(lightYellow, level)
-	case slog.LevelError:
-		level = colorize(lightRed, level)
+	if h.p {
+		switch r.Level {
+		case slog.LevelDebug:
+			level = colorize(darkGray, level)
+		case slog.LevelInfo:
+			level = colorize(cyan, level)
+		case slog.LevelWarn:
+			level = colorize(lightYellow, level)
+		case slog.LevelError:
+			level = colorize(lightRed, level)
+		}
 	}
 
 	attrs, err := h.computeAttrs(ctx, r)
@@ -76,17 +79,26 @@ func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 		return err
 	}
 
-	bytes, err := json.MarshalIndent(attrs, "", "  ")
+	bytes, err := json.Marshal(attrs)
 	if err != nil {
 		return fmt.Errorf("error when marshalling attrs: %w", err)
 	}
 
-	fmt.Println(
-		colorize(white, r.Time.Format(timeFormat)),
-		level,
-		colorize(white, r.Message),
-		colorize(lightGray, string(bytes)),
-	)
+	if h.p {
+		fmt.Println(
+			colorize(white, r.Time.Format(timeFormat)),
+			level,
+			colorize(white, r.Message),
+			colorize(lightGray, string(bytes)),
+		)
+	} else {
+		fmt.Println(
+			r.Time.Format(timeFormat),
+			level,
+			r.Message,
+			string(bytes),
+		)
+	}
 
 	return nil
 }
@@ -141,5 +153,23 @@ func NewHandler(opts *slog.HandlerOptions) *Handler {
 			ReplaceAttr: suppressDefaults(opts.ReplaceAttr),
 		}),
 		m: &sync.Mutex{},
+		p: false,
+	}
+}
+
+func NewPrettyHandler(opts *slog.HandlerOptions) *Handler {
+	if opts == nil {
+		opts = &slog.HandlerOptions{}
+	}
+	b := &bytes.Buffer{}
+	return &Handler{
+		b: b,
+		h: slog.NewJSONHandler(b, &slog.HandlerOptions{
+			Level:       opts.Level,
+			AddSource:   opts.AddSource,
+			ReplaceAttr: suppressDefaults(opts.ReplaceAttr),
+		}),
+		m: &sync.Mutex{},
+		p: true,
 	}
 }
