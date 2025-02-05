@@ -53,10 +53,10 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 			Category: *facetRes.DocumentAttributeKey,
 			Options:  make([]FilterOption, len(facetRes.DocumentAttributeValueCountPairs)),
 		}
-		for j, p := range facetRes.DocumentAttributeValueCountPairs {
+		for j, attribute := range facetRes.DocumentAttributeValueCountPairs {
 			filterCategory.Options[j] = FilterOption{
-				Label: *p.DocumentAttributeValue.StringValue,
-				Count: *p.Count,
+				Label: *attribute.DocumentAttributeValue.StringValue,
+				Count: *attribute.Count,
 			}
 		}
 		results.Filters[i] = filterCategory
@@ -70,13 +70,13 @@ func MakeQuery(query string, filters map[string][]string) KendraResults {
 		AndAllFilters: make([]types.AttributeFilter, len(filters)),
 	}
 	andAllIndex := 0
-	for k, v := range filters {
+	for k, filterCategory := range filters {
 		// _file_type is a string so we can't use ContainsAny
 		if k == "_file_type" {
 			kendraFilters.AndAllFilters[andAllIndex] = types.AttributeFilter{
-				OrAllFilters: make([]types.AttributeFilter, len(v)),
+				OrAllFilters: make([]types.AttributeFilter, len(filterCategory)),
 			}
-			for orAllIndex, str := range v {
+			for orAllIndex, str := range filterCategory {
 				kendraFilters.AndAllFilters[andAllIndex].OrAllFilters[orAllIndex] = types.AttributeFilter{
 					EqualsTo: &types.DocumentAttribute{
 						Key: &k,
@@ -91,7 +91,7 @@ func MakeQuery(query string, filters map[string][]string) KendraResults {
 				ContainsAny: &types.DocumentAttribute{
 					Key: &k,
 					Value: &types.DocumentAttributeValue{
-						StringListValue: v,
+						StringListValue: filterCategory,
 					},
 				},
 			}
@@ -107,7 +107,7 @@ func MakeQuery(query string, filters map[string][]string) KendraResults {
 
 	// TODO: this needs to be fixed to a proper error
 	if err != nil {
-		log.Printf("Kendra Query Failed %+v", err)
+		log.Printf("Kendra Query Failed %+filterCategory", err)
 	}
 
 	results := queryOutputToResults(*out)
