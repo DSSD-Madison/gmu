@@ -6,7 +6,6 @@
 <!-- Search Page -->
 {{ block "results-init" . }}
 <div class="relative h-[300px] bg-green">
-<!--    <img src="images/Banner.jpeg" class="absolute top-0 z-0 w-full h-auto max-w-full">-->
     <div id="formwrapper" class="z-10 grid h-full place-items-center px-4">
         <form hx-post="/search" hx-target="#results-container" hx-swap="innerHTML" hx-trigger="load, submit" class="w-full max-w-2xl">
             <div id="searchbar" class="relative flex w-full">
@@ -22,7 +21,6 @@
         </form>
     </div>
     <div id="results-container" class="min-h-screen px-4">
-<!--        <img id="masonlogo" class="w-full max-w-xs mx-auto" src="images/mason-logo-horizontal.png">-->
     </div>
 </div>
 {{end}}
