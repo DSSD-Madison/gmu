@@ -13,7 +13,7 @@ const MinQueryLength = 3
 func fetchSearchPage(c echo.Context) error {
 	query := c.FormValue("query")
 	if len(query) < MinQueryLength {
-		return c.String(http.StatusBadRequest, "Error 400, could not get query from request.")
+		return echo.NewHTTPError(http.StatusBadRequest, "Could not get query from request.")
 	}
 	return c.Render(http.StatusOK, "search", query)
 }
@@ -21,7 +21,7 @@ func fetchSearchPage(c echo.Context) error {
 func Search(c echo.Context) error {
 	query := c.FormValue("query")
 	if len(query) < MinQueryLength {
-		return c.String(http.StatusBadRequest, "Error 400, could not get query from request.")
+		return echo.NewHTTPError(http.StatusBadRequest, "Could not get query from request.")
 	}
 	results := models.MakeQuery(query, nil)
 
