@@ -9,7 +9,13 @@
                    placeholder="Begin Your Search Here..."
                    type="text"
                    name="query"
-                   value="">
+                   hx-post="/search/suggestions"
+                   hx-trigger="input changed delay:250ms"
+                   hx-target="#outer-suggestions"
+                   hx-swap="innerHTML"
+                   value="{{ . }}"
+            >
+            <div id="outer-suggestions" class="absolute z-10 w-full top-full left-0 bg-white border border-gray-300 shadow-lg"></div>
         </div>
     </form>
 </div>

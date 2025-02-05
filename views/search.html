@@ -1,6 +1,6 @@
 <!-- Loading Indicator -->
 {{ block "indicator" . }}
-<img id="indicator" src="svg/bars.svg" class="absolute self-center inline htmx-indicator right-8">
+<img id="indicator" src="svg/bars.svg" class="absolute top-1/4 self-center inline htmx-indicator right-8">
 {{end}}
 
 <!-- Search Page -->
@@ -22,7 +22,7 @@
                 hx-swap="innerHTML"
 				value="{{ . }}">
                 {{ template "indicator" . }}
-				<div id="suggestions" class="absolute z-10 w-full mt-1 bg-white border border-gray-300 shadow-lg hidden"></div>
+                <div id="suggestions" class="absolute z-10 w-full top-full left-0 bg-white border border-gray-300 shadow-lg hidden"></div>
             </div>
 			<script>
 				document.addEventListener('htmx:afterSwap', function(event) {
