@@ -24,11 +24,10 @@ type KendraResult struct {
 }
 
 type KendraResults struct {
-	QueryOutput kendra.QueryOutput
-	Results     []KendraResult
-	Query       string
-	Count       int
-	Filters     []FilterCategory
+	Results []KendraResult
+	Query   string
+	Count   int
+	Filters []FilterCategory
 }
 
 func queryOutputToResults(out kendra.QueryOutput) KendraResults {
