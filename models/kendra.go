@@ -48,12 +48,12 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 
 	}
 
-	for i, f := range out.FacetResults {
+	for i, facetRes := range out.FacetResults {
 		filterCategory := FilterCategory{
-			Category: *f.DocumentAttributeKey,
-			Options:  make([]FilterOption, len(f.DocumentAttributeValueCountPairs)),
+			Category: *facetRes.DocumentAttributeKey,
+			Options:  make([]FilterOption, len(facetRes.DocumentAttributeValueCountPairs)),
 		}
-		for j, p := range f.DocumentAttributeValueCountPairs {
+		for j, p := range facetRes.DocumentAttributeValueCountPairs {
 			filterCategory.Options[j] = FilterOption{
 				Label: *p.DocumentAttributeValue.StringValue,
 				Count: *p.Count,
@@ -69,25 +69,25 @@ func MakeQuery(query string, filters map[string][]string) KendraResults {
 	kendraFilters := types.AttributeFilter{
 		AndAllFilters: make([]types.AttributeFilter, len(filters)),
 	}
-	i := 0
+	andAllIndex := 0
 	for k, v := range filters {
 		// _file_type is a string so we can't use ContainsAny
 		if k == "_file_type" {
-			kendraFilters.AndAllFilters[i] = types.AttributeFilter{
+			kendraFilters.AndAllFilters[andAllIndex] = types.AttributeFilter{
 				OrAllFilters: make([]types.AttributeFilter, len(v)),
 			}
-			for j, s := range v {
-				kendraFilters.AndAllFilters[i].OrAllFilters[j] = types.AttributeFilter{
+			for orAllIndex, str := range v {
+				kendraFilters.AndAllFilters[andAllIndex].OrAllFilters[orAllIndex] = types.AttributeFilter{
 					EqualsTo: &types.DocumentAttribute{
 						Key: &k,
 						Value: &types.DocumentAttributeValue{
-							StringValue: &s,
+							StringValue: &str,
 						},
 					},
 				}
 			}
 		} else {
-			kendraFilters.AndAllFilters[i] = types.AttributeFilter{
+			kendraFilters.AndAllFilters[andAllIndex] = types.AttributeFilter{
 				ContainsAny: &types.DocumentAttribute{
 					Key: &k,
 					Value: &types.DocumentAttributeValue{
@@ -96,7 +96,7 @@ func MakeQuery(query string, filters map[string][]string) KendraResults {
 				},
 			}
 		}
-		i += 1
+		andAllIndex += 1
 	}
 	kendraQuery := kendra.QueryInput{
 		AttributeFilter: &kendraFilters,
