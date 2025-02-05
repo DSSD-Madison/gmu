@@ -1,17 +1,22 @@
 package main
 
 import (
+	"context"
 	"log"
+	"log/slog"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
+	"github.com/DSSD-Madison/gmu/internal"
 	"github.com/DSSD-Madison/gmu/models"
 	"github.com/DSSD-Madison/gmu/routes"
 )
 
 func main() {
+
+	logger := slog.New(internal.NewHandler(nil))
 
 	err := godotenv.Load()
 	if err != nil {
@@ -19,8 +24,30 @@ func main() {
 	}
 
 	e := echo.New()
-	e.Use(middleware.Logger())
-
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogStatus:   true,
+		LogURI:      true,
+		LogError:    true,
+		LogRemoteIP: true,
+		HandleError: true, // forwards error to the global error handler, so it can decide appropriate status code
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			if v.Error == nil {
+				logger.LogAttrs(context.Background(), slog.LevelInfo, "REQUEST",
+					slog.String("uri", v.URI),
+					slog.Int("status", v.Status),
+					slog.String("ip", v.RemoteIP),
+				)
+			} else {
+				logger.LogAttrs(context.Background(), slog.LevelError, "REQUEST ERROR",
+					slog.String("uri", v.URI),
+					slog.Int("status", v.Status),
+					slog.String("err", v.Error.Error()),
+					slog.String("ip", v.RemoteIP),
+				)
+			}
+			return nil
+		},
+	}))
 	// Static file handlers
 	e.Static("/images", "static/images")
 	e.Static("/css", "static/css")
