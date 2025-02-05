@@ -1,16 +1,16 @@
 package models
 
 type FilterOption struct {
-	Label	string
-	Count	int
+	Label string
+	Count int32
 }
 
 type FilterCategory struct {
-	Category	string
-	Options		[]FilterOption
+	Category string
+	Options  []FilterOption
 }
 
-func Filters() []FilterCategory{
+func Filters() []FilterCategory {
 	return []FilterCategory{
 		{
 			Category: "Authors",

@@ -1,50 +1,68 @@
-<!-- Filters Section -->
 {{ define "sidecolumn" }}
-<aside id="sidecolumn" class="mx-6 mt-6 w-64 rounded-md bg-white">
-    {{ range $index, $filter := .Filters }}
-    <div id="accordion-{{ $index }}" class="border-b border-gray-200">
-      <!-- Accordion Header -->
-      <button
-        id="accordion-button-{{ $index }}"
-        aria-expanded="false"
-        aria-controls="accordion-body-{{ $index }}"
-        class="w-full text-left"
-        onclick="toggleAccordion('{{ $index }}')">
-        <div id="accordion-heading-{{ $index }}" class="p-4 bg-gray-100 hover:bg-gray-200">
-          <div class="flex items-center justify-between">
-            <span class="text-black font-bold">{{ $filter.Category }}</span>
-            <img 
-              src="svg/chevron-down.svg" 
-              alt="Expand" 
-              class="w-4 h-4 transition-transform duration-300">
+<aside id="sidecolumn" class="mx-10 w-64 bg-white">
+  <form
+          hx-post="/filters"
+          hx-trigger="click from:#apply-filters-btn"
+          hx-target="#results-content-container"
+          hx-include="#searchbar"
+          hx-swap="innerHTML">
+    <div class="rounded-md overflow-hidden">
+      {{ range $index, $filter := .Filters }}
+      <div id="accordion-{{ $index }}" class="border-b">
+        <!-- Accordion Header -->
+        <button
+                type="button"
+                id="accordion-button-{{ $index }}"
+                aria-expanded="false"
+                aria-controls="accordion-body-{{ $index }}"
+                class="w-full text-left"
+                onclick="toggleAccordion('{{ $index }}')">
+          <div id="accordion-heading-{{ $index }}" class="p-4 bg-gray-100 hover:bg-gray-200">
+            <div class="flex items-center justify-between">
+              <span class="text-black font-bold">{{ $filter.Category }}</span>
+              <img
+                      src="svg/chevron-down.svg"
+                      alt="Expand"
+                      class="w-4 h-4 transition-transform duration-300">
+            </div>
           </div>
-        </div>
-      </button>
+        </button>
 
-      <!-- Accordion Body -->
-      <div
-        id="accordion-body-{{ $index }}"
-        role="region"
-        aria-labelledby="accordion-button-{{ $index }}"
-        class="hidden p-4 bg-white">
-        <div class="space-y-2">
-          <!-- Dynamic Content with Checkboxes -->
-          {{ range $optionIndex, $option := $filter.Options }}
-          <div class="flex items-center justify-between">
-            <label for="filter-{{ $index }}-{{ $optionIndex }}" class="flex items-center space-x-2 cursor-pointer">
-              <input
-                id="filter-{{ $index }}-{{ $optionIndex }}"
-                type="checkbox"
-                class="form-checkbox h-4 w-4 text-blue-600">
-              <span>{{ $option.Label }}</span>
-            </label>
-            <span>{{ $option.Count }}</span>
+        <!-- Accordion Body -->
+        <div
+                id="accordion-body-{{ $index }}"
+                role="region"
+                aria-labelledby="accordion-button-{{ $index }}"
+                class="hidden p-4 bg-white">
+          <div class="space-y-2">
+            <!-- Dynamic Content with Checkboxes -->
+            {{ range $optionIndex, $option := $filter.Options }}
+            <div class="flex items-center justify-between">
+              <label for="filter-{{ $index }}-{{ $optionIndex }}" class="flex items-center space-x-2 cursor-pointer">
+                <input
+                        id="filter-{{ $index }}-{{ $optionIndex }}"
+                        type="checkbox"
+                        name="filters[{{ $filter.Category }}][]"
+                        value="{{ $option.Label }}"
+                        class="form-checkbox h-4 w-4 text-blue-600">
+                <span>{{ $option.Label }}</span>
+              </label>
+              <span>{{ $option.Count }}</span>
+            </div>
+            {{ end }}
           </div>
-          {{ end }}
         </div>
       </div>
+      {{ end }}
     </div>
-    {{ end }}
+    <!-- Apply Filters Button -->
+    <button
+            id="apply-filters-btn"
+            type="submit"
+            class="mt-4 w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">
+      Apply Filters
+    </button>
+  </form>
 </aside>
 
 <script>
