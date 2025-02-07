@@ -1,0 +1,31 @@
+name: Build and Run Go + HTMX App
+
+on:
+  push:
+    branches:
+      - deploy-app
+  pull_request:
+    branches:
+      - deploy-app
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛎 Checkout Code
+        uses: actions/checkout@v3
+
+      - name: ⚙️ Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23.3' 
+
+      - name: 📦 Install Dependencies
+        run: go mod tidy
+
+      - name: 🛠 Install Tailwind and Air
+        run: make install-x64 
+
+      - name: 🚀 Run Go Application
+        run: air
