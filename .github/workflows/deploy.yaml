@@ -32,5 +32,14 @@ jobs:
       - name: 🔧 Fix Permissions for Tailwind Binary
         run: chmod +x ./tailwindcss
 
+      - name: Create .env file
+        run: |
+          echo "PORT=${{ secrets.PORT }}" >> .env
+          echo "REGION=${{ secrets.REGION }}" >> .env
+          echo "ACCESS_KEY=${{ secrets.ACCESS_KEY }}" >> .env
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
+          echo "INDEX_ID=${{ secrets.INDEX_ID }}" >> .env
+
+
       - name: 🚀 Run Air (Go Live Reload)
         run: air
