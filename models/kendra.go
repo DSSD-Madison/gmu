@@ -21,6 +21,7 @@ type KendraResult struct {
 	Title   string
 	Excerpt string
 	Link    string
+	PageNum int
 }
 
 type KendraResults struct {
@@ -41,6 +42,12 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 			Title:   internal.TrimExtension(*item.DocumentTitle.Text),
 			Excerpt: *item.DocumentExcerpt.Text,
 			Link:    *item.DocumentURI,
+		}
+
+		for _, a := range item.DocumentAttributes {
+			if *a.Key == "_excerpt_page_number" {
+				res.PageNum = int(*a.Value.LongValue)
+			}
 		}
 		results.Results[i] = res
 		results.Count = int(*out.TotalNumberOfResults)

@@ -17,7 +17,7 @@
 <!-- Individual Result Partial -->
 {{ define "result-card" }}
 <div class="p-4 bg-white border rounded-md shadow-md">
-    <a href="{{ .Link }}" target="_blank" rel="noopener noreferrer" class="text-lg font-semibold underline">
+    <a href="{{ .Link }}#page={{ .PageNum }}" target="_blank" rel="noopener noreferrer" class="text-lg font-semibold underline">
         {{ .Title }}
     </a>
     <p class="text-gray-600">{{ .Excerpt }}</p>
