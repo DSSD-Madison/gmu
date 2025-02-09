@@ -6,8 +6,9 @@ type FilterOption struct {
 }
 
 type FilterCategory struct {
-	Category string
-	Options  []FilterOption
+	Category     string
+	Options      []FilterOption
+	ReadableName string
 }
 
 func Filters() []FilterCategory {

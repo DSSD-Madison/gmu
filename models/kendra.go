@@ -47,10 +47,22 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 
 	}
 
+	myMap := map[string]string{
+		"_authors":         "Authors",
+		"_file_type":       "File Type",
+		"source":           "Source",
+		"Subject_Keywords": "Subject Keywords",
+	}
+
 	for i, facetRes := range out.FacetResults {
+		ReadableName, isFound := myMap[*facetRes.DocumentAttributeKey]
+		if !isFound {
+			ReadableName = *facetRes.DocumentAttributeKey
+		}
 		filterCategory := FilterCategory{
-			Category: *facetRes.DocumentAttributeKey,
-			Options:  make([]FilterOption, len(facetRes.DocumentAttributeValueCountPairs)),
+			Category:     *facetRes.DocumentAttributeKey,
+			Options:      make([]FilterOption, len(facetRes.DocumentAttributeValueCountPairs)),
+			ReadableName: ReadableName,
 		}
 		for j, attribute := range facetRes.DocumentAttributeValueCountPairs {
 			filterCategory.Options[j] = FilterOption{
