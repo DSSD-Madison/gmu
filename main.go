@@ -28,8 +28,24 @@ func main() {
 		mode = "dev"
 	}
 
+	levelStr, exist := os.LookupEnv("LOG_LEVEL")
+	var level slog.Level
+	switch levelStr {
+	case "debug":
+		level = slog.LevelDebug
+	case "info":
+		level = slog.LevelInfo
+	case "warn":
+		level = slog.LevelWarn
+	case "error":
+		level = slog.LevelError
+	default:
+		level = slog.LevelInfo
+	}
+
 	loggerOpts := internal.HandlerOptions{
-		Mode: mode,
+		Mode:  mode,
+		Level: level,
 	}
 
 	logger = slog.New(internal.NewHandler(&loggerOpts))
