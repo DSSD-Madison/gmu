@@ -110,6 +110,7 @@ func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 	return nil
 }
 
+// TODO: Potentially replace the bytes buffer with a sync pool
 func (h *Handler) computeAttrs(
 	ctx context.Context,
 	r slog.Record,
