@@ -86,7 +86,7 @@ func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 		return err
 	}
 
-	bytes, err := json.Marshal(attrs)
+	jsonPayload, err := json.Marshal(attrs)
 	if err != nil {
 		return fmt.Errorf("error when marshalling attrs: %w", err)
 	}
@@ -96,14 +96,14 @@ func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 			colorize(white, r.Time.Format(timeFormat)),
 			level,
 			colorize(white, r.Message),
-			colorize(lightGray, string(bytes)),
+			colorize(lightGray, string(jsonPayload)),
 		)
 	} else {
 		fmt.Println(
 			r.Time.Format(timeFormat),
 			level,
 			r.Message,
-			string(bytes),
+			string(jsonPayload),
 		)
 	}
 
