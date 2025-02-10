@@ -24,7 +24,11 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	mode := os.Getenv("MODE")
+	mode, exist := os.LookupEnv("MODE")
+	if !exist {
+		mode = "dev"
+	}
+
 	switch mode {
 	case "dev":
 		logger = slog.New(internal.NewPrettyHandler(nil))
