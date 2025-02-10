@@ -10,6 +10,13 @@ import (
 	"sync"
 )
 
+type HandlerOptions struct {
+	Mode        string
+	AddSource   bool
+	Level       slog.Leveler
+	ReplaceAttr func(groups []string, a slog.Attr) slog.Attr
+}
+
 const (
 	reset = "\033[0m"
 
@@ -140,27 +147,21 @@ func suppressDefaults(
 	}
 }
 
-func NewHandler(opts *slog.HandlerOptions) *Handler {
+func NewHandler(opts *HandlerOptions) *Handler {
 	if opts == nil {
-		opts = &slog.HandlerOptions{}
+		opts = &HandlerOptions{}
 	}
-	b := &bytes.Buffer{}
-	return &Handler{
-		b: b,
-		h: slog.NewJSONHandler(b, &slog.HandlerOptions{
-			Level:       opts.Level,
-			AddSource:   opts.AddSource,
-			ReplaceAttr: suppressDefaults(opts.ReplaceAttr),
-		}),
-		m: &sync.Mutex{},
-		p: false,
-	}
-}
+	var prettyPrint bool
 
-func NewPrettyHandler(opts *slog.HandlerOptions) *Handler {
-	if opts == nil {
-		opts = &slog.HandlerOptions{}
+	switch opts.Mode {
+	case "dev":
+		prettyPrint = true
+	case "prod":
+		prettyPrint = false
+	default:
+		prettyPrint = false
 	}
+
 	b := &bytes.Buffer{}
 	return &Handler{
 		b: b,
@@ -170,6 +171,6 @@ func NewPrettyHandler(opts *slog.HandlerOptions) *Handler {
 			ReplaceAttr: suppressDefaults(opts.ReplaceAttr),
 		}),
 		m: &sync.Mutex{},
-		p: true,
+		p: prettyPrint,
 	}
 }

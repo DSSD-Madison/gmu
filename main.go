@@ -29,12 +29,11 @@ func main() {
 		mode = "dev"
 	}
 
-	switch mode {
-	case "dev":
-		logger = slog.New(internal.NewPrettyHandler(nil))
-	case "prod":
-		logger = slog.New(internal.NewHandler(nil))
+	loggerOpts := internal.HandlerOptions{
+		Mode: mode,
 	}
+
+	logger = slog.New(internal.NewHandler(&loggerOpts))
 
 	e := echo.New()
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
