@@ -43,22 +43,22 @@ func colorize(colorCode int, v string) string {
 }
 
 type Handler struct {
-	h slog.Handler
-	b *bytes.Buffer
-	m *sync.Mutex
-	p bool // pretty?
+	handler     slog.Handler
+	bytes       *bytes.Buffer
+	mutex       *sync.Mutex
+	prettyPrint bool
 }
 
 func (h *Handler) Enabled(ctx context.Context, level slog.Level) bool {
-	return h.h.Enabled(ctx, level)
+	return h.handler.Enabled(ctx, level)
 }
 
 func (h *Handler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return &Handler{h: h.h.WithAttrs(attrs), b: h.b, m: h.m}
+	return &Handler{handler: h.handler.WithAttrs(attrs), bytes: h.bytes, mutex: h.mutex}
 }
 
 func (h *Handler) WithGroup(name string) slog.Handler {
-	return &Handler{h: h.h.WithGroup(name), b: h.b, m: h.m}
+	return &Handler{handler: h.handler.WithGroup(name), bytes: h.bytes, mutex: h.mutex}
 }
 
 const (
@@ -68,7 +68,7 @@ const (
 func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 	level := r.Level.String() + ":"
 
-	if h.p {
+	if h.prettyPrint {
 		switch r.Level {
 		case slog.LevelDebug:
 			level = colorize(darkGray, level)
@@ -91,7 +91,7 @@ func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 		return fmt.Errorf("error when marshalling attrs: %w", err)
 	}
 
-	if h.p {
+	if h.prettyPrint {
 		fmt.Println(
 			colorize(white, r.Time.Format(timeFormat)),
 			level,
@@ -114,17 +114,17 @@ func (h *Handler) computeAttrs(
 	ctx context.Context,
 	r slog.Record,
 ) (map[string]any, error) {
-	h.m.Lock()
+	h.mutex.Lock()
 	defer func() {
-		h.b.Reset()
-		h.m.Unlock()
+		h.bytes.Reset()
+		h.mutex.Unlock()
 	}()
-	if err := h.h.Handle(ctx, r); err != nil {
+	if err := h.handler.Handle(ctx, r); err != nil {
 		return nil, fmt.Errorf("error when calling inner handler's Handle: %w", err)
 	}
 
 	var attrs map[string]any
-	err := json.Unmarshal(h.b.Bytes(), &attrs)
+	err := json.Unmarshal(h.bytes.Bytes(), &attrs)
 	if err != nil {
 		return nil, fmt.Errorf("error when unmarshalling inner handler's Handle result: %w", err)
 	}
@@ -164,13 +164,13 @@ func NewHandler(opts *HandlerOptions) *Handler {
 
 	b := &bytes.Buffer{}
 	return &Handler{
-		b: b,
-		h: slog.NewJSONHandler(b, &slog.HandlerOptions{
+		bytes: b,
+		handler: slog.NewJSONHandler(b, &slog.HandlerOptions{
 			Level:       opts.Level,
 			AddSource:   opts.AddSource,
 			ReplaceAttr: suppressDefaults(opts.ReplaceAttr),
 		}),
-		m: &sync.Mutex{},
-		p: prettyPrint,
+		mutex:       &sync.Mutex{},
+		prettyPrint: prettyPrint,
 	}
 }
