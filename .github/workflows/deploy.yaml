@@ -1,4 +1,4 @@
-name: Build and Run Go + HTMX App
+name: Deploy Go + HTMX App to AWS EC2
 
 on:
   push:
@@ -11,26 +11,16 @@ on:
       - deploy-app
 
 jobs:
-  build-and-run:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: 🛎 Checkout Code
+      - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: ⚙️ Set up Go
+      - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.23.3'  
-
-      - name: 📦 Install Dependencies
-        run: go mod tidy
-
-      - name: 🛠 Install Tailwind and Air
-        run: make install-tailwind-linux install-air
-
-      - name: 🔧 Fix Permissions for Tailwind Binary
-        run: chmod +x ./tailwindcss
+          go-version: '1.23.3'
 
       - name: Create .env file
         run: |
@@ -40,6 +30,49 @@ jobs:
           echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
           echo "INDEX_ID=${{ secrets.INDEX_ID }}" >> .env
 
+      - name: Install Dependencies
+        run: go mod tidy
 
-      - name: 🚀 Run Air (Go Live Reload)
-        run: air
+      - name: Install Tailwind and Air
+        run: make install-tailwind-linux install-air
+
+      - name: Build Go App
+        run: go build -o gmu .
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: gmu-artifact
+          path: |
+            gmu
+            .env
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: gmu-artifact
+          path: build-files
+
+      - name: SCP files to AWS EC2 server
+        uses: appleboy/scp-action@master
+        with:
+          debug: true
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: ${{ secrets.AWS_EC2_USERNAME }}
+          key: ${{ secrets.AWS_EC2_SSH_KEY }}
+          source: "build-files/*"
+          target: "/home/ubuntu/github-actions/build-files/"
+          rm: true
+
+      - name: Run deploy.sh on AWS EC2 server
+        uses: appleboy/ssh-action@master
+        with:
+          debug: true
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: ${{ secrets.AWS_EC2_USERNAME }}
+          key: ${{ secrets.AWS_EC2_SSH_KEY }}
+          script: /home/ubuntu/deploy.sh
