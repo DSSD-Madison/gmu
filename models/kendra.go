@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/aws/aws-sdk-go-v2/service/kendra"
@@ -47,7 +48,7 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 
 	}
 
-	myMap := map[string]string{
+	filterNamesMap := map[string]string{
 		"_authors":         "Authors",
 		"_file_type":       "File Type",
 		"source":           "Source",
@@ -55,14 +56,15 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	}
 
 	for i, facetRes := range out.FacetResults {
-		ReadableName, isFound := myMap[*facetRes.DocumentAttributeKey]
-		if !isFound {
-			ReadableName = *facetRes.DocumentAttributeKey
+		Name, ok := filterNamesMap[*facetRes.DocumentAttributeKey]
+		fmt.Println(Name)
+		if !ok {
+			Name = *facetRes.DocumentAttributeKey
 		}
 		filterCategory := FilterCategory{
-			Category:     *facetRes.DocumentAttributeKey,
-			Options:      make([]FilterOption, len(facetRes.DocumentAttributeValueCountPairs)),
-			ReadableName: ReadableName,
+			Category: *facetRes.DocumentAttributeKey,
+			Options:  make([]FilterOption, len(facetRes.DocumentAttributeValueCountPairs)),
+			Name:     Name,
 		}
 		for j, attribute := range facetRes.DocumentAttributeValueCountPairs {
 			filterCategory.Options[j] = FilterOption{
