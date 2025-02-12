@@ -59,8 +59,18 @@
     <button
             id="apply-filters-btn"
             type="submit"
-            class="mt-4 w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">
+            class="mt-4 bg-green text-black p-2 rounded-md hover:bg-green ">
       Apply Filters
+    </button>
+    <!-- Reset Filters Button -->
+    <!-- Works by first resetting the form, then clicking the apply filters button -->
+    <!-- If we just want it to clear the filters and not submit, remove the hx-on=... line and make type="reset" -->
+    <button
+          id="clear-filters-btn"
+          type="button"
+          hx-on="click: this.form.reset(); document.getElementById('apply-filters-btn').click();"
+         class="mt-4 bg-green text-black p-2 rounded-md hover:bg-green  mr-4">
+      Reset Filters
     </button>
   </form>
 </aside>
