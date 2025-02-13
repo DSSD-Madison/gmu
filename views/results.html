@@ -4,6 +4,21 @@
     {{ template "sidecolumn" . }}
     {{ template "results-container" . }}
 </div>
+<!-- This is swapped in to replace the input OOB to update the contents of the input when a suggestion is clicked-->
+<input class="w-full px-6 py-3 text-2xl border-2 rounded-t-3xl rounded-b-3xl shadow-md outline-none"
+id="searchquery"
+autocomplete="off"
+type="text" 
+name="query"
+hx-post="/search/suggestions"
+hx-trigger="input changed delay:250ms"
+hx-target="#suggestions"
+hx-swap="innerHTML"
+hx-swap-oob="true"
+value="{{ .Query }}">
+
+<!--This is swapped in to clear the contents of the suggestions dropdown when a suggestion is clicked-->
+{{ template "suggestions-container" . }}
 {{end}}
 
 {{ define "results-container" }}

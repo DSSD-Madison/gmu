@@ -31,6 +31,10 @@ type KendraResults struct {
 	Filters []FilterCategory
 }
 
+type KendraSuggestions struct {
+	Suggestions []string
+}
+
 func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	results := KendraResults{
 		Results: make([]KendraResult, len(out.ResultItems)),
@@ -131,4 +135,31 @@ func MakeQuery(query string, filters map[string][]string) KendraResults {
 	results := queryOutputToResults(*out)
 	results.Query = query
 	return results
+}
+
+func querySuggestionsOutputToSuggestions(out kendra.GetQuerySuggestionsOutput) KendraSuggestions {
+	suggestions := KendraSuggestions{
+		Suggestions: make([]string, 0),
+	}
+
+	for _, item := range out.Suggestions {
+		suggestions.Suggestions = append(suggestions.Suggestions, *item.Value.Text.Text)
+	}
+
+	return suggestions
+}
+
+func GetSuggestions(query string) (KendraSuggestions, error) {
+	kendraQuery := kendra.GetQuerySuggestionsInput{
+		IndexId:   &indexId,
+		QueryText: &query,
+	}
+	out, err := client.GetQuerySuggestions(context.TODO(), &kendraQuery)
+	if err != nil {
+		log.Printf("Kendra Suggestions Query Failed %+v", err)
+		return KendraSuggestions{}, err
+	}
+
+	suggestions := querySuggestionsOutputToSuggestions(*out)
+	return suggestions, nil
 }

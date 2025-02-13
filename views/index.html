@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en" class="overscroll-none">
   <head>
-    <title>Better Evidence Project</title>
+    <title>Better Evidence Project - Home</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="/images/logo.ico" type="image/x-icon">
@@ -14,5 +14,23 @@
       {{ block "search-home" . }} Default content {{ end }}
     </div>
   </body>
+{{ template "suggestions-js" . }}
 </html>
+
+{{ block "suggestions-js" . }}
+<script>
+	// attach event listener to input
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+        const inputElement = document.getElementById('searchquery');
+        if (inputElement && !inputElement.hasAttribute('data-listener-attached')) {
+            inputElement.addEventListener('htmx:configRequest', function(event) {
+                const inputValue = event.target.value;
+				event.detail.parameters['query'] = inputValue;
+            });
+
+            inputElement.setAttribute('data-listener-attached', 'true');
+        }
+    });
+</script>
+{{end}}
 

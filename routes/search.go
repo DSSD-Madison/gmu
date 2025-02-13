@@ -10,18 +10,29 @@ import (
 
 const MinQueryLength = 3
 
-func fetchSearchPage(c echo.Context) error {
+func SearchSuggestions(c echo.Context) error {
 	query := c.FormValue("query")
-	if len(query) < MinQueryLength {
-		return echo.NewHTTPError(http.StatusBadRequest, "Query too short")
+
+	if len(query) == 0 {
+		return nil
 	}
-	return c.Render(http.StatusOK, "search", query)
+	suggestions, err := models.GetSuggestions(query)
+	// TODO: add error status code
+	if err != nil {
+		return nil
+	}
+	return c.Render(http.StatusOK, "suggestions", suggestions)
 }
 
 func Search(c echo.Context) error {
 	query := c.FormValue("query")
+	context := c.FormValue("context")
+
 	if len(query) < MinQueryLength {
 		return echo.NewHTTPError(http.StatusBadRequest, "Query too short")
+	}
+	if context == "home" {
+		return c.Render(http.StatusOK, "search", query)
 	}
 	results := models.MakeQuery(query, nil)
 
