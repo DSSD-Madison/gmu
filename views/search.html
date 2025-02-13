@@ -10,10 +10,9 @@
     <div id="formwrapper" class="col-start-1 row-start-1 z-2 pl-2 grid place-items-center">
         <form hx-post="/search" hx-target="#results-container" hx-swap="innerHTML" hx-trigger="load, submit" class="w-full max-w-2xl">
             <div id="searchbar" class="relative">
-                <input 
+			<input class="w-full px-6 py-3 text-2xl border-2 rounded-t-3xl rounded-b-3xl shadow-md outline-none"
 				id="searchquery"
 				autocomplete="off"
-				class="w-full px-6 py-3 text-2xl border-2 border-blue-500 rounded-full shadow-md focus:ring-2 focus:ring-blue-400 focus:outline-none transition-all duration-200"
 				type="text" 
 				name="query"
                 hx-post="/search/suggestions"

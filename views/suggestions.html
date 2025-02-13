@@ -1,44 +1,56 @@
 {{ block "suggestions" . }}
     {{ range .Suggestions }}
-		<p class="cursor-pointer hover:underline" hx-trigger="click" hx-post="/search" hx-vals='{"query": "{{.}}"}'>{{ . }}</p>
+		<div class="px-6 hover:bg-gray-200">
+			<p class="cursor-pointer" hx-trigger="click" hx-post="/search" hx-vals='{"query": "{{.}}"}'>{{ . }}</p>
+		</div>
     {{end}}
 {{end}}
 
 {{ define "suggestions-container"}}
-<div id="suggestions" class="absolute z-10 w-full top-full left-0 bg-white border border-gray-300 shadow-lg hidden"></div>
+<div id="suggestions" class="suggestions absolute z-10 w-full top-full left-0 bg-white border border-gray-300 shadow-lg hidden"></div>
 {{end}}
 
 {{define "suggestions-script"}}
 <script>
-document.addEventListener('htmx:afterSwap', function(event) {
+	document.addEventListener('htmx:afterSwap', function(event) {
 		console.log(event.detail.elt)
 		if (event.detail.elt.id === "suggestions") {
-		if (event.detail.elt.childNodes.length > 0) {
-		console.log("g0")
-		document.getElementById('suggestions').classList.remove('hidden');
-		} else {
-		console.log("e0")
-		document.getElementById('suggestions').classList.add('hidden');
+			if (event.detail.elt.childNodes.length > 0) {
+				document.getElementById('suggestions').classList.remove('hidden');
+				document.getElementById('searchquery').classList.remove('rounded-b-3xl')
+			} else {
+				document.getElementById('suggestions').classList.add('hidden');
+				document.getElementById('searchquery').classList.add('rounded-b-3xl')
+			}
 		}
-		}
-		})
-document.addEventListener('click', (event) => {
+	})
+	document.addEventListener('click', (event) => {
 		const input = document.querySelector('#searchbar input');
 		const dropdown = document.getElementById('suggestions');
 
 		if (event.target === input) {
-		const dropdownElementsCount = dropdown.querySelectorAll('p').length;
-		if (dropdownElementsCount > 0) {
-		dropdown.classList.remove('hidden');
+			const dropdownElementsCount = dropdown.querySelectorAll('p').length;
+			document.getElementById('searchquery').classList.remove('border-gray-300')
+			document.getElementById('searchquery').classList.add('border-blue-500')
+			if (dropdownElementsCount > 0) {
+				dropdown.classList.remove('hidden');
+				document.getElementById('searchquery').classList.remove('rounded-b-3xl')
+			} else {
+				dropdown.classList.add('hidden');
+				document.getElementById('searchquery').classList.add('rounded-b-3xl')
+			}
 		} else {
-		dropdown.classList.add('hidden');
-		}
+			document.getElementById('searchquery').classList.remove('border-blue-500')
+			document.getElementById('searchquery').classList.add('border-gray-300')
 		}
 
 		if (!input.contains(event.target) && !dropdown.contains(event.target)) {
-		dropdown.classList.add('hidden');
+			dropdown.classList.add('hidden');
+			document.getElementById('searchquery').classList.add('rounded-b-3xl')
+			document.getElementById('searchquery').classList.remove('border-blue-500')
+			document.getElementById('searchquery').classList.add('border-gray-300')
 		}
-		});
+	});
 </script>
 {{end}}
 
