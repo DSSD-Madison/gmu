@@ -19,7 +19,7 @@ hx-swap-oob="true"
 value="{{ .Query }}">
 
 <!--This is swapped in to clear the contents of the suggestions dropdown when a suggestion is clicked-->
-<div id="suggestions" hx-swap-oob="true" class="absolute z-10 w-full mt-1 bg-white border border-gray-300 shadow-lg hidden"></div>
+{{ template "suggestions-container" . }}
 {{end}}
 
 {{ define "results-container" }}

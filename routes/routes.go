@@ -11,7 +11,6 @@ func InitRoutes(e *echo.Echo) {
 
 	// Search Routes
 	e.POST("/search", Search)
-	e.POST("/fetchSearchPage", fetchSearchPage)
 	e.POST("/search/suggestions", SearchSuggestions)
 
 	// Filters Route

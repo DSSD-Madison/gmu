@@ -22,39 +22,9 @@
                 hx-swap="innerHTML"
 				value="{{ . }}">
                 {{ template "indicator" . }}
-                <div id="suggestions" class="absolute z-10 w-full top-full left-0 bg-white border border-gray-300 shadow-lg hidden"></div>
+				{{ template "suggestions-container" . }}
             </div>
-			<script>
-				document.addEventListener('htmx:afterSwap', function(event) {
-					console.log(event.detail.elt)
-					if (event.detail.elt.id === "suggestions") {
-						if (event.detail.elt.childNodes.length > 0) {
-							console.log("g0")
-							document.getElementById('suggestions').classList.remove('hidden');
-						} else {
-							console.log("e0")
-							document.getElementById('suggestions').classList.add('hidden');
-						}
-					}
-				})
-				document.addEventListener('click', (event) => {
-					const input = document.querySelector('#searchbar input');
-					const dropdown = document.getElementById('suggestions');
-
-					if (event.target === input) {
-						const dropdownElementsCount = dropdown.querySelectorAll('p').length;
-						if (dropdownElementsCount > 0) {
-							dropdown.classList.remove('hidden');
-						} else {
-							dropdown.classList.add('hidden');
-						}
-					}
-
-					if (!input.contains(event.target) && !dropdown.contains(event.target)) {
-						dropdown.classList.add('hidden');
-					}
-				});
-			</script>
+			{{ template "suggestions-script" . }}
         </form>
     </div>
     <div id="results-container" class="min-h-screen px-4">
