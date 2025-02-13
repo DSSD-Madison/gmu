@@ -32,9 +32,7 @@ type KendraResults struct {
 }
 
 type KendraSuggestions struct {
-	SuggestionOutput kendra.GetQuerySuggestionsOutput
-	Suggestions      []string
-	Suggestion       types.SuggestionTextWithHighlights
+	Suggestions []string
 }
 
 func queryOutputToResults(out kendra.QueryOutput) KendraResults {
@@ -141,8 +139,7 @@ func MakeQuery(query string, filters map[string][]string) KendraResults {
 
 func querySuggestionsOutputToSuggestions(out kendra.GetQuerySuggestionsOutput) KendraSuggestions {
 	suggestions := KendraSuggestions{
-		SuggestionOutput: out,
-		Suggestions:      make([]string, 0),
+		Suggestions: make([]string, 0),
 	}
 
 	for _, item := range out.Suggestions {
