@@ -2,7 +2,6 @@ package models
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/aws/aws-sdk-go-v2/service/kendra"
@@ -57,7 +56,6 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 
 	for i, facetRes := range out.FacetResults {
 		Name, ok := filterNamesMap[*facetRes.DocumentAttributeKey]
-		fmt.Println(Name)
 		if !ok {
 			Name = *facetRes.DocumentAttributeKey
 		}
