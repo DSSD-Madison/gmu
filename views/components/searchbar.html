@@ -4,7 +4,7 @@
 {{end}}
 
 {{define "searchbar"}}
-        <div id="searchbar" class="relative [&:not(:has(p))]:focus-within:[&_input]:rounded-3xl [&:not(:has(p))]:focus-within:[&_input]:border-blue-400 [&:has(p)]:focus-within:[&_input]:rounded-t-3xl [&:has(p)]:focus-within:[&_input]:border-blue-400 [&:not(:has(p))]:not-focus-within:[&_input]:rounded-3xl [&:has(p)]:not-focus-within:[&_input]:rounded-3xl hover:[&_input]:rounded-t-3xl w-full">
+        <div id="searchbar" class="relative not-has-[p]:focus-within:[&_input]:rounded-3xl not-has-[p]:focus-within:[&_input]:border-blue-400 has-[p]:focus-within:[&_input]:rounded-t-3xl has-[p]:focus-within:[&_input]:border-blue-400 not-has-[p]:not-focus-within:[&_input]:rounded-3xl has-[p]:not-focus-within:[&_input]:rounded-3xl hover:[&_input]:rounded-t-3xl w-full">
             <input class="peer border-2 px-6 py-3 w-full outline-none bg-white"
 				   id="searchquery"
                    autocomplete="off"
@@ -23,7 +23,7 @@
 {{end}}
 
 {{define "searchbar-oob"}}
-        <div hx-swap-oob="true" id="searchbar" class="relative [&:not(:has(p))]:focus-within:[&_input]:rounded-3xl [&:not(:has(p))]:focus-within:[&_input]:border-blue-400 [&:has(p)]:focus-within:[&_input]:rounded-t-3xl [&:has(p)]:focus-within:[&_input]:border-blue-400 [&:not(:has(p))]:not-focus-within:[&_input]:rounded-3xl [&:has(p)]:not-focus-within:[&_input]:rounded-3xl hover:[&_input]:rounded-t-3xl w-full">
+        <div hx-swap-oob="true" id="searchbar" class="relative not-has-[p]:focus-within:[&_input]:rounded-3xl not-has-[p]:focus-within:[&_input]:border-blue-400 has-[p]:focus-within:[&_input]:rounded-t-3xl has-[p]:focus-within:[&_input]:border-blue-400 not-has-[p]:not-focus-within:[&_input]:rounded-3xl has-[p]:not-focus-within:[&_input]:rounded-3xl hover:[&_input]:rounded-t-3xl w-full">
             <input class="peer border-2 px-6 py-3 w-full outline-none bg-white"
 				   id="searchquery"
                    autocomplete="off"
