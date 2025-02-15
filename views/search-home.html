@@ -4,8 +4,8 @@
     <h2 class="text-xl font-semibold text-gray-700">Better Evidence Project</h2>
 	<input id="context" type="hidden" name="context" value="home"> <!-- used for context -->
     <form hx-post="/search" hx-swap="innerHTML" hx-target="#root" class="w-full" hx-include="#context">
-        <div id="searchbar" class="w-full relative">
-            <input class="peer w-full px-6 py-3 text-2xl border-2 focus:ring-3 focus:rounded-b-none rounded-t-3xl rounded-b-3xl shadow-md"
+        <div id="searchbar" class="absolute [&:not(:has(p))]:focus-within:[&_input]:rounded-3xl [&:not(:has(p))]:focus-within:[&_input]:border-blue-400 [&:has(p)]:focus-within:[&_input]:rounded-t-3xl [&:has(p)]:focus-within:[&_input]:border-blue-400 [&:not(:has(p))]:not-focus-within:[&_input]:rounded-3xl [&:has(p)]:not-focus-within:[&_input]:rounded-3xl w-full">
+            <input class="peer border-2 px-6 py-3 w-full outline-none"
 				   id="searchquery"
                    autocomplete="off"
                    placeholder="Begin Your Search Here..."
