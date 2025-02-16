@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -28,7 +27,6 @@ func Filters(c echo.Context) error {
 		cleanKey := strings.TrimPrefix(key, "filters[")
 		cleanKey = strings.TrimSuffix(cleanKey, "][]")
 
-		fmt.Println(cleanKey, values)
 		selectedFilters[cleanKey] = values
 	}
 
