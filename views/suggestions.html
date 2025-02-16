@@ -1,6 +1,6 @@
 {{ block "suggestions" . }}
 {{ range .Suggestions }}
-<p hx-trigger="click" hx-post="/search" class="active:bg-red-500 target:bg-blue-500" hx-vals='{"query": "{{.}}"}'>{{ . }}</p>
+<p hx-trigger="click" hx-post="/search" class="bg-white" hx-vals='{"query": "{{.}}"}'>{{ . }}</p>
 {{end}}
 {{end}}
 
