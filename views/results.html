@@ -23,8 +23,8 @@ value="{{ .Query }}">
 
 {{ define "results-container" }}
 <div id="results-content-container" class="space-y-6">
-    {{ range .Results }}
-    {{ template "result-card" . }}
+    {{ range $key, $value := .Results }}
+		{{ template "result-card" $value }}
     {{ end }}
 </div>
 {{ end }}
@@ -32,10 +32,19 @@ value="{{ .Query }}">
 <!-- Individual Result Partial -->
 {{ define "result-card" }}
 <div class="p-4 bg-white border rounded-md shadow-md">
-    <a href="{{ .Link }}#page={{ .PageNum }}" target="_blank" rel="noopener noreferrer" class="text-lg font-semibold underline">
+    <a href="{{ .Link }}" target="_blank" rel="noopener noreferrer" class="text-lg font-semibold underline">
         {{ .Title }}
     </a>
-    <p class="text-gray-600">{{ .Excerpt }}</p>
+	{{ $link := .Link }}
+	{{ range $i, $excerpt := .Excerpts }}
+		<div class="inline">
+			<p class="text-gray-600">{{ $excerpt.Text }}
+				<sup>
+					<a class="text-blue-500" href="{{ $link }}#page={{ $excerpt.PageNum }}">[{{ $excerpt.PageNum }}]</a>
+				</sup>
+			</p>
+		</div>
+	{{end}}
 </div>
 {{end}}
 

@@ -17,15 +17,19 @@ var opts = kendra.Options{
 
 var client = kendra.New(opts)
 
-type KendraResult struct {
-	Title   string
-	Excerpt string
-	Link    string
+type Excerpt struct {
+	Text    string
 	PageNum int
 }
 
+type KendraResult struct {
+	Title    string
+	Excerpts []Excerpt
+	Link     string
+}
+
 type KendraResults struct {
-	Results []KendraResult
+	Results map[string]KendraResult
 	Query   string
 	Count   int
 	Filters []FilterCategory
@@ -37,25 +41,40 @@ type KendraSuggestions struct {
 
 func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	results := KendraResults{
-		Results: make([]KendraResult, len(out.ResultItems)),
+		Results: make(map[string]KendraResult),
 		Filters: make([]FilterCategory, len(out.FacetResults)),
 	}
 
-	for i, item := range out.ResultItems {
-		res := KendraResult{
-			Title:   internal.TrimExtension(*item.DocumentTitle.Text),
-			Excerpt: *item.DocumentExcerpt.Text,
-			Link:    *item.DocumentURI,
+	for _, item := range out.ResultItems {
+		title := internal.TrimExtension(*item.DocumentTitle.Text)
+
+		var res KendraResult
+
+		if _, ok := results.Results[title]; !ok {
+			res = KendraResult{
+				Title:    internal.TrimExtension(*item.DocumentTitle.Text),
+				Excerpts: make([]Excerpt, 0),
+				Link:     *item.DocumentURI,
+			}
+		} else {
+			res = results.Results[title]
 		}
+
+		pagenum := 0
 
 		for _, a := range item.DocumentAttributes {
 			if *a.Key == "_excerpt_page_number" {
-				res.PageNum = int(*a.Value.LongValue)
+				pagenum = int(*a.Value.LongValue)
 			}
 		}
-		results.Results[i] = res
-		results.Count = int(*out.TotalNumberOfResults)
 
+		res.Excerpts = append(res.Excerpts, Excerpt{
+			Text:    *item.DocumentExcerpt.Text,
+			PageNum: pagenum,
+		})
+		results.Results[res.Title] = res
+
+		results.Count = int(*out.TotalNumberOfResults)
 	}
 
 	filterNamesMap := map[string]string{
