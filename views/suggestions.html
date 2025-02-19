@@ -1,64 +1,13 @@
 {{ block "suggestions" . }}
 {{ range .Suggestions }}
-<div class="px-6 hover:bg-gray-200">
-	<p class="cursor-pointer" hx-trigger="click" hx-post="/search" hx-vals='{"query": "{{.}}"}'>{{ . }}</p>
-</div>
+<p hx-trigger="click" hx-post="/search" class="bg-white" hx-vals='{"query": "{{.}}"}'>{{ . }}</p>
 {{end}}
 {{end}}
 
 {{ define "suggestions-container"}}
-<div id="suggestions" class="suggestions absolute z-10 w-full top-full left-0 bg-white border border-gray-300 shadow-lg hidden"></div>
+<div id="suggestions" class="bg-white absolute hidden opacity-0 peer-focus:block hover:block w-full max-w-2xl *:w-full *:px-6 *:py-3 *:border-r-2 *:border-l-2 *:last:border-b-2 *:last:rounded-b-3xl *:hover:cursor-pointer peer-focus:opacity-100 peer-focus:*:hover:bg-gray-200 *:last:shadow-lg"></div>
 {{end}}
 
-{{define "suggestions-script"}}
-<script>
-	document.addEventListener('htmx:afterSwap', function(event) {
-		const suggestions = document.getElementById('suggestions');
-		const searchQuery = document.getElementById('searchquery');
-
-		if (event.detail.elt.id === "suggestions") {
-			if (event.detail.elt.childNodes.length > 0) {
-				suggestions.classList.remove('hidden');
-				searchQuery.classList.remove('rounded-b-3xl');
-			} else {
-				suggestions.classList.add('hidden');
-				searchQuery.classList.add('rounded-b-3xl');
-			}
-		}
-
-		if (event.detail.elt.id === "searchquery") {
-			suggestions.classList.add('hidden');
-			searchQuery.classList.add('rounded-b-3xl');
-		}
-	});
-
-	document.addEventListener('click', (event) => {
-		const input = document.querySelector('#searchbar input');
-		const dropdown = document.getElementById('suggestions');
-		const searchQuery = document.getElementById('searchquery');
-
-		if (event.target === input) {
-			const dropdownElementsCount = dropdown.querySelectorAll('p').length;
-			searchQuery.classList.remove('border-gray-300');
-			searchQuery.classList.add('border-blue-500');
-			if (dropdownElementsCount > 0) {
-				dropdown.classList.remove('hidden');
-				searchQuery.classList.remove('rounded-b-3xl');
-			} else {
-				dropdown.classList.add('hidden');
-				searchQuery.classList.add('rounded-b-3xl');
-			}
-		} else {
-			searchQuery.classList.remove('border-blue-500');
-			searchQuery.classList.add('border-gray-300');
-		}
-
-		if (!input.contains(event.target) && !dropdown.contains(event.target)) {
-			dropdown.classList.add('hidden');
-			searchQuery.classList.add('rounded-b-3xl');
-			searchQuery.classList.remove('border-blue-500');
-			searchQuery.classList.add('border-gray-300');
-		}
-	});
-</script>
+{{ define "suggestions-container-oob"}}
+<div hx-swap-oob="true" hx-swap="outerhtml" id="suggestions" class="bg-white absolute hidden opacity-0 peer-focus:block hover:block w-full max-w-2xl *:w-full *:px-6 *:py-3 *:border-r-2 *:border-l-2 *:last:border-b-2 *:last:rounded-b-3xl *:hover:cursor-pointer peer-focus:opacity-100 peer-focus:*:hover:bg-gray-200 *:last:shadow-lg"></div>
 {{end}}

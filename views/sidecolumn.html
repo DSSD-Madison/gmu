@@ -65,6 +65,10 @@
   </form>
 </aside>
 
+{{ template "accordian-toggle-script" }}
+{{ end }}
+
+{{ define "accordian-toggle-script" }}
 <script>
   function toggleAccordion(index) {
     const accordionBody = document.getElementById(`accordion-body-${index}`);
@@ -83,4 +87,5 @@
     img.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
   }
 </script>
-{{ end }}
+
+{{end}}
