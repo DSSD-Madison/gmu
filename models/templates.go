@@ -61,6 +61,7 @@ func NewTemplate() *Templates {
 		"views/search.html",
 		"views/components/searchbar.html",
 		"views/suggestions.html",
+		"views/components/skeleton.html",
 	))
 	tmpl["results"] = template.Must(template.ParseFiles(
 		"views/results.html",
