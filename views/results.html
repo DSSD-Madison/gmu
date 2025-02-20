@@ -23,22 +23,19 @@
 <!-- Individual Result Partial -->
 {{ define "result-card" }}
 <div class="hover:-translate-y-1 hover:scale-103 ease-in-out transition p-4 bg-white border rounded-md shadow-md">
-    <a href="{{ .Link }}#page={{ .PageNum }}" target="_blank" rel="noopener noreferrer" class="text-lg font-semibold underline">
-        <a href="{{ .Link }}" target="_blank" rel="noopener noreferrer" class="text-lg font-semibold underline">
-            {{ .Title }}
-        </a>
-        <p class="text-gray-600">{{ .Excerpt }}</p>
-        {{ $link := .Link }}
-        {{ range $i, $excerpt := .Excerpts }}
-        <div class="inline">
-            <p class="text-gray-600">{{ $excerpt.Text }}
-                <sup>
-                    <a class="text-blue-500" href="{{ $link }}#page={{ $excerpt.PageNum }}">[{{ $excerpt.PageNum }}]</a>
-                </sup>
-            </p>
-        </div>
-        {{end}}
+    <a href="{{ .Link }}" target="_blank" rel="noopener noreferrer" class="text-lg font-semibold underline">
+        {{ .Title }}
     </a>
+    {{ $link := .Link }}
+    {{ range $i, $excerpt := .Excerpts }}
+    <div class="inline">
+        <p class="text-gray-600">{{ $excerpt.Text }}
+            <sup>
+                <a class="text-blue-500" target="_blank" rel="noopener noreferrer" href="{{ $link }}#page={{ $excerpt.PageNum }}">[{{ $excerpt.PageNum }}]</a>
+            </sup>
+        </p>
+    </div>
+    {{end}}
 </div>
 {{end}}
 
