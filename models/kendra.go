@@ -17,45 +17,42 @@ var opts = kendra.Options{
 
 var client = kendra.New(opts)
 
-type KendraResult struct {
-	Title   string
-	Excerpt string
-	Link    string
-	PageNum int
-}
-
-type KendraResults struct {
-	Results []KendraResult
-	Query   string
-	Count   int
-	Filters []FilterCategory
-}
-
-type KendraSuggestions struct {
-	Suggestions []string
-}
-
 func queryOutputToResults(out kendra.QueryOutput) KendraResults {
-	results := KendraResults{
-		Results: make([]KendraResult, len(out.ResultItems)),
+	kendraResults := KendraResults{
+		Results: make(map[string]KendraResult),
 		Filters: make([]FilterCategory, len(out.FacetResults)),
 	}
 
-	for i, item := range out.ResultItems {
-		res := KendraResult{
-			Title:   internal.TrimExtension(*item.DocumentTitle.Text),
-			Excerpt: *item.DocumentExcerpt.Text,
-			Link:    *item.DocumentURI,
+	for _, item := range out.ResultItems {
+		title := internal.TrimExtension(*item.DocumentTitle.Text)
+
+		var res KendraResult
+
+		if result, ok := kendraResults.Results[title]; !ok {
+			res = KendraResult{
+				Title:    title,
+				Excerpts: make([]Excerpt, 0),
+				Link:     *item.DocumentURI,
+			}
+		} else {
+			res = result
 		}
+
+		pageNum := 0
 
 		for _, a := range item.DocumentAttributes {
 			if *a.Key == "_excerpt_page_number" {
-				res.PageNum = int(*a.Value.LongValue)
+				pageNum = int(*a.Value.LongValue)
 			}
 		}
-		results.Results[i] = res
-		results.Count = int(*out.TotalNumberOfResults)
 
+		res.Excerpts = append(res.Excerpts, Excerpt{
+			Text:    *item.DocumentExcerpt.Text,
+			PageNum: pageNum,
+		})
+		kendraResults.Results[res.Title] = res
+
+		kendraResults.Count = int(*out.TotalNumberOfResults)
 	}
 
 	filterNamesMap := map[string]string{
@@ -81,10 +78,10 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 				Count: *attribute.Count,
 			}
 		}
-		results.Filters[i] = filterCategory
+		kendraResults.Filters[i] = filterCategory
 	}
 
-	return results
+	return kendraResults
 }
 
 func MakeQuery(query string, filters map[string][]string) KendraResults {
