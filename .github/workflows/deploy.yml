@@ -20,9 +20,11 @@ jobs:
           username: ${{ secrets.AWS_EC2_USERNAME }}
           key: ${{ secrets.AWS_EC2_SSH_KEY }}
           script: |
+            export PATH=$PATH:/usr/local/go/bin
             cd /var/www/go-htmx-app
             git pull origin main
             make install-tailwind-linux
             go build -o gmu -buildvcs=false
             ./tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify
             sudo systemctl restart goapp
+    
