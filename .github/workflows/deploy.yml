@@ -20,7 +20,4 @@ jobs:
           username: ${{ secrets.AWS_EC2_USERNAME }}
           key: ${{ secrets.AWS_EC2_SSH_KEY }}
           script: |
-            source ~/.profile
-            source ~/.bashrc
-            export PATH=$PATH:/usr/local/go/bin
             /home/ubuntu/deploy.sh
