@@ -29,5 +29,11 @@ jobs:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USERNAME }}
           key: ${{ secrets.AWS_EC2_SSH_KEY }}
-          script: /home/ubuntu/deploy.sh
-          debug: true 
+          script: |
+            source ~/.profile
+            source ~/.bashrc
+            export PATH=$PATH:/usr/local/go/bin
+            which go || echo "Go still not found"
+            go version || echo "Go version command failed"
+            /home/ubuntu/deploy.sh
+            debug: true 
