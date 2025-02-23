@@ -36,4 +36,4 @@ jobs:
             which go || echo "Go still not found"
             go version || echo "Go version command failed"
             /home/ubuntu/deploy.sh
-            debug: true 
+            debug: true
