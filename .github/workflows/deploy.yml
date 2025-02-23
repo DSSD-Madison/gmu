@@ -13,16 +13,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install Go
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y golang-go
-          
-      - name: Add Go to PATH
-        run: |
-          echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.bashrc
-          source ~/.bashrc
-
       - name: Run deploy.sh on AWS EC2 server
         uses: appleboy/ssh-action@master
         with:
@@ -33,7 +23,4 @@ jobs:
             source ~/.profile
             source ~/.bashrc
             export PATH=$PATH:/usr/local/go/bin
-            which go || echo "Go still not found"
-            go version || echo "Go version command failed"
             /home/ubuntu/deploy.sh
-            debug: true 
