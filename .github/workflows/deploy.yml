@@ -22,4 +22,9 @@ jobs:
             source ~/.profile
             source ~/.bashrc
             export PATH=$PATH:/usr/local/go/bin
-            /home/ubuntu/deploy.sh
+            cd /var/www/go-htmx-app
+            git pull origin main
+            go build -o gmu -buildvcs=false
+            ./tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify
+            sudo systemctl restart goapp
+    
