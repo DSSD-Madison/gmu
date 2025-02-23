@@ -30,4 +30,4 @@ jobs:
           username: ${{ secrets.AWS_EC2_USERNAME }}
           key: ${{ secrets.AWS_EC2_SSH_KEY }}
           script: /home/ubuntu/deploy.sh
-          debug: true
+          debug: true 
