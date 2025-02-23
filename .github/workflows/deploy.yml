@@ -1,13 +1,36 @@
-name: Deploy to EC2
+name: CI/CD Pipeline
 
 on:
   push:
     branches:
       - main
-      - deploy-app
+  pull_request:
+
 jobs:
-  deploy:
+  build-test:
+    name: Test Build
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y golang
+
+      - name: Build and Test
+        run: |
+          export PATH=$PATH:/usr/local/go/bin
+          make install-linux
+          go build -o gmu -buildvcs=false
+          ./tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify
+
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: build-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
       - name: Checkout code
@@ -23,8 +46,7 @@ jobs:
             export PATH=$PATH:/usr/local/go/bin
             cd /var/www/go-htmx-app
             git pull origin main
-            make install-tailwind-linux
+            make install-linux
             go build -o gmu -buildvcs=false
             ./tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify
             sudo systemctl restart goapp
-    
