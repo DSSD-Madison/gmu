@@ -1,31 +1,22 @@
 TAILWIND_VERSION = v4.0.6
+TAILWIND_BASE_URL = https://github.com/tailwindlabs/tailwindcss/releases/download/$(TAILWIND_VERSION)/
 
-install-arm64: install-tailwind-arm64 install-air
-install-x64: install-tailwind-x64 install-air
-install-linux: install-tailwind-linux install-air
+# call install-arm64, -x64, or -linux, based on your OS
+install-arm64: install-air
+	$(MAKE) install-tailwind FILE=tailwindcss-macos-arm64
 
-# Target to install Tailwind CSS binary - MacOS arm64 (M1 onwards)
-install-tailwind-arm64:
-	@echo "Installing Tailwind..."
-	curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/download/$(TAILWIND_VERSION)/tailwindcss-macos-arm64
-	chmod +x tailwindcss-macos-arm64
-	mv tailwindcss-macos-arm64 tailwindcss
+install-x64: install-air
+	$(MAKE) install-tailwind FILE=tailwindcss-macos-x64
 
-# Target to install Tailwind CSS binary - MacOS x64 (Intel)
-install-tailwind-x64:
-	@echo "Installing Tailwind..."
-	curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/download/$(TAILWIND_VERSION)/tailwindcss-macos-x64
-	chmod +x tailwindcss-macos-x64
-	mv tailwindcss-macos-x64 tailwindcss
+install-linux: install-air
+	$(MAKE) install-tailwind FILE=tailwindcss-linux-x64
 
-# Target to install Tailwind CSS binary for Linux (x86_64 for GitHub Actions)
-install-tailwind-linux:
-	@echo "Installing Tailwind for Linux x64..."
-	curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/$(TAILWIND_VERSION)/download/tailwindcss-linux-x64
-	chmod +x tailwindcss-linux-x64
-	mv tailwindcss-linux-x64 tailwindcss
+install-tailwind:
+	@echo "Downloading Tailwind..."
+	curl -sLO $(TAILWIND_BASE_URL)$(FILE) 
+	chmod +x $(FILE)  
+	mv $(FILE) tailwindcss
 
-# Target to install Air binary
 install-air:
 	@echo "Installing Air..."
 	go install github.com/air-verse/air@latest
