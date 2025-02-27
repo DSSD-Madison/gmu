@@ -13,6 +13,9 @@ type Templates struct {
 	templates map[string]*template.Template
 }
 
+// Returns the splits of the input string split at the first colon character, along with a boolean true to indicate success
+//
+// Returns input string and an empty string if no colon is found, and a boolean false to indicate failure
 func splitAtColon(input string) (string, string, bool) {
 	// Check if there's a colon in the string
 	if strings.Contains(input, ":") {
@@ -89,10 +92,12 @@ func NewTemplate() *Templates {
 	return tmpls
 }
 
+// Registers a template by parsing a list of templates together
 func (tmpls *Templates) registerResponse(key string, files []string) {
 	tmpls.templates[key] = template.Must(template.ParseFiles(files...))
 }
 
+// Registers a page using the base HTML template base.html.
 func (tmpls *Templates) registerPage(key string, partialFile string) {
 	t, _ := template.New(key).Parse(fmt.Sprintf(`{{block "base" .}}{{end}}`))
 	t, err := t.New("base").ParseFiles("views/base.html", partialFile)
@@ -102,6 +107,7 @@ func (tmpls *Templates) registerPage(key string, partialFile string) {
 	tmpls.templates[key] = t
 }
 
+// Registers a key-accessible template associated with a template defined in the given partialFile
 func (tmpls *Templates) registerPartial(key string, partial string, partialFile string) {
 	t, err := template.ParseFiles(partialFile)
 	if err != nil {
