@@ -51,29 +51,62 @@ func (t *Templates) Render(w io.Writer, name string, data interface{}, c echo.Co
 
 func NewTemplate() *Templates {
 	tmpl := make(map[string]*template.Template)
-	tmpl["index"] = template.Must(template.ParseFiles(
+	tmpls := &Templates{
+		templates: tmpl,
+	}
+
+	tmpls.registerResponse("index", []string{
 		"views/index.html",
 		"views/search-home.html",
 		"views/components/searchbar.html",
 		"views/suggestions.html",
-	))
-	tmpl["search"] = template.Must(template.ParseFiles(
+	})
+	tmpls.registerResponse("search", []string{
 		"views/search.html",
 		"views/components/searchbar.html",
 		"views/suggestions.html",
 		"views/components/skeleton.html",
-	))
-	tmpl["results"] = template.Must(template.ParseFiles(
+	})
+	tmpls.registerResponse("results", []string{
 		"views/results.html",
 		"views/sidecolumn.html",
 		"views/components/searchbar.html",
 		"views/suggestions.html",
-	))
-	tmpl["suggestions"] = template.Must(template.ParseFiles(
+	})
+	tmpls.registerResponse("suggestions", []string{
 		"views/suggestions.html",
-	))
+	})
 
-	return &Templates{
-		templates: tmpl,
+	tmpls.registerPage("document", "views/document/document.html")
+	tmpls.registerPage("document-edit", "views/document/document-edit.html")
+	tmpls.registerPage("document-new", "views/document/document-new.html")
+	tmpls.registerPage("document-delete", "views/document/document-delete.html")
+
+	tmpls.registerPartial("document-edit/patch", "edit", "views/document/document-edit.html")
+	tmpls.registerPartial("document-new/put", "new", "views/document/document-new.html")
+	tmpls.registerPartial("document-delete/delete", "delete", "views/document/document-delete.html")
+
+	return tmpls
+}
+
+func (tmpls *Templates) registerResponse(key string, files []string) {
+	tmpls.templates[key] = template.Must(template.ParseFiles(files...))
+}
+
+func (tmpls *Templates) registerPage(key string, partialFile string) {
+	t, _ := template.New(key).Parse(fmt.Sprintf(`{{block "base" .}}{{end}}`))
+	t, err := t.New("base").ParseFiles("views/base.html", partialFile)
+	if err != nil {
+		fmt.Printf("tmpl err %q\n", err)
 	}
+	tmpls.templates[key] = t
+}
+
+func (tmpls *Templates) registerPartial(key string, partial string, partialFile string) {
+	t, err := template.ParseFiles(partialFile)
+	if err != nil {
+		fmt.Printf("error parsing template: %q", err)
+	}
+	content := t.Lookup(partial)
+	tmpls.templates[key] = content
 }
