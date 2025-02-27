@@ -15,4 +15,16 @@ func InitRoutes(e *echo.Echo) {
 
 	// Filters Route
 	e.POST("/filters", Filters)
+
+	// Document Management Routes
+	e.GET("/document", DocumentView)
+
+	e.GET("/document/new", DocumentNew)
+	e.PUT("/document/new", DocumentNewPut)
+
+	e.GET("/document/delete", DocumentDelete)
+	e.DELETE("/document/delete", DocumentDeleteDelete)
+
+	e.GET("/document/edit", DocumentEdit)
+	e.PATCH("/document/edit", DocumentEditPatch)
 }

@@ -1,0 +1,15 @@
+<!--Document New Page-->
+{{define "content"}}
+	<p>Document new</p>
+	<form hx-put="/document/new" hx-trigger="submit" hx-target="#response" hx-swap="innerHTML">
+		<label for="title">Document Title: </label>
+		<input type="text" name="title" id="title" />
+		<input hx-put="/document/new" type="submit" value="new" />
+	</form>
+	<p id="response">{{ . }}</p>
+{{end}}
+
+{{define "new"}}
+	<p>Put: {{ .Title }} {{ .Status }}</p>
+{{end}}
+

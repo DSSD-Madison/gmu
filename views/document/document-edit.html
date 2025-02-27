@@ -1,0 +1,17 @@
+<!--Document Edit Page-->
+{{define "content"}}
+	<p>Document edit</p>
+	<form hx-patch="/document/edit" hx-trigger="submit" hx-target="#response" hx-swap="innerHTML">
+		<label for="title">Document Title: </label>
+		<input type="text" name="title" id="title" />
+		<label for="author">Author: </label>
+		<input type="text" name="author" id="author" />
+		<input hx-patch="/document/edit" type="submit" value="submit" />
+	</form>
+	<p id="response">{{ . }}</p>
+{{end}}
+
+{{define "edit"}}
+	<p>Patch: {{ .Title }} {{ .Edit }} {{ .Status }}</p>
+{{end}}
+

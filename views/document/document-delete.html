@@ -1,0 +1,14 @@
+<!--Document Delete Page-->
+{{define "content"}}
+	<p>Document delete</p>
+	<form hx-delete="/document/delete" hx-trigger="submit" hx-target="#response" hx-swap="innerHTML">
+		<label for="title">Document Title: </label>
+		<input type="text" name="title" id="title" />
+		<input hx-delete="/document/delete" type="submit" value="delete" />
+	</form>
+	<p id="response">{{ . }}</p>
+{{end}}
+
+{{define "delete"}}
+	<p>Delete: {{ .Title }} {{ .Status }}</p>
+{{end}}
