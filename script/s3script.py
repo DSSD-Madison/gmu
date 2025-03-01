@@ -98,7 +98,7 @@ def categorize_files(bucket_name):
 ################################################
 # Script Execution
 ################################################
-if __name__ == "__main__":
+# if __name__ == "__main__":
     # Main idea on the script
     # print("Starting S3 File Processing...")
 
@@ -115,6 +115,6 @@ if __name__ == "__main__":
 
     # print("Finished Processing All Files.")
 
-    BUCKET_NAME = "allianceforpeacebuilding-org"
+    # BUCKET_NAME = "allianceforpeacebuilding-org"
     # print(process_json_file(BUCKET_NAME, list_s3_files(BUCKET_NAME)[1]["Key"]))
-    print(list_s3_files(BUCKET_NAME)[1]["Key"])
+    # print(list_s3_files(BUCKET_NAME)[1]["Key"])

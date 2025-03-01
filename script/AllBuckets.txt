@@ -1,0 +1,12 @@
+Bucket allianceforpeacebuilding-org - 232 files
+Bucket aws-cloudtrail-logs-676432721551-af2ce380 - 0 files
+Bucket bep-json-test-bucket - 9 files
+Bucket bep-metadata - 1 files
+Bucket bep-temp-gene - 0 files
+Bucket better-evidence-project-resources - 0 files
+Bucket better-evidence-project-resources-backups - 0 files
+Bucket better-evidence-repository - 0 files
+Bucket ipinst-org - 0 files
+Bucket ipinst-org-issue-briefs - 0 files
+Bucket ipinst-org-policy-papers - 0 files
+Bucket video-kendra-testing - 0 files
