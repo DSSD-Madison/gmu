@@ -3,7 +3,7 @@
 <div class="grid place-items-center relative">
     <img src="images/Banner.jpeg" class="col-start-1 row-start-1 object-cover top-0 z-1 w-full h-auto">
     <div id="formwrapper" class="col-start-1 row-start-1 z-2 flex justify-center items-center w-full" hx-indicator="#indicator">
-        <form hx-post="/search" hx-target="#results-container" hx-swap="innerHTML" hx-trigger="load, submit" class="w-1/4">
+        <form hx-post="/search" hx-target="#results-container" hx-swap="innerHTML" hx-trigger="load, submit" class="w-1/2">
 			{{template "searchbar" .}}
         </form>
     </div>
