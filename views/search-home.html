@@ -1,10 +1,10 @@
 <!-- Home Page -->
 {{ define "search-home" }}
-<div class="flex flex-col items-center justify-center h-screen">
+<div class="flex flex-col items-center justify-start min-h-screen pt-80">
     <h2 class="text-xl font-semibold text-gray-700 py-3">Better Evidence Project</h2>
-	<input id="context" type="hidden" name="context" value="home"> <!-- used for context -->
+    <input id="context" type="hidden" name="context" value="home"> <!-- used for context -->
     <form hx-post="/search" hx-swap="innerHTML" hx-target="#root" class="flex flex-row w-3/8" hx-include="#context">
-		{{template "searchbar"}}
+        {{template "searchbar"}}
     </form>
 </div>
 {{end}}
