@@ -8,6 +8,7 @@ import (
 func InitRoutes(e *echo.Echo) {
 	// Home Route
 	e.GET("/", Home)
+	e.GET("/test", Test)
 
 	// Search Routes
 	e.GET("/search", Search)
