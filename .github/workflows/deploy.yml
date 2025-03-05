@@ -23,12 +23,11 @@ jobs:
       - name: Generate SQLC code
         run: |
           go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-          echo "$HOME/go/bin" >> $GITHUB_PATH
+          export PATH=$HOME/go/bin:/usr/local/go/bin:$PATH
           sqlc generate
 
       - name: Build and Test
         run: |
-          export PATH=$PATH:/usr/local/go/bin
           make install-linux
           go build -o gmu -buildvcs=false
           ./tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify
@@ -50,7 +49,7 @@ jobs:
           username: ${{ secrets.AWS_EC2_USERNAME }}
           key: ${{ secrets.AWS_EC2_SSH_KEY }}
           script: |
-            export PATH=$PATH:/usr/local/go/bin
+            export PATH=$HOME/go/bin:/usr/local/go/bin:$PATH
             cd /var/www/go-htmx-app
             git stash
             git pull origin main
