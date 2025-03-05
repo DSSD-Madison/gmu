@@ -32,5 +32,5 @@ func Filters(c echo.Context) error {
 
 	results := models.MakeQuery(query, selectedFilters)
 
-	return c.Render(http.StatusOK, "results:results-container", results)
+	return c.Render(http.StatusOK, "results-container", results)
 }
