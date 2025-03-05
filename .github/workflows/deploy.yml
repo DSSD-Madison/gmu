@@ -57,6 +57,6 @@ jobs:
             echo "$HOME/go/bin" >> $GITHUB_PATH
             sqlc generate
             make install-linux
-            go build -o gmu -buildvcs=false
             ./tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify
+            go build -o gmu -buildvcs=false
             sudo systemctl restart goapp
