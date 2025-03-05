@@ -53,9 +53,17 @@ func NewTemplate() *Templates {
 	tmpl := make(map[string]*template.Template)
 	tmpl["index"] = template.Must(template.ParseFiles(
 		"views/index.html",
+		"views/home.html",
+		"views/components/searchbar.html",
+		"views/suggestions.html",
+	))
+	tmpl["search-standalone"] = template.Must(template.ParseFiles(
+		"views/index.html",
 		"views/search-home.html",
 		"views/components/searchbar.html",
 		"views/suggestions.html",
+		"views/search.html",
+		"views/components/skeleton.html",
 	))
 	tmpl["search"] = template.Must(template.ParseFiles(
 		"views/search.html",
