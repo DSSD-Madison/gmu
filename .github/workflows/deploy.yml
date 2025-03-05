@@ -23,11 +23,11 @@ jobs:
       - name: Generate SQLC code
         run: |
           go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+          export PATH=$PATH:/usr/local/go/bin
           sqlc generate
 
       - name: Build and Test
         run: |
-          export PATH=$PATH:/usr/local/go/bin
           make install-linux
           go build -o gmu -buildvcs=false
           ./tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify
