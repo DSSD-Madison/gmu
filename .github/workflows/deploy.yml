@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - db-infrastructure
   pull_request:
 
 jobs:
@@ -18,6 +19,11 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y golang
+          
+      - name: Generate SQLC code
+        run: |
+          go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+          sqlc generate
 
       - name: Build and Test
         run: |
@@ -45,7 +51,10 @@ jobs:
           script: |
             export PATH=$PATH:/usr/local/go/bin
             cd /var/www/go-htmx-app
+            git stash
             git pull origin main
+            go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+            sqlc generate
             make install-linux
             go build -o gmu -buildvcs=false
             ./tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify
