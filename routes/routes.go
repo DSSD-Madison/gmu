@@ -10,7 +10,7 @@ func InitRoutes(e *echo.Echo) {
 	e.GET("/", Home)
 
 	// Search Routes
-	e.POST("/search", Search)
+	e.GET("/search", Search)
 	e.POST("/search/suggestions", SearchSuggestions)
 
 	// Filters Route

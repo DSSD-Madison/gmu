@@ -28,13 +28,25 @@ func Search(c echo.Context) error {
 	query := c.FormValue("query")
 	context := c.FormValue("context")
 
+	if len(query) == 0 {
+		return Home(c)
+	}
+
 	if len(query) < MinQueryLength {
 		return echo.NewHTTPError(http.StatusBadRequest, "Query too short")
 	}
-	if context == "home" {
+	// Check if the request is coming from HTMX
+	isHTMX := c.Request().Header.Get("HX-Request") != ""
+
+	if isHTMX {
+		if context == "results" {
+			results := models.MakeQuery(query, nil)
+			return c.Render(http.StatusOK, "results", results)
+		}
+
 		return c.Render(http.StatusOK, "search", query)
 	}
-	results := models.MakeQuery(query, nil)
 
-	return c.Render(http.StatusOK, "results", results)
+	return c.Render(http.StatusOK, "search-standalone", query)
+
 }
