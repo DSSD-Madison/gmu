@@ -22,6 +22,7 @@ hover:[&_input]:rounded-t-3xl
 	   placeholder="Begin Your Search Here..."
 	   type="text"
 	   name="query"
+	   hx-push-url="false"
 	   hx-post="/search/suggestions"
 	   hx-trigger="input changed delay:250ms"
 	   hx-target="#suggestions"

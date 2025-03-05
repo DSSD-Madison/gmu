@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -26,7 +27,8 @@ func SearchSuggestions(c echo.Context) error {
 
 func Search(c echo.Context) error {
 	query := c.FormValue("query")
-	context := c.FormValue("context")
+	fmt.Printf("query: %s\n", query)
+	fmt.Printf("resp: %+v\n", c.Request().Header)
 
 	if len(query) == 0 {
 		return Home(c)
@@ -36,17 +38,16 @@ func Search(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Query too short")
 	}
 	// Check if the request is coming from HTMX
-	isHTMX := c.Request().Header.Get("HX-Request") != ""
+	target := c.Request().Header.Get("HX-Target")
 
-	if isHTMX {
-		if context == "results" {
-			results := models.MakeQuery(query, nil)
-			return c.Render(http.StatusOK, "results", results)
-		}
-
+	if target == "root" || target == "" {
+		return c.Render(http.StatusOK, "search-standalone", query)
+	} else if target == "results-container" {
+		fmt.Println("results doing")
+		results := models.MakeQuery(query, nil)
+		return c.Render(http.StatusOK, "results", results)
+	} else {
 		return c.Render(http.StatusOK, "search", query)
 	}
-
-	return c.Render(http.StatusOK, "search-standalone", query)
 
 }
