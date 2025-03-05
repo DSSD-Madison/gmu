@@ -7,14 +7,13 @@ CREATE TABLE documents (
     category VARCHAR(100),                    -- Classification category
     publish_date DATE,                        -- When the file was published
     source VARCHAR(255),                      -- Where it came from
-    region_id INT REFERENCES regions(id) ON DELETE SET NULL, -- Links to regions
+    region_id UUID REFERENCES regions(id) ON DELETE SET NULL, -- Links to regions
 
-    s3_bucket VARCHAR(255) NOT NULL,          -- S3 Bucket name
-    s3_key VARCHAR(1024) UNIQUE NOT NULL,     -- Full path in S3
+    s3_file VARCHAR(1024) UNIQUE NOT NULL,     -- Full path in S3
+    s3_file_preview VARCHAR(1024) UNIQUE,      -- Path in S3
     pdf_link VARCHAR(1024),                   -- Public access link (if available)
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Automatically sets timestamp
-    last_modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP -- Updates when modified
     deleted_at TIMESTAMP NULL -- Soft delete
 );
 
@@ -40,8 +39,8 @@ CREATE TABLE authors (
 -- Table: doc_authors (Many-to-Many Relationship between documents and authors)
 CREATE TABLE doc_authors (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    doc_id INT REFERENCES documents(id) ON DELETE CASCADE,
-    author_id INT REFERENCES authors(id) ON DELETE CASCADE,
+    doc_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+    author_id UUID REFERENCES authors(id) ON DELETE CASCADE,
     UNIQUE (doc_id, author_id) -- Prevent duplicate entries
 );
 
@@ -58,8 +57,8 @@ CREATE TABLE keywords (
 -- Table: doc_keywords (Many-to-Many Relationship between documents and keywords)
 CREATE TABLE doc_keywords (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    doc_id INT REFERENCES documents(id) ON DELETE CASCADE,
-    keyword_id INT REFERENCES keywords(id) ON DELETE CASCADE,
+    doc_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+    keyword_id UUID REFERENCES keywords(id) ON DELETE CASCADE,
     UNIQUE (doc_id, keyword_id)
 );
 

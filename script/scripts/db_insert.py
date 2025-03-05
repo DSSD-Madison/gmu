@@ -13,17 +13,18 @@ logging.basicConfig(
     filename="logs/errors.log",
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    filemode="a"
+    filemode="a",
 )
 
 # Test Logging
 logging.info("Test Error - Logging system is working.")
 
 # Setup DB connection
-DATABASE_URL = "postgresql://postgres:password@localhost/gmu_test_dev_db"
+DATABASE_URL = "postgresql://postgres:R5umUQOEhSp69OrjbnAm@18.205.40.248:5432/postgres"
 engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
 session = Session()
+
 
 def insert_document(data):
     """Inserts a document into the database."""
@@ -45,9 +46,8 @@ def insert_document(data):
             publish_date=data["Attributes"].get("Date_Published"),
             source=data["Attributes"].get("source", ["Unknown"])[0],
             region_id=region.id,
-            s3_bucket="my-bucket",
-            s3_key=data["Attributes"].get("Link"),
-            pdf_link=data["Attributes"].get("Link")
+            s3_file=data["Attributes"].get("Link"),
+            pdf_link=data["Attributes"].get("Link"),
         )
         session.add(document)
         session.commit()
@@ -73,12 +73,14 @@ def insert_document(data):
             session.commit()
 
         print(f"Successfully inserted: {data['DocumentId'][0]}")
-    
+
     except IntegrityError as ie:
         session.rollback()
         logging.info(f"Integrity Error inserting {data['DocumentId'][0]}: {ie}")
-        print(f"Integrity error inserting {data['DocumentId'][0]}. Check logs/errors.log")
-    
+        print(
+            f"Integrity error inserting {data['DocumentId'][0]}. Check logs/errors.log"
+        )
+
     except Exception as e:
         session.rollback()
         logging.info(f"Error inserting {data['Title']}: {e}")

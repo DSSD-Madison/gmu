@@ -1,32 +1,8 @@
-2025-03-01 02:55:11,778 - Test Error - Logging system is working.
-2025-03-01 02:55:12,336 - Found 232 JSON metadata files.
-2025-03-01 02:55:45,816 - Found 0 JSON metadata files.
-2025-03-01 02:55:45,994 - Found 9 JSON metadata files.
-2025-03-01 02:58:33,068 - Test Error - Logging system is working.
-2025-03-01 02:58:33,634 - Found 232 JSON metadata files.
-2025-03-01 03:06:17,367 - Test Error - Logging system is working.
-2025-03-01 03:06:17,944 - Found 232 JSON metadata files.
-2025-03-01 03:06:19,161 - Found 0 JSON metadata files.
-2025-03-01 03:06:19,388 - Found 9 JSON metadata files.
-2025-03-01 03:06:19,612 - Found 1 JSON metadata files.
-2025-03-01 03:06:19,797 - Found 0 JSON metadata files.
-2025-03-01 03:06:20,152 - Found 0 JSON metadata files.
-2025-03-01 03:06:20,328 - Found 0 JSON metadata files.
-2025-03-01 03:06:20,675 - Found 0 JSON metadata files.
-2025-03-01 03:06:21,170 - Found 0 JSON metadata files.
-2025-03-01 03:06:21,597 - Found 0 JSON metadata files.
-2025-03-01 03:06:21,983 - Found 0 JSON metadata files.
-2025-03-01 03:06:22,163 - Found 0 JSON metadata files.
-2025-03-01 03:06:26,374 - Test Error - Logging system is working.
-2025-03-01 03:06:26,926 - Found 232 JSON metadata files.
-2025-03-01 03:06:27,892 - Found 0 JSON metadata files.
-2025-03-01 03:06:28,086 - Found 9 JSON metadata files.
-2025-03-01 03:06:28,270 - Found 1 JSON metadata files.
-2025-03-01 03:06:28,473 - Found 0 JSON metadata files.
-2025-03-01 03:06:28,849 - Found 0 JSON metadata files.
-2025-03-01 03:06:29,020 - Found 0 JSON metadata files.
-2025-03-01 03:06:29,320 - Found 0 JSON metadata files.
-2025-03-01 03:06:29,753 - Found 0 JSON metadata files.
-2025-03-01 03:06:30,117 - Found 0 JSON metadata files.
-2025-03-01 03:06:30,560 - Found 0 JSON metadata files.
-2025-03-01 03:06:30,762 - Found 0 JSON metadata files.
+2025-03-04 18:32:30,770 - Test Error - Logging system is working.
+2025-03-04 18:32:31,238 - Found 232 JSON metadata files.
+2025-03-04 18:35:57,885 - Integrity Error inserting 0595.pdf: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "doc_keywords_doc_id_keyword_id_key"
+DETAIL:  Key (doc_id, keyword_id)=(8dcef88c-eb24-474c-ab53-6dacbbff3d07, be90d8a9-68a9-4265-b2a0-b2ea8d3ff8c3) already exists.
+
+[SQL: INSERT INTO doc_keywords (id, doc_id, keyword_id) VALUES (%(id)s::UUID, %(doc_id)s::UUID, %(keyword_id)s::UUID)]
+[parameters: {'id': UUID('cbaca0aa-e04d-45b4-a0f4-fe81a8703199'), 'doc_id': UUID('8dcef88c-eb24-474c-ab53-6dacbbff3d07'), 'keyword_id': UUID('be90d8a9-68a9-4265-b2a0-b2ea8d3ff8c3')}]
+(Background on this error at: https://sqlalche.me/e/20/gkpj)
