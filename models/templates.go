@@ -72,6 +72,9 @@ func NewTemplate() *Templates {
 	tmpl["suggestions"] = template.Must(template.ParseFiles(
 		"views/suggestions.html",
 	))
+	tmpl["test"] = template.Must(template.ParseFiles(
+		"views/test.html",
+	))
 
 	return &Templates{
 		templates: tmpl,
