@@ -4,18 +4,12 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"os"
-	"strings"
 
 	"github.com/labstack/echo/v4"
 )
 
-type TemplatesNew struct {
-	templates map[string]*Template
-}
-
 type Templates struct {
-	templates map[string]*template.Template
+	templates map[string]*Template
 }
 
 type Template struct {
@@ -23,6 +17,7 @@ type Template struct {
 	tmpl *template.Template
 }
 
+// Parses text into the given template
 func (t *Template) Parse(text string) (*Template, error) {
 	tmpl, err := t.tmpl.Parse(text)
 	if err != nil {
@@ -32,6 +27,7 @@ func (t *Template) Parse(text string) (*Template, error) {
 	return t, nil
 }
 
+// Executes the template to the given writer
 func (t *Template) Execute(w io.Writer, data interface{}) error {
 	err := t.tmpl.Execute(w, data)
 	if err != nil {
@@ -40,6 +36,7 @@ func (t *Template) Execute(w io.Writer, data interface{}) error {
 	return nil
 }
 
+// Executes the specified named template to the given io.Writer
 func (t *Template) ExecuteTemplate(w io.Writer, name string, data interface{}) error {
 	err := t.tmpl.ExecuteTemplate(w, name, data)
 	if err != nil {
@@ -48,11 +45,13 @@ func (t *Template) ExecuteTemplate(w io.Writer, name string, data interface{}) e
 	return nil
 }
 
+// Defines a new template to associate with the given template
 func (t *Template) New(name string) *Template {
 	t.tmpl = t.tmpl.New(name)
 	return t
 }
 
+// Parses files into the given template.
 func (t *Template) ParseFiles(fileNames ...string) (*Template, error) {
 	_, err := t.tmpl.ParseFiles(fileNames...)
 	if err != nil {
@@ -61,16 +60,19 @@ func (t *Template) ParseFiles(fileNames ...string) (*Template, error) {
 	return t, nil
 }
 
+// Creates a new template with no content associated with it
 func New(name string) *Template {
 	t := &Template{name: name, tmpl: template.New(name)}
 
 	return t
 }
 
+// Returns the name of the Template
 func (t *Template) Name() string {
 	return t.tmpl.Name()
 }
 
+// Wrapper for template functions. Panics if an error occurs.
 func Must(t *Template, err error) *Template {
 	if err != nil {
 		panic(err)
@@ -78,6 +80,7 @@ func Must(t *Template, err error) *Template {
 	return t
 }
 
+// Returns the specified template if it exists, otherwise returns nil
 func (t *Template) Lookup(name string) *Template {
 	tmpl := t.tmpl.Lookup(name)
 	if tmpl != nil {
@@ -86,6 +89,7 @@ func (t *Template) Lookup(name string) *Template {
 	return nil
 }
 
+// Wrapper function for parsing templates. Panics if it encounters an error
 func (t *Template) Must(err error) *Template {
 	if err != nil {
 		panic(err)
@@ -93,54 +97,30 @@ func (t *Template) Must(err error) *Template {
 	return t
 }
 
+// Wrapper for parsing files. Panics if an error occurs
 func (t *Template) MustParseFiles(fileNames ...string) *Template {
 	return Must(t.ParseFiles(fileNames...))
 }
 
-func splitAtColon(input string) (string, string, bool) {
-	// Check if there's a colon in the string
-	if strings.Contains(input, ":") {
-		// Split the string at the first colon
-		parts := strings.SplitN(input, ":", 2)
-		return parts[0], parts[1], true
-	}
-	// Return false if there's no colon
-	return input, "", false
-}
-
-func (t *TemplatesNew) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	group, part, usingSubTemplate := splitAtColon(name)
-	tmpl, ok := t.templates[group]
+func (t *Templates) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	tmpl, ok := t.templates[name]
 	if !ok {
 		return fmt.Errorf("template %s not found", name)
 	}
 
-	// usingSubTemplate is when we want to use a specific block within a template
-	// For example the sidebar block within the results-list
-	// We would pass in a name like results:sidebar
-	if usingSubTemplate {
-		err := tmpl.ExecuteTemplate(w, part, data)
-		if err != nil {
-			return fmt.Errorf("failed to render sub template %s: %w", name, err)
-		}
-	} else {
-		err := tmpl.Execute(w, data)
-		if err != nil {
-			return fmt.Errorf("failed to render template %s: %w", name, err)
-		}
+	err := tmpl.Execute(w, data)
+	if err != nil {
+		return fmt.Errorf("failed to render template %s: %w", name, err)
 	}
 
 	return nil
 }
 
-func NewTemplate() *TemplatesNew {
+func NewTemplate() *Templates {
 	tmpl := make(map[string]*Template)
-	tmpls := &TemplatesNew{
+	tmpls := &Templates{
 		templates: tmpl,
 	}
-	// templs := &Templates{
-	// 	templates: make(map[string]*template.Template),
-	// }
 
 	tmpls.RegisterTemplate(
 		New("index").
@@ -179,11 +159,6 @@ func NewTemplate() *TemplatesNew {
 			),
 	)
 
-	defined := tmpls.templates["results"].tmpl.DefinedTemplates()
-	fmt.Println(defined)
-	fmt.Println(tmpls.templates["results"].Name())
-	tmpls.templates["results"].Execute(os.Stdout, nil)
-
 	tmpls.RegisterTemplate(
 		New("suggestions").
 			ParseResponse(
@@ -191,60 +166,34 @@ func NewTemplate() *TemplatesNew {
 			),
 	)
 
-	for k, v := range tmpls.templates {
-		fmt.Println(k, v)
-	}
-
-	// tmpls.registerResponse("index", []string{
-	// 	"views/index.html",
-	// 	"views/home.html",
-	// 	"views/components/searchbar.html",
-	// 	"views/suggestions.html",
-	// })
-	// tmpls.registerTitle("index", "Better Evidence Project - Home")
-	// tmpls.registerResponse("search-standalone", []string{
-	// 	"views/index.html",
-	// 	"views/search-home.html",
-	// 	"views/components/searchbar.html",
-	// 	"views/suggestions.html",
-	// 	"views/search.html",
-	// 	"views/components/skeleton.html",
-	// })
-	// tmpls.registerResponse("search", []string{
-	// 	"views/search.html",
-	// 	"views/components/searchbar.html",
-	// 	"views/suggestions.html",
-	// 	"views/components/skeleton.html",
-	// })
-	// tmpls.registerResponse("results", []string{
-	// 	"views/results.html",
-	// 	"views/sidecolumn.html",
-	// 	"views/components/searchbar.html",
-	// 	"views/suggestions.html",
-	// })
-	// tmpls.registerResponse("suggestions", []string{
-	// 	"views/suggestions.html",
-	// })
+	tmpls.RegisterTemplate(
+		New("results-container").
+			ParsePartial("views/results.html", "results-container"),
+	)
 
 	return tmpls
 }
 
-func (tmpls *TemplatesNew) RegisterTemplate(t *Template) {
+// Registers a Template to the template map
+func (tmpls *Templates) RegisterTemplate(t *Template) {
 	fmt.Printf("registered %s\n", t.Name())
 	tmpls.templates[t.name] = t
 }
 
-func (tmpls *TemplatesNew) MustRegisterTemplate(t *Template, err error) {
+// Wrapper for registering a template, simply panics on an error
+func (tmpls *Templates) MustRegisterTemplate(t *Template, err error) {
 	tmpls.RegisterTemplate(Must(t, err))
 }
 
+// Adds a "title" template to the Template
+// Intended for setting the HTML header title, useful for Pages
 func (t *Template) WithTitle(title string) *Template {
-	tmpl := template.New("")
 	t.New(title).Parse(fmt.Sprintf(`{{define "title"}}%s{{end}}`, title))
-	fmt.Printf(tmpl.DefinedTemplates())
 	return t
 }
 
+// ParseResponse parses a collection of files and returns a template
+// Intended for larger responses from HTMX, with multiple templates
 func (t *Template) ParseResponse(fileNames ...string) *Template {
 	_, err := t.ParseFiles(fileNames...)
 	if err != nil {
@@ -269,36 +218,12 @@ func (t *Template) ParsePage(page string) *Template {
 	return t
 }
 
-func (t *Template) ParsePartial(partial string, partialFile string) *Template {
-	t, err := t.ParseFiles(partialFile)
+// ParsePartial parses a file and returns a single named template from that file
+func (t *Template) ParsePartial(partialFile string, partial string) *Template {
+	_, err := t.ParseFiles(partialFile)
 	if err != nil {
 		fmt.Printf("error parsing template: %q", err)
 	}
 	content := t.Lookup(partial)
 	return content
-}
-
-// Registers a template by parsing a list of templates together
-func (tmpls *Templates) registerResponse(key string, files []string) {
-	tmpls.templates[key] = template.Must(template.ParseFiles(files...))
-}
-
-// Registers a page using the base HTML template base.html.
-func (tmpls *Templates) registerPage(key string, partialFile string) {
-	t, _ := template.New(key).Parse(fmt.Sprintf(`{{block "base" .}}{{end}}`))
-	t, err := t.New("base").ParseFiles("views/base.html", partialFile)
-	if err != nil {
-		fmt.Printf("tmpl err %q\n", err)
-	}
-	tmpls.templates[key] = t
-}
-
-// Registers a key-accessible template associated with a template defined in the given partialFile
-func (tmpls *Templates) registerPartial(key string, partial string, partialFile string) {
-	t, err := template.ParseFiles(partialFile)
-	if err != nil {
-		fmt.Printf("error parsing template: %q", err)
-	}
-	content := t.Lookup(partial)
-	tmpls.templates[key] = content
 }
