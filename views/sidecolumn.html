@@ -1,91 +1,44 @@
-{{ define "sidecolumn" }}
-<aside id="sidecolumn" class="mx-10 w-64 bg-white">
-  <form
-          hx-post="/filters"
-          hx-trigger="click from:#apply-filters-btn"
-          hx-target="#results-content-container"
-          hx-include="#searchbar"
-          hx-swap="innerHTML">
-    <div class="rounded-md overflow-hidden">
-      {{ range $index, $filter := .Filters }}
-      <div id="accordion-{{ $index }}" class="border-b">
-        <!-- Accordion Header -->
-        <button
-                type="button"
-                id="accordion-button-{{ $index }}"
-                aria-expanded="false"
-                aria-controls="accordion-body-{{ $index }}"
-                class="w-full text-left"
-                onclick="toggleAccordion('{{ $index }}')">
-          <div id="accordion-heading-{{ $index }}" class="p-4 bg-gray-100 hover:bg-gray-200">
-            <div class="flex items-center justify-between">
-              <span class="text-black font-bold">{{ $filter.Name }}</span>
-              <img
-                      src="svg/chevron-down.svg"
-                      alt="Expand"
-                      class="w-4 h-4 transition-transform duration-300">
-            </div>
-          </div>
-        </button>
+{{define "sidecolumn"}}
+<aside id="sidecolmn" class="mx-10 w-64 px-4">
+	<form
+			hx-post="/filters"
+			hx-trigger="click from:#apply-filters-btn"
+			hx-target="#results-content-container"
+			hx-include="#searchbar"
+			hx-swap="innerHTML"
+	>
+		{{ range $index, $filter := .Filters }}
+		<details class="mb-4 border rounded-lg overflow-hidden group/filter">
+			<summary class="text-base select-none p-3 bg-gray-100 hover:bg-gray-200 flex justify-between items-center cursor-pointer">
+				<p class="font-medium">{{ $filter.Name }}</p>
+				<svg class="w-4 h-4 transition-transform group-open/filter:rotate-90" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+					<path d="M12.95 10.707l.707-.707L8 4.343 6.586 5.757 10.828 10l-4.242 4.243L8 15.657l4.95-4.95z"/>
+				</svg>
+			</summary>
+			<div class="bg-white p-2 flex flex-col divide-y divide-gray-200">
+				{{ range $optionIndex, $option := $filter.Options }}
+				<label class="flex items-center p-2 cursor-pointer hover:bg-blue-50 text-sm">
+					<input
+							type="checkbox"
+							class="mr-2 accent-blue-600"
+							name="filters[{{ $filter.Category }}][]"
+							value="{{ $option.Label }}"
+					>
+					<span class="flex-grow">{{ $option.Label }}</span>
+					<span class="text-xs text-gray-600">({{ $option.Count }})</span>
+				</label>
+				{{ end }}
+			</div>
+		</details>
+		{{ end }}
 
-        <!-- Accordion Body -->
-        <div
-                id="accordion-body-{{ $index }}"
-                role="region"
-                aria-labelledby="accordion-button-{{ $index }}"
-                class="hidden p-4 bg-white">
-          <div class="space-y-2">
-            <!-- Dynamic Content with Checkboxes -->
-            {{ range $optionIndex, $option := $filter.Options }}
-            <div class="flex items-center justify-between">
-              <label for="filter-{{ $index }}-{{ $optionIndex }}" class="flex items-center space-x-2 cursor-pointer">
-                <input
-                        id="filter-{{ $index }}-{{ $optionIndex }}"
-                        type="checkbox"
-                        name="filters[{{ $filter.Category }}][]"
-                        value="{{ $option.Label }}"
-                        class="form-checkbox h-4 w-4 text-blue-600">
-                <span>{{ $option.Label }}</span>
-              </label>
-              <span>{{ $option.Count }}</span>
-            </div>
-            {{ end }}
-          </div>
-        </div>
-      </div>
-      {{ end }}
-    </div>
-    <!-- Apply Filters Button -->
-    <button
-            id="apply-filters-btn"
-            type="submit"
-            class="mt-4 w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">
-      Apply Filters
-    </button>
-  </form>
+		<button
+				id="apply-filters-btn"
+				type="submit"
+				class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition"
+		>
+			Apply Filters
+		</button>
+	</form>
 </aside>
-
-{{ template "accordian-toggle-script" }}
-{{ end }}
-
-{{ define "accordian-toggle-script" }}
-<script>
-  function toggleAccordion(index) {
-    const accordionBody = document.getElementById(`accordion-body-${index}`);
-    const accordionButton = document.getElementById(`accordion-button-${index}`);
-    const isHidden = accordionBody.classList.contains('hidden');
-
-    // Toggle visibility
-    accordionBody.classList.toggle('hidden', !isHidden);
-    accordionBody.classList.toggle('block', isHidden);
-
-    // Update aria-expanded
-    accordionButton.setAttribute('aria-expanded', isHidden);
-
-    // Rotate the arrow icon
-    const img = accordionButton.querySelector('img');
-    img.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-  }
-</script>
-
 {{end}}
