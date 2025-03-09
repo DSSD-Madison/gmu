@@ -1,44 +1,44 @@
 import os
-import logging
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
-from models.models import Document, Region, Author, DocAuthor, Keyword, DocKeyword
+from models.dynamic_models import (
+    DynamicDocument,
+    DynamicRegion,
+    DynamicAuthor,
+    DynamicDocAuthor,
+    DynamicKeyword,
+    DynamicDocKeyword,
+)
+from models.base import engine
+from logs.logger import logger  # Centralized logging
 
 # Ensure logs directory exists
 os.makedirs("logs", exist_ok=True)
 
-# Configure logging properly
-logging.basicConfig(
-    filename="logs/errors.log",
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    filemode="a",
-)
-
-# Test Logging
-logging.info("Test Error - Logging system is working.")
-
-# Setup DB connection
-DATABASE_URL = "postgresql://postgres:R5umUQOEhSp69OrjbnAm@18.205.40.248:5432/postgres"
-engine = create_engine(DATABASE_URL)
+# Initialize Session
 Session = sessionmaker(bind=engine)
-session = Session()
+
+
+def get_or_create(session, model, **kwargs):
+    """Fetch an existing record or create a new one."""
+    instance = session.query(model).filter_by(**kwargs).first()
+    if not instance:
+        instance = model(**kwargs)
+        session.add(instance)
+        session.commit()
+    return instance
 
 
 def insert_document(data):
-    """Inserts a document into the database."""
+    """Inserts a document and its related data into the database."""
+    session = Session()
     try:
-        # Ensure region exists or create
+        # Ensure region exists
         region_name = data.get("Attributes", {}).get("Region", ["Unknown"])[0]
-        region = session.query(Region).filter_by(name=region_name).first()
-        if not region:
-            region = Region(name=region_name)
-            session.add(region)
-            session.commit()
+        region = get_or_create(session, DynamicRegion, name=region_name)
 
         # Insert document
-        document = Document(
+        document = DynamicDocument(
             file_name=data["DocumentId"][0],
             title=data["Title"],
             abstract="",
@@ -54,34 +54,24 @@ def insert_document(data):
 
         # Insert authors
         for author_name in data["Attributes"].get("_authors", []):
-            author = session.query(Author).filter_by(name=author_name).first()
-            if not author:
-                author = Author(name=author_name)
-                session.add(author)
-                session.commit()
-            session.add(DocAuthor(doc_id=document.id, author_id=author.id))
-            session.commit()
+            author = get_or_create(session, DynamicAuthor, name=author_name)
+            session.add(DynamicDocAuthor(doc_id=document.id, author_id=author.id))
 
         # Insert keywords
         for keyword_text in data["Attributes"].get("Subject_Keywords", []):
-            keyword = session.query(Keyword).filter_by(keyword=keyword_text).first()
-            if not keyword:
-                keyword = Keyword(keyword=keyword_text)
-                session.add(keyword)
-                session.commit()
-            session.add(DocKeyword(doc_id=document.id, keyword_id=keyword.id))
-            session.commit()
+            keyword = get_or_create(session, DynamicKeyword, keyword=keyword_text)
+            session.add(DynamicDocKeyword(doc_id=document.id, keyword_id=keyword.id))
 
-        print(f"Successfully inserted: {data['DocumentId'][0]}")
+        session.commit()
+        logger.info(f"✅ Successfully inserted: {data['DocumentId'][0]}")
 
     except IntegrityError as ie:
         session.rollback()
-        logging.info(f"Integrity Error inserting {data['DocumentId'][0]}: {ie}")
-        print(
-            f"Integrity error inserting {data['DocumentId'][0]}. Check logs/errors.log"
-        )
+        logger.warning(f"⚠️ Integrity Error inserting {data['DocumentId'][0]}: {ie}")
 
     except Exception as e:
         session.rollback()
-        logging.info(f"Error inserting {data['Title']}: {e}")
-        print(f"Error inserting {data['DocumentId'][0]}. Check logs/errors.log")
+        logger.exception(f"❌ Error inserting {data['DocumentId'][0]}: {e}")
+
+    finally:
+        session.close()
