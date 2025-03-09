@@ -5,12 +5,20 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Database Configuration
-DATABASE_URL = os.getenv(
-    "AWS_DATABASE_URL", "postgresql://postgres:password@localhost/gmu_test_dev_db"
-)
+LOCAL_DATABASE_URL = "postgresql://postgres:password@localhost/gmu_test_dev_db"
+# Use a separate test database when running tests
+if os.getenv("TEST_MODE"):
+    DATABASE_URL = LOCAL_DATABASE_URL
+else:
+    DATABASE_URL = os.getenv("AWS_DATABASE_URL", LOCAL_DATABASE_URL)
 
 # Logging Configuration
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")  # Can be DEBUG, INFO, WARNING, ERROR
 
+# AWS Credentials
+AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+
 # Batch Processing
-BATCH_SIZE = int(os.getenv("BATCH_SIZE", "100"))  # Number of records per batch
+S3_BATCH_SIZE = int(os.getenv("BATCH_SIZE", "100"))  # Number of records per batch

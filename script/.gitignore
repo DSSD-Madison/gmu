@@ -1,3 +1,5 @@
 /venv
 /trash
 /docs
+/logs
+*.DS_Store
