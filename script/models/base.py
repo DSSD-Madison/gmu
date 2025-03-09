@@ -1,10 +1,16 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker, declarative_base
+from logs.logger import logger  # Centralized logging
+from config import DATABASE_URL
 
-# Setup Database Connection
-DATABASE_URL = "postgresql://postgres:password@localhost/gmu_test_dev_db"
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(bind=engine)
+# Initialize SQLAlchemy Engine
+try:
+    engine = create_engine(DATABASE_URL, echo=False)
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    metadata = MetaData()
+    Base = declarative_base(metadata=metadata)
 
-# Base Model
-Base = declarative_base()
+    logger.info("✅ Database connection established")
+except Exception as e:
+    logger.error(f"❌ Database connection failed: {e}")
+    raise  # Raise exception to prevent silent failure
