@@ -26,24 +26,35 @@ def list_s3_buckets():
 
 
 def list_s3_files(bucket_name, prefix=""):
-    """Fetches all files from an S3 bucket, optionally filtering by prefix."""
+    """Fetches files from an S3 bucket in batches and yields them."""
     try:
         paginator = s3.get_paginator("list_objects_v2")
-        files = []
+        batch_count = 0
 
         for page in paginator.paginate(
             Bucket=bucket_name,
             Prefix=prefix,
-            PaginationConfig={"MaxItems": S3_BATCH_SIZE},
+            PaginationConfig={"PageSize": S3_BATCH_SIZE},
         ):
-            files.extend(page.get("Contents", []))
+            batch_files = [
+                f["Key"] for f in page.get("Contents", []) if f["Key"].endswith(".json")
+            ]
 
-        file_keys = [f["Key"] for f in files]
-        logger.info(f"✅ Found {len(file_keys)} files in bucket '{bucket_name}'")
-        return file_keys
+            batch_count += 1
+            logger.info(
+                f"✅ Batch {batch_count}: Found {len(batch_files)} JSON files in bucket '{bucket_name}'"
+            )
+
+            if batch_files:
+                yield batch_files  # Process each batch immediately
+
+        logger.info(
+            f"✅ Finished processing {batch_count} batches in bucket '{bucket_name}'"
+        )
+
     except (BotoCoreError, ClientError) as e:
         logger.error(f"❌ Error listing files in {bucket_name}: {e}")
-        return []
+        yield []
 
 
 def fetch_json_from_s3(bucket_name, file_key):

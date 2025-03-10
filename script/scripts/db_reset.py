@@ -1,13 +1,13 @@
 import sys
 import os
-import logging
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import text
+
+# Add the project root directory to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from models.base import engine
 from logs.logger import logger  # Centralized logging
-
-# Ensure parent directory is accessible
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Initialize database session
 Session = sessionmaker(bind=engine)
