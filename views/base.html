@@ -1,8 +1,9 @@
 <!-- Page Boilerplate -->
+{{define "base"}}
 <!DOCTYPE html>
 <html lang="en" class="overscroll-none">
   <head>
-    <title>{{block "title" .}}Better Evidence Project{{end}}</title>
+	  <title>{{block "title" .}}Better Evidence Project{{end}}</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="/images/logo.ico" type="image/x-icon">
@@ -16,7 +17,8 @@
   </head>
   <body class="m-0">
     <div id="root">
-      {{ block "home" . }} Default content {{ end }}
+		{{block "content" .}}Better Evidence Project{{end}}
     </div>
   </body>
 </html>
+{{end}}
