@@ -126,7 +126,7 @@ func MakeQuery(query string, filters map[string][]string) KendraResults {
 
 	// TODO: this needs to be fixed to a proper error
 	if err != nil {
-		log.Printf("Kendra Query Failed %+filterCategory", err)
+		log.Printf("Kendra Query Failed %q", err)
 	}
 
 	results := queryOutputToResults(*out)
