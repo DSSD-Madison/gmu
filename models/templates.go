@@ -210,6 +210,7 @@ func NewTemplate() *Templates {
 				"views/components/searchbar.html",
 				"views/suggestions.html",
 				"views/sidecolumn.html",
+				"views/components/pagination.html",
 			),
 	)
 

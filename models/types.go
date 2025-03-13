@@ -12,10 +12,12 @@ type KendraResult struct {
 }
 
 type KendraResults struct {
-	Results map[string]KendraResult
-	Query   string
-	Count   int
-	Filters []FilterCategory
+	Results     map[string]KendraResult
+	Query       string
+	Count       int
+	CurrentPage int
+	TotalPages  int
+	Filters     []FilterCategory
 }
 
 type KendraSuggestions struct {

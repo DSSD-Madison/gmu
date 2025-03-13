@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 
@@ -27,11 +27,15 @@ func SearchSuggestions(c echo.Context) error {
 
 func Search(c echo.Context) error {
 	query := c.FormValue("query")
-	fmt.Printf("query: %s\n", query)
-	fmt.Printf("resp: %+v\n", c.Request().Header)
+	pageNum := c.FormValue("page")
 
 	if len(query) == 0 {
 		return Home(c)
+	}
+
+	num, err := strconv.Atoi(pageNum)
+	if err != nil {
+		num = 1
 	}
 
 	if len(query) < MinQueryLength {
@@ -43,8 +47,7 @@ func Search(c echo.Context) error {
 	if target == "root" || target == "" {
 		return c.Render(http.StatusOK, "search-standalone", query)
 	} else if target == "results-container" {
-		fmt.Println("results doing")
-		results := models.MakeQuery(query, nil)
+		results := models.MakeQuery(query, nil, num)
 		return c.Render(http.StatusOK, "results", results)
 	} else {
 		return c.Render(http.StatusOK, "search", query)

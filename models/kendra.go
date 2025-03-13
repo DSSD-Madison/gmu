@@ -51,9 +51,9 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 			PageNum: pageNum,
 		})
 		kendraResults.Results[res.Title] = res
-
-		kendraResults.Count = int(*out.TotalNumberOfResults)
 	}
+
+	kendraResults.Count = int(*out.TotalNumberOfResults)
 
 	filterNamesMap := map[string]string{
 		"_authors":         "Authors",
@@ -84,7 +84,7 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	return kendraResults
 }
 
-func MakeQuery(query string, filters map[string][]string) KendraResults {
+func MakeQuery(query string, filters map[string][]string, pageNum int) KendraResults {
 	kendraFilters := types.AttributeFilter{
 		AndAllFilters: make([]types.AttributeFilter, len(filters)),
 	}
@@ -117,10 +117,12 @@ func MakeQuery(query string, filters map[string][]string) KendraResults {
 		}
 		andAllIndex += 1
 	}
+	var page int32 = 2
 	kendraQuery := kendra.QueryInput{
 		AttributeFilter: &kendraFilters,
 		IndexId:         &indexId,
 		QueryText:       &query,
+		PageNumber:      &page,
 	}
 	out, err := client.Query(context.TODO(), &kendraQuery)
 
@@ -130,6 +132,8 @@ func MakeQuery(query string, filters map[string][]string) KendraResults {
 	}
 
 	results := queryOutputToResults(*out)
+	results.CurrentPage = pageNum
+	results.TotalPages = (results.Count + 9) / 10
 	results.Query = query
 	return results
 }
