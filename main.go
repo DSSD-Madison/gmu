@@ -81,7 +81,7 @@ func main() {
 	e.Static("/svg", "static/svg")
 
 	// Renderer
-	e.Renderer = models.NewTemplate()
+	e.Renderer = models.RegisterTemplates()
 
 	// Routes
 	routes.InitRoutes(e)

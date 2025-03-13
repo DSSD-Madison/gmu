@@ -11,14 +11,17 @@ import (
 	"github.com/DSSD-Madison/gmu/models/environment"
 )
 
-var opts = kendra.Options{
+// client is the global Kendra client used in the program.
+var client = kendra.New(kendra.Options{
 	Credentials: environment.Provider(),
 	Region:      environment.Region(),
-}
+})
 
-var client = kendra.New(opts)
+// indexId holds the indexId for the Kendra index.
 var indexId = environment.IndexId()
 
+// queryOutputToResults parses the Kendra query output into KendraResults
+// to be used for displaying the results page.
 func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	kendraResults := KendraResults{
 		Results: make(map[string]KendraResult),
@@ -86,6 +89,7 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	return kendraResults
 }
 
+// MakeQuery builds a query to Kendra.
 func MakeQuery(query string, filters map[string][]string) KendraResults {
 	kendraFilters := types.AttributeFilter{
 		AndAllFilters: make([]types.AttributeFilter, len(filters)),
@@ -136,6 +140,7 @@ func MakeQuery(query string, filters map[string][]string) KendraResults {
 	return results
 }
 
+// querySuggestionsOutputToSuggestions parses Kendra query suggestions into KendraSuggestions.
 func querySuggestionsOutputToSuggestions(out kendra.GetQuerySuggestionsOutput) KendraSuggestions {
 	suggestions := KendraSuggestions{
 		Suggestions: make([]string, 0),
@@ -148,6 +153,7 @@ func querySuggestionsOutputToSuggestions(out kendra.GetQuerySuggestionsOutput) K
 	return suggestions
 }
 
+// GetSuggestions queries Kendra for Suggestions using the provided query.
 func GetSuggestions(query string) (KendraSuggestions, error) {
 	kendraQuery := kendra.GetQuerySuggestionsInput{
 		IndexId:   &indexId,
