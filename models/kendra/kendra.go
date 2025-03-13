@@ -1,4 +1,4 @@
-package models
+package kendra
 
 import (
 	"context"
@@ -8,14 +8,17 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/kendra/types"
 
 	"github.com/DSSD-Madison/gmu/internal"
+	"github.com/DSSD-Madison/gmu/models"
+	"github.com/DSSD-Madison/gmu/models/environment"
 )
 
 var opts = kendra.Options{
-	Credentials: prov,
-	Region:      region,
+	Credentials: models.Provider(),
+	Region:      environment.Region(),
 }
 
 var client = kendra.New(opts)
+var indexId = environment.IndexId()
 
 func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	kendraResults := KendraResults{

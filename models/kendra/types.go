@@ -1,4 +1,4 @@
-package models
+package kendra
 
 type Excerpt struct {
 	Text    string

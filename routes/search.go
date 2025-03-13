@@ -6,7 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/DSSD-Madison/gmu/models"
+	"github.com/DSSD-Madison/gmu/models/kendra"
 )
 
 const MinQueryLength = 3
@@ -17,7 +17,7 @@ func SearchSuggestions(c echo.Context) error {
 	if len(query) == 0 {
 		return nil
 	}
-	suggestions, err := models.GetSuggestions(query)
+	suggestions, err := kendra.GetSuggestions(query)
 	// TODO: add error status code
 	if err != nil {
 		return nil
@@ -44,7 +44,7 @@ func Search(c echo.Context) error {
 		return c.Render(http.StatusOK, "search-standalone", query)
 	} else if target == "results-container" {
 		fmt.Println("results doing")
-		results := models.MakeQuery(query, nil)
+		results := kendra.MakeQuery(query, nil)
 		return c.Render(http.StatusOK, "results", results)
 	} else {
 		return c.Render(http.StatusOK, "search", query)

@@ -6,7 +6,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/DSSD-Madison/gmu/models"
+	"github.com/DSSD-Madison/gmu/models/kendra"
 )
 
 func Filters(c echo.Context) error {
@@ -30,7 +30,7 @@ func Filters(c echo.Context) error {
 		selectedFilters[cleanKey] = values
 	}
 
-	results := models.MakeQuery(query, selectedFilters)
+	results := kendra.MakeQuery(query, selectedFilters)
 
 	return c.Render(http.StatusOK, "results-container", results)
 }

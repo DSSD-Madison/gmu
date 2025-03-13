@@ -3,22 +3,31 @@ package models
 import (
 	"context"
 
+	"github.com/DSSD-Madison/gmu/models/environment"
 	"github.com/aws/aws-sdk-go-v2/aws"
 )
 
 var creds = aws.Credentials{
-	AccessKeyID:     accessKey,
-	SecretAccessKey: secretKey,
+	AccessKeyID:     environment.AccessKey(),
+	SecretAccessKey: environment.SecretKey(),
 }
 
-type Provider struct {
+type provider struct {
 	Credentials aws.Credentials
 }
 
-func (p Provider) Retrieve(ctx context.Context) (aws.Credentials, error) {
+func (p provider) Retrieve(ctx context.Context) (aws.Credentials, error) {
 	return p.Credentials, nil
 }
 
-var prov = Provider{
+func Provider() provider {
+	return prov
+}
+
+func Credentials() aws.Credentials {
+	return creds
+}
+
+var prov = provider{
 	Credentials: creds,
 }
