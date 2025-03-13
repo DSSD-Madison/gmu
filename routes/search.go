@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -27,9 +26,6 @@ func SearchSuggestions(c echo.Context) error {
 
 func Search(c echo.Context) error {
 	query := c.FormValue("query")
-	fmt.Printf("query: %s\n", query)
-	fmt.Printf("resp: %+v\n", c.Request().Header)
-
 	if len(query) == 0 {
 		return Home(c)
 	}
@@ -43,7 +39,6 @@ func Search(c echo.Context) error {
 	if target == "root" || target == "" {
 		return c.Render(http.StatusOK, "search-standalone", query)
 	} else if target == "results-container" {
-		fmt.Println("results doing")
 		results := kendra.MakeQuery(query, nil)
 		return c.Render(http.StatusOK, "results", results)
 	} else {
