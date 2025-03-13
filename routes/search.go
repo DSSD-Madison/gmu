@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync/atomic"
+	"time"
 
 	"github.com/labstack/echo/v4"
 
@@ -30,7 +32,37 @@ func SearchSuggestions(c echo.Context) error {
 	return models.Render(c, http.StatusOK, components.Suggestions(suggestions))
 }
 
+type Job struct {
+	ID       int
+	Response chan models.KendraResults
+}
+
+
+const maxWorkers = 2
+
+var (
+	activeWorkers int32
+	semaphore     = make(chan struct{}, maxWorkers)
+)
+
+func worker(job Job, query string, filters url.Values, num int) {
+	defer func() {
+		<-semaphore
+		atomic.AddInt32(&activeWorkers, -1)
+	}()
+
+	// fmt.Printf("worker processing job: %d", job.ID)
+	// time.Sleep(2 * time.Second)
+	// result := fmt.Sprintf("Job %d completed!", job.ID)
+	// fmt.Printf("worker finished job %d\n", job.ID)
+
+	results := models.MakeQuery(query, filters, num)
+
+	job.Response <- results
+}
+
 func Search(c echo.Context, db_querier *db.Queries) error {
+
 	query := c.FormValue("query")
 	pageNum := c.FormValue("page")
 
@@ -66,6 +98,7 @@ func Search(c echo.Context, db_querier *db.Queries) error {
 	if len(query) < MinQueryLength {
 		return echo.NewHTTPError(http.StatusBadRequest, "Query too short")
 	}
+
 	// Check if the request is coming from HTMX
 	target := c.Request().Header.Get("HX-Target")
 
@@ -102,11 +135,22 @@ func Search(c echo.Context, db_querier *db.Queries) error {
 	} else {
 		return models.Render(c, http.StatusOK, components.SearchHome(models.KendraResults{UrlData: urlData}))
 	}
-
 }
 
 func getResults(c echo.Context, queries *db.Queries, query string, filters url.Values, num int) (models.KendraResults, error) {
-	results := models.MakeQuery(query, filters, num)
+	jobID := time.Now().UnixNano()
+	respChan := make(chan models.KendraResults, 1)
+	job := Job{
+		ID:       int(jobID),
+		Response: respChan,
+	}
+
+	semaphore <- struct{}{}
+	atomic.AddInt32(&activeWorkers, 1)
+
+	go worker(job, query, filters, num)
+
+	results := <-respChan
 	err := db_helpers.AddImagesToResults(results, c, queries)
 	if err != nil {
 		return models.KendraResults{}, err

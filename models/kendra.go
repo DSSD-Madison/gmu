@@ -11,8 +11,9 @@ import (
 )
 
 var opts = kendra.Options{
-	Credentials: prov,
-	Region:      region,
+	Credentials:      prov,
+	Region:           region,
+	RetryMaxAttempts: 10,
 }
 
 var client = kendra.New(opts)
