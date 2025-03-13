@@ -8,12 +8,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/kendra/types"
 
 	"github.com/DSSD-Madison/gmu/internal"
-	"github.com/DSSD-Madison/gmu/models"
 	"github.com/DSSD-Madison/gmu/models/environment"
 )
 
 var opts = kendra.Options{
-	Credentials: models.Provider(),
+	Credentials: environment.Provider(),
 	Region:      environment.Region(),
 }
 

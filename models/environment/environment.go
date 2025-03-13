@@ -1,8 +1,11 @@
+// Environment provides access to the current program's environment
 package environment
 
 import (
+	"context"
 	"os"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/joho/godotenv"
 )
 
@@ -58,3 +61,28 @@ var env = func() environment {
 		indexId:   os.Getenv("INDEX_ID"),
 	}
 }()
+
+var creds = aws.Credentials{
+	AccessKeyID:     AccessKey(),
+	SecretAccessKey: SecretKey(),
+}
+
+type provider struct {
+	Credentials aws.Credentials
+}
+
+func (p provider) Retrieve(ctx context.Context) (aws.Credentials, error) {
+	return p.Credentials, nil
+}
+
+func Provider() provider {
+	return prov
+}
+
+func Credentials() aws.Credentials {
+	return creds
+}
+
+var prov = provider{
+	Credentials: creds,
+}
