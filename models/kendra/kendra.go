@@ -23,17 +23,21 @@ var indexId = environment.IndexId()
 // queryOutputToResults parses the Kendra query output into KendraResults
 // to be used for displaying the results page.
 func queryOutputToResults(out kendra.QueryOutput) KendraResults {
-	kendraResults := KendraResults{
-		Results: make(map[string]KendraResult),
-		Filters: make([]FilterCategory, len(out.FacetResults)),
+	return KendraResults{
+		Results: processResults(out.ResultItems),
+		Filters: processFilters(out.FacetResults),
+		Count:   int(*out.TotalNumberOfResults),
 	}
+}
 
-	for _, item := range out.ResultItems {
+func processResults(resultItems []types.QueryResultItem) (results map[string]KendraResult) {
+	results = make(map[string]KendraResult)
+	for _, item := range resultItems {
 		title := internal.TrimExtension(*item.DocumentTitle.Text)
 
 		var res KendraResult
 
-		if result, ok := kendraResults.Results[title]; !ok {
+		if result, ok := results[title]; !ok {
 			res = KendraResult{
 				Title:    title,
 				Excerpts: make([]Excerpt, 0),
@@ -55,11 +59,13 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 			Text:    *item.DocumentExcerpt.Text,
 			PageNum: pageNum,
 		})
-		kendraResults.Results[res.Title] = res
-
-		kendraResults.Count = int(*out.TotalNumberOfResults)
+		results[res.Title] = res
 	}
+	return
+}
 
+func processFilters(facetResults []types.FacetResult) (filters []FilterCategory) {
+	filters = make([]FilterCategory, len(facetResults))
 	filterNamesMap := map[string]string{
 		"_authors":         "Authors",
 		"_file_type":       "File Type",
@@ -67,7 +73,7 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 		"Subject_Keywords": "Subject Keywords",
 	}
 
-	for i, facetRes := range out.FacetResults {
+	for i, facetRes := range facetResults {
 		Name, ok := filterNamesMap[*facetRes.DocumentAttributeKey]
 		if !ok {
 			Name = *facetRes.DocumentAttributeKey
@@ -83,10 +89,9 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 				Count: *attribute.Count,
 			}
 		}
-		kendraResults.Filters[i] = filterCategory
+		filters[i] = filterCategory
 	}
-
-	return kendraResults
+	return
 }
 
 // MakeQuery builds a query to Kendra.
