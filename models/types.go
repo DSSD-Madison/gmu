@@ -12,15 +12,16 @@ type KendraResult struct {
 }
 
 type KendraResults struct {
-	Results     map[string]KendraResult
-	Query       string
-	Count       int
-	CurrentPage int
-	HasPrev     bool
-	HasNext     bool
-	PrevPage    int
-	NextPage    int
-	Filters     []FilterCategory
+	Results      map[string]KendraResult
+	Query        string
+	Count        int
+	CurrentPage  int
+	HasPrev      bool
+	HasNext      bool
+	PrevPage     int
+	NextPage     int
+	Filters      []FilterCategory
+	IsStoringUrl bool
 }
 
 type KendraSuggestions struct {
@@ -45,7 +46,8 @@ type Filter struct {
 }
 
 type UrlData struct {
-	Query   string
-	Filters []Filter
-	Page    int
+	IsStoringUrl bool
+	Query        string
+	Filters      []Filter
+	Page         int
 }

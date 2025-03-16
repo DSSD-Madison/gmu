@@ -5,12 +5,6 @@
     <div id="formwrapper" class="col-start-1 row-start-1 z-2 flex justify-center items-center w-full" hx-indicator="#indicator">
         <form hx-get="/search" hx-target="#results-container" hx-swap="innerHTML" hx-trigger="load, submit" class="w-3/8" hx-headers='{"init": "true"}'>
 			{{template "searchbar" .}}
-			{{ range $_, $filter := .Filters }}
-			{{ range $filter.SelectedFilters }}
-			<input type="hidden" name="{{ $filter.Name }}" value="{{ . }}">
-			{{ end }}
-			{{ end }}
-			<input type="hidden" name="page" value="{{.Page}}">
         </form>
     </div>
     <div id="results-container" class="min-h-screen w-full px-4">

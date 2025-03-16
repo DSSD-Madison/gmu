@@ -29,6 +29,14 @@ hover:[&_input]:rounded-t-3xl
 	   hx-swap="innerHTML"
 	   value="{{ .Query }}"
 >
+{{ if .IsStoringUrl }}
+{{ range $_, $filter := .Filters }}
+{{ range $filter.SelectedFilters }}
+<input type="hidden" name="{{ $filter.Name }}" value="{{ . }}">
+{{ end }}
+{{ end }}
+<input type="hidden" name="page" value="{{.Page}}">
+{{ end }}
 {{ end }}
 
 <!-- Standard Searchbar -->

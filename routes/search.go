@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -54,12 +53,11 @@ func Search(c echo.Context) error {
 		})
 	}
 
-	fmt.Println(filters)
-
 	urlData := models.UrlData{
-		Query:   query,
-		Filters: filterList,
-		Page:    num,
+		Query:        query,
+		Filters:      filterList,
+		Page:         num,
+		IsStoringUrl: true,
 	}
 	if len(query) < MinQueryLength {
 		return echo.NewHTTPError(http.StatusBadRequest, "Query too short")
@@ -70,6 +68,10 @@ func Search(c echo.Context) error {
 	if target == "root" || target == "" {
 		return c.Render(http.StatusOK, "search-standalone", urlData)
 	} else if target == "results-container" {
+		if len(filterList) == 0 {
+			results := models.MakeQuery(query, filters, num)
+			return c.Render(http.StatusOK, "results", results)
+		}
 		tempResults := models.MakeQuery(query, nil, 1)
 
 		results := models.MakeQuery(query, filters, num)
