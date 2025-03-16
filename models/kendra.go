@@ -117,7 +117,7 @@ func MakeQuery(query string, filters map[string][]string, pageNum int) KendraRes
 		}
 		andAllIndex += 1
 	}
-	var page int32 = 2
+	page := int32(pageNum)
 	kendraQuery := kendra.QueryInput{
 		AttributeFilter: &kendraFilters,
 		IndexId:         &indexId,
@@ -130,10 +130,15 @@ func MakeQuery(query string, filters map[string][]string, pageNum int) KendraRes
 	if err != nil {
 		log.Printf("Kendra Query Failed %+filterCategory", err)
 	}
-
 	results := queryOutputToResults(*out)
+
+	totalPages := (results.Count + 9) / 10
 	results.CurrentPage = pageNum
-	results.TotalPages = (results.Count + 9) / 10
+	results.PrevPage = pageNum - 1
+	results.HasPrev = pageNum > 1
+	results.NextPage = pageNum + 1
+	results.HasNext = pageNum < totalPages
+	
 	results.Query = query
 	return results
 }

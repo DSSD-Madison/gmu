@@ -1,13 +1,14 @@
 <!-- Results Section -->
 {{ block "results" . }}
-<div id="grid-container" class="pt-10 pr-10 grid grid-cols-[1fr_3fr] bg-white w-full">
+<div id="grid-container" class="pt-10 pr-10 grid grid-cols-[1fr_3fr] grid-rows-[auto_1fr_auto] bg-white w-full gap-4">
     {{ template "sidecolumn" . }}
-    {{ template "pagination" . }}
-    {{ template "results-container" . }}
+    <div id="results-and-pagination">
+        {{ template "results-and-pagination" . }}
+    </div>
 </div>
 <!-- This is swapped in to replace the input OOB to update the contents of the input when a suggestion is clicked-->
 
-{{template "searchbar-oob" .Query}}
+{{template "searchbar-oob" .}}
 
 <!--This is swapped in to clear the contents of the suggestions dropdown when a suggestion is clicked-->
 {{ template "suggestions-container-oob" . }}
@@ -19,6 +20,13 @@
 		{{ template "result-card" $value }}
     {{ end }}
 </div>
+{{ end }}
+
+{{ define "results-and-pagination" }}
+    {{ template "results-container" . }}
+    <div class="col-span-2">
+        {{ template "pagination" . }}
+    </div>
 {{ end }}
 
 <!-- Individual Result Partial -->
@@ -42,4 +50,38 @@
     </div>
 </div>
 {{end}}
+
+{{ define "pagination" }}
+<div class="flex justify-center items-center space-x-2 mt-4 p-4 bg-gray-100 rounded-lg shadow">
+    {{ if .HasPrev }}
+    <button
+            hx-get="/search"
+            hx-push-url="true"
+            hx-target="#results-and-pagination"
+            hx-include="#searchbar, #sidecolumn"
+            hx-vals='{"page": "{{ .PrevPage }}"}'
+            hx-swap="innerHTML"
+            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+    >
+        Previous
+    </button>
+    {{ end }}
+
+    <span class="px-4 py-2 bg-gray-300 rounded">{{ .CurrentPage }}</span>
+
+    {{ if .HasNext }}
+    <button
+            hx-get="/search"
+            hx-push-url="true"
+            hx-target="#results-and-pagination"
+            hx-include="#searchbar, #sidecolumn"
+            hx-vals='{"page": "{{ .NextPage }}"}'
+            hx-swap="innerHTML"
+            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+    >
+        Next
+    </button>
+    {{ end }}
+</div>
+{{ end }}
 

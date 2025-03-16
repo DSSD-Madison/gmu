@@ -226,5 +226,10 @@ func NewTemplate() *Templates {
 			ParsePartial("views/results.html", "results-container"),
 	)
 
+	tmpls.RegisterTemplate(
+		New("results-and-pagination").
+			ParsePartial("views/results.html", "results-and-pagination"),
+	)
+
 	return tmpls
 }

@@ -16,7 +16,10 @@ type KendraResults struct {
 	Query       string
 	Count       int
 	CurrentPage int
-	TotalPages  int
+	HasPrev     bool
+	HasNext     bool
+	PrevPage    int
+	NextPage    int
 	Filters     []FilterCategory
 }
 
@@ -25,12 +28,24 @@ type KendraSuggestions struct {
 }
 
 type FilterOption struct {
-	Label string
-	Count int32
+	Label    string
+	Selected bool
+	Count    int32
 }
 
 type FilterCategory struct {
 	Category string
 	Options  []FilterOption
 	Name     string
+}
+
+type Filter struct {
+	Name            string
+	SelectedFilters []string
+}
+
+type UrlData struct {
+	Query   string
+	Filters []Filter
+	Page    int
 }
