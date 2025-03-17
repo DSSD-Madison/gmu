@@ -10,7 +10,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 
 	"github.com/DSSD-Madison/gmu/internal"
-	"github.com/DSSD-Madison/gmu/models"
+	"github.com/DSSD-Madison/gmu/models/template"
 	"github.com/DSSD-Madison/gmu/routes"
 )
 
@@ -81,7 +81,7 @@ func main() {
 	e.Static("/svg", "static/svg")
 
 	// Renderer
-	e.Renderer = models.NewTemplate()
+	e.Renderer = template.RegisterTemplates()
 
 	// Routes
 	routes.InitRoutes(e)
