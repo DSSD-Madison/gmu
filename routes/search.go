@@ -2,6 +2,7 @@ package routes
 
 import (
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -73,24 +74,10 @@ func Search(c echo.Context) error {
 			return c.Render(http.StatusOK, "results", results)
 		}
 		tempResults := models.MakeQuery(query, nil, 1)
-
 		results := models.MakeQuery(query, filters, num)
-
 		results.Filters = tempResults.Filters
 
-		for i, cat := range results.Filters {
-			if selectedOptions, exists := filters[cat.Category]; exists {
-				for idx, o := range cat.Options {
-					for _, selected := range selectedOptions {
-						if o.Label == selected {
-							results.Filters[i].Options[idx].Selected = true
-							break
-						}
-					}
-				}
-			}
-		}
-
+		selectFilters(filters, &results)
 		return c.Render(http.StatusOK, "results", results)
 	} else if target == "results-content-container" {
 		results := models.MakeQuery(query, filters, num)
@@ -102,4 +89,19 @@ func Search(c echo.Context) error {
 		return c.Render(http.StatusOK, "search", urlData)
 	}
 
+}
+
+func selectFilters(filters url.Values, results *models.KendraResults) {
+	for i, cat := range results.Filters {
+		if selectedOptions, exists := filters[cat.Category]; exists {
+			for idx, o := range cat.Options {
+				for _, selected := range selectedOptions {
+					if o.Label == selected {
+						results.Filters[i].Options[idx].Selected = true
+						break
+					}
+				}
+			}
+		}
+	}
 }

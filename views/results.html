@@ -25,7 +25,7 @@
 {{ define "results-and-pagination" }}
     {{ template "results-container" . }}
     <div class="col-span-2">
-        {{ template "pagination" . }}
+        {{ template "pagination" .PageStatus }}
     </div>
 {{ end }}
 

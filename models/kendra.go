@@ -133,12 +133,15 @@ func MakeQuery(query string, filters map[string][]string, pageNum int) KendraRes
 	results := queryOutputToResults(*out)
 
 	totalPages := (results.Count + 9) / 10
-	results.CurrentPage = pageNum
-	results.PrevPage = pageNum - 1
-	results.HasPrev = pageNum > 1
-	results.NextPage = pageNum + 1
-	results.HasNext = pageNum < totalPages
-	
+
+	results.PageStatus = PageStatus{
+		CurrentPage: pageNum,
+		PrevPage:    pageNum - 1,
+		NextPage:    pageNum + 1,
+		HasPrev:     pageNum > 1,
+		HasNext:     pageNum < totalPages,
+	}
+
 	results.Query = query
 	return results
 }

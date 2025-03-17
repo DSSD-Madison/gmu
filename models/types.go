@@ -11,15 +11,19 @@ type KendraResult struct {
 	Link     string
 }
 
+type PageStatus struct {
+	CurrentPage int
+	HasPrev     bool
+	HasNext     bool
+	PrevPage    int
+	NextPage    int
+}
+
 type KendraResults struct {
 	Results      map[string]KendraResult
 	Query        string
 	Count        int
-	CurrentPage  int
-	HasPrev      bool
-	HasNext      bool
-	PrevPage     int
-	NextPage     int
+	PageStatus   PageStatus
 	Filters      []FilterCategory
 	IsStoringUrl bool
 }
