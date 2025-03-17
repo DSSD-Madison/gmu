@@ -3,7 +3,7 @@
 --
 
 -- Dumped from database version 17.4 (Debian 17.4-1.pgdg120+2)
--- Dumped by pg_dump version 17.4 (Debian 17.4-1.pgdg120+2)
+-- Dumped by pg_dump version 17.4
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -17,6 +17,15 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: postgres
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+ALTER SCHEMA public OWNER TO postgres;
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -26,7 +35,7 @@ SET default_table_access_method = heap;
 --
 
 CREATE TABLE public.authors (
-    id integer NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255) NOT NULL
 );
 
@@ -34,67 +43,60 @@ CREATE TABLE public.authors (
 ALTER TABLE public.authors OWNER TO postgres;
 
 --
+-- Name: doc_authors; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.doc_authors (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    doc_id uuid,
+    author_id uuid
+);
+
+
+ALTER TABLE public.doc_authors OWNER TO postgres;
+
+--
+-- Name: doc_keywords; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.doc_keywords (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    doc_id uuid,
+    keyword_id uuid
+);
+
+
+ALTER TABLE public.doc_keywords OWNER TO postgres;
+
+--
 -- Name: documents; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.documents (
-    id integer NOT NULL,
-    title character varying(255) NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    file_name character varying(255) NOT NULL,
+    title text NOT NULL,
     abstract text,
-    region integer,
     category character varying(100),
     publish_date date,
     source character varying(255),
-    image_id character varying(100),
-    pdf_id character varying(100),
-    orig_link character varying(500),
-    last_modified timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    region_id uuid,
+    s3_file character varying(1024) NOT NULL,
+    s3_file_preview character varying(1024),
+    pdf_link character varying(1024),
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    deleted_at timestamp without time zone
 );
 
 
 ALTER TABLE public.documents OWNER TO postgres;
 
 --
--- Name: documents_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
---
-
-CREATE SEQUENCE public.documents_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.documents_id_seq OWNER TO postgres;
-
---
--- Name: documents_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE public.documents_id_seq OWNED BY public.documents.id;
-
-
---
--- Name: keywordreference; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.keywordreference (
-    article_id integer NOT NULL,
-    keyword_id integer NOT NULL
-);
-
-
-ALTER TABLE public.keywordreference OWNER TO postgres;
-
---
 -- Name: keywords; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.keywords (
-    id integer NOT NULL,
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
     keyword character varying(255) NOT NULL
 );
 
@@ -102,92 +104,23 @@ CREATE TABLE public.keywords (
 ALTER TABLE public.keywords OWNER TO postgres;
 
 --
--- Name: keywords_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: regions; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE SEQUENCE public.keywords_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.keywords_id_seq OWNER TO postgres;
-
---
--- Name: keywords_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE public.keywords_id_seq OWNED BY public.keywords.id;
-
-
---
--- Name: region; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.region (
-    id integer NOT NULL,
+CREATE TABLE public.regions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255) NOT NULL
 );
 
 
-ALTER TABLE public.region OWNER TO postgres;
+ALTER TABLE public.regions OWNER TO postgres;
 
 --
--- Name: region_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: authors authors_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-CREATE SEQUENCE public.region_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.region_id_seq OWNER TO postgres;
-
---
--- Name: region_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE public.region_id_seq OWNED BY public.region.id;
-
-
---
--- Name: writtenby; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.writtenby (
-    article_id integer NOT NULL,
-    author_id integer NOT NULL
-);
-
-
-ALTER TABLE public.writtenby OWNER TO postgres;
-
---
--- Name: documents id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.documents ALTER COLUMN id SET DEFAULT nextval('public.documents_id_seq'::regclass);
-
-
---
--- Name: keywords id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.keywords ALTER COLUMN id SET DEFAULT nextval('public.keywords_id_seq'::regclass);
-
-
---
--- Name: region id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.region ALTER COLUMN id SET DEFAULT nextval('public.region_id_seq'::regclass);
+ALTER TABLE ONLY public.authors
+    ADD CONSTRAINT authors_name_key UNIQUE (name);
 
 
 --
@@ -199,6 +132,46 @@ ALTER TABLE ONLY public.authors
 
 
 --
+-- Name: doc_authors doc_authors_doc_id_author_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.doc_authors
+    ADD CONSTRAINT doc_authors_doc_id_author_id_key UNIQUE (doc_id, author_id);
+
+
+--
+-- Name: doc_authors doc_authors_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.doc_authors
+    ADD CONSTRAINT doc_authors_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: doc_keywords doc_keywords_doc_id_keyword_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.doc_keywords
+    ADD CONSTRAINT doc_keywords_doc_id_keyword_id_key UNIQUE (doc_id, keyword_id);
+
+
+--
+-- Name: doc_keywords doc_keywords_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.doc_keywords
+    ADD CONSTRAINT doc_keywords_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: documents documents_file_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.documents
+    ADD CONSTRAINT documents_file_name_key UNIQUE (file_name);
+
+
+--
 -- Name: documents documents_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -207,11 +180,19 @@ ALTER TABLE ONLY public.documents
 
 
 --
--- Name: keywordreference keywordreference_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: documents documents_s3_file_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.keywordreference
-    ADD CONSTRAINT keywordreference_pkey PRIMARY KEY (article_id, keyword_id);
+ALTER TABLE ONLY public.documents
+    ADD CONSTRAINT documents_s3_file_key UNIQUE (s3_file);
+
+
+--
+-- Name: documents documents_s3_file_preview_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.documents
+    ADD CONSTRAINT documents_s3_file_preview_key UNIQUE (s3_file_preview);
 
 
 --
@@ -231,67 +212,116 @@ ALTER TABLE ONLY public.keywords
 
 
 --
--- Name: region region_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: regions regions_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.region
-    ADD CONSTRAINT region_name_key UNIQUE (name);
-
-
---
--- Name: region region_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.region
-    ADD CONSTRAINT region_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.regions
+    ADD CONSTRAINT regions_name_key UNIQUE (name);
 
 
 --
--- Name: writtenby writtenby_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: regions regions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.writtenby
-    ADD CONSTRAINT writtenby_pkey PRIMARY KEY (article_id, author_id);
+ALTER TABLE ONLY public.regions
+    ADD CONSTRAINT regions_pkey PRIMARY KEY (id);
 
 
 --
--- Name: documents documents_region_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: idx_doc_authors_author_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_doc_authors_author_id ON public.doc_authors USING btree (author_id);
+
+
+--
+-- Name: idx_doc_authors_doc_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_doc_authors_doc_id ON public.doc_authors USING btree (doc_id);
+
+
+--
+-- Name: idx_doc_keywords_doc_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_doc_keywords_doc_id ON public.doc_keywords USING btree (doc_id);
+
+
+--
+-- Name: idx_doc_keywords_keyword_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_doc_keywords_keyword_id ON public.doc_keywords USING btree (keyword_id);
+
+
+--
+-- Name: idx_documents_category; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_documents_category ON public.documents USING btree (category);
+
+
+--
+-- Name: idx_documents_publish_date; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_documents_publish_date ON public.documents USING btree (publish_date);
+
+
+--
+-- Name: idx_regions_name; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_regions_name ON public.regions USING btree (name);
+
+
+--
+-- Name: doc_authors doc_authors_author_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.doc_authors
+    ADD CONSTRAINT doc_authors_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.authors(id) ON DELETE CASCADE;
+
+
+--
+-- Name: doc_authors doc_authors_doc_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.doc_authors
+    ADD CONSTRAINT doc_authors_doc_id_fkey FOREIGN KEY (doc_id) REFERENCES public.documents(id) ON DELETE CASCADE;
+
+
+--
+-- Name: doc_keywords doc_keywords_doc_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.doc_keywords
+    ADD CONSTRAINT doc_keywords_doc_id_fkey FOREIGN KEY (doc_id) REFERENCES public.documents(id) ON DELETE CASCADE;
+
+
+--
+-- Name: doc_keywords doc_keywords_keyword_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.doc_keywords
+    ADD CONSTRAINT doc_keywords_keyword_id_fkey FOREIGN KEY (keyword_id) REFERENCES public.keywords(id) ON DELETE CASCADE;
+
+
+--
+-- Name: documents documents_region_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.documents
-    ADD CONSTRAINT documents_region_fkey FOREIGN KEY (region) REFERENCES public.region(id) ON DELETE SET NULL;
+    ADD CONSTRAINT documents_region_id_fkey FOREIGN KEY (region_id) REFERENCES public.regions(id) ON DELETE SET NULL;
 
 
 --
--- Name: keywordreference keywordreference_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: postgres
 --
 
-ALTER TABLE ONLY public.keywordreference
-    ADD CONSTRAINT keywordreference_article_id_fkey FOREIGN KEY (article_id) REFERENCES public.documents(id) ON DELETE CASCADE;
-
-
---
--- Name: keywordreference keywordreference_keyword_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.keywordreference
-    ADD CONSTRAINT keywordreference_keyword_id_fkey FOREIGN KEY (keyword_id) REFERENCES public.keywords(id) ON DELETE CASCADE;
-
-
---
--- Name: writtenby writtenby_article_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.writtenby
-    ADD CONSTRAINT writtenby_article_id_fkey FOREIGN KEY (article_id) REFERENCES public.documents(id) ON DELETE CASCADE;
-
-
---
--- Name: writtenby writtenby_author_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.writtenby
-    ADD CONSTRAINT writtenby_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.authors(id) ON DELETE CASCADE;
+REVOKE USAGE ON SCHEMA public FROM PUBLIC;
+GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
 --

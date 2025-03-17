@@ -22,8 +22,8 @@
 
 <!-- Individual Result Partial -->
 {{ define "result-card" }}
-<div class="hover:-translate-y-1 hover:scale-103 ease-in-out transition p-4 bg-white rounded-md shadow-md flex items-start space-x-4">
-    <img src="https://placehold.co/120x120/webp" alt="Preview" class="w-24 h-24 object-cover rounded-md">
+<div class="flex items-start p-4 space-x-4 transition ease-in-out bg-white rounded-md shadow-md hover:-translate-y-1 hover:scale-103">
+    <img src="{{ .Image }}" alt="Preview" class="object-cover w-24 h-24 rounded-md">
     <div>
         <a href="{{ .Link }}" target="_blank" rel="noopener noreferrer" class="text-lg font-semibold underline">
             {{ .Title }}

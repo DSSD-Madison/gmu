@@ -6,10 +6,11 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/DSSD-Madison/gmu/db"
 	"github.com/DSSD-Madison/gmu/models"
 )
 
-func Filters(c echo.Context) error {
+func Filters(c echo.Context, queries *db.Queries) error {
 	// Ensure form values are parsed
 	if err := c.Request().ParseForm(); err != nil {
 		return c.String(http.StatusBadRequest, "Failed to parse form")
