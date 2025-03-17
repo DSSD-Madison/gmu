@@ -3,8 +3,8 @@ import boto3
 from botocore.exceptions import BotoCoreError, ClientError
 from logs.logger import logger
 from config import (
-    AWS_ACCESS_KEY,
-    AWS_SECRET_KEY,
+    AWS_S3_ACCESS_KEY,
+    AWS_S3_SECRET_KEY,
     AWS_REGION,
     TEST_BUCKET,
     SKIP_BUCKETS,
@@ -13,8 +13,8 @@ from config import (
 # Initialize S3 client using credentials from config.py
 s3 = boto3.client(
     "s3",
-    aws_access_key_id=AWS_ACCESS_KEY,
-    aws_secret_access_key=AWS_SECRET_KEY,
+    aws_access_key_id=AWS_S3_ACCESS_KEY,
+    aws_secret_access_key=AWS_S3_SECRET_KEY,
     region_name=AWS_REGION,
 )
 
@@ -25,6 +25,7 @@ def get_s3_buckets():
         response = s3.list_buckets()
         bucket_names = [bucket["Name"] for bucket in response.get("Buckets", [])]
         logger.info(f"Found {len(bucket_names)} S3 buckets.")
+        print(bucket_names)
         return bucket_names
     except (BotoCoreError, ClientError) as e:
         logger.error(f"Error listing S3 buckets: {e}")

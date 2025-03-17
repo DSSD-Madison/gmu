@@ -70,19 +70,7 @@ venv\Scripts\activate     # On Windows
 pip install -r requirements.txt
 ```
 
-4. Set Up Environment Variables
-
-Create a `.env` file and define:
-
-```
-LOCAL_DATABASE_URL=postgresql://user:password@localhost/db_name
-AWS_DATABASE_URL=postgresql://user:password@aws-host/db_name
-ACCESS_KEY=your_access_key
-SECRET_ACCESS=your_secret_key
-REGION=us-east-1
-```
-
-5. Run the Pipeline
+4. Run the Pipeline
 
 ```bash
 python main.py
