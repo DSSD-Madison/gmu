@@ -2,7 +2,6 @@ package models
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/aws/aws-sdk-go-v2/service/kendra"
@@ -23,9 +22,6 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 		Results: make(map[string]KendraResult),
 		Filters: make([]FilterCategory, len(out.FacetResults)),
 	}
-
-	fmt.Printf("Number of ResultItems: %d\n", len(out.ResultItems))
-
 
 	for _, item := range out.ResultItems {
 		title := internal.TrimExtension(*item.DocumentTitle.Text)

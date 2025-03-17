@@ -2,43 +2,86 @@ package routes
 
 import (
 	"fmt"
+	"log"
+	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/DSSD-Madison/gmu/db"
+	"github.com/DSSD-Madison/gmu/handlers"
 	"github.com/DSSD-Madison/gmu/models"
+	"github.com/labstack/echo/v4"
 )
 
-func ConvertToS3URIs(kendraResults models.KendraResults) ([]string, error) {
-	fmt.Println("before conversion")
+func addImagesToResults(results models.KendraResults, c echo.Context, queries *db.Queries) (error) {
+	uris, err := ConvertToS3URIs(results)
+	if err != nil {
+		return err
+	}
+	documentMap, err := handlers.GetDocuments(c, queries, uris)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	for key, kendraResult := range results.Results {
+
+		s3URI := ConvertToS3URI(kendraResult.Link)
+		if s3URI == "" {
+			continue
+		}
+
+		document, found := documentMap[s3URI]
+		if !found {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": fmt.Sprintf("document not found for S3 URI: %s", s3URI)})
+		}
+
+		if document.S3FilePreview.Valid {
+			image, err := ConvertS3URIToURL(document.S3FilePreview.String)
+			if err != nil {
+				return err
+			}
+			kendraResult.Image = image
+		} else {
+			kendraResult.Image = "https://placehold.co/120x120/webp"
+		}
+		results.Results[key] = kendraResult
+	}
 	
+	return nil
+}
+
+func ConvertToS3URIs(kendraResults models.KendraResults) ([]string, error) {
 	s3URIs := []string{}
 	for _, result := range kendraResults.Results {
 		fmt.Println(result.Link)
-		s3URI, err := ConvertToS3URI(result.Link)
-		if err != nil {
-			return nil, err
+		s3URI := ConvertToS3URI(result.Link)
+		if s3URI == "" {
+			continue
 		}
 		s3URIs = append(s3URIs, s3URI)
 	}
 	return s3URIs, nil
 }
 
-func ConvertToS3URI(inputURL string) (string, error) {
+func ConvertToS3URI(inputURL string) (string) {
 	// Parse the URL
 	parsedURL, err := url.Parse(inputURL)
 	if err != nil {
-		return "", fmt.Errorf("invalid URL: %s", inputURL)
+		log.Printf("invalid URL: %s", inputURL)
+		return ""
 	}
 
 	// Ensure the URL uses HTTP or HTTPS
 	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
-		return "", fmt.Errorf("unsupported URL scheme: %s", inputURL)
+		log.Printf("unsupported URL scheme: %s", inputURL)
+		return ""
 	}
 
 	// Extract the hostname (should be in the form of "<bucket>.s3.amazonaws.com")
 	hostParts := strings.Split(parsedURL.Host, ".s3.amazonaws.com")
 	if len(hostParts) != 2 || hostParts[0] == "" {
-		return "", fmt.Errorf("URL format is incorrect: %s", inputURL)
+		log.Printf("URL format is incorrect: %s", inputURL)
+		return ""
 	}
 
 	bucket := hostParts[0]
@@ -46,14 +89,15 @@ func ConvertToS3URI(inputURL string) (string, error) {
 	// Decode the path (converts "%20" → " ")
 	filePath, err := url.PathUnescape(parsedURL.Path)
 	if err != nil {
-		return "", fmt.Errorf("error decoding URL path: %v", err)
+		log.Printf("error decoding URL path: %v", err)
+		return ""
 	}
 
 	// Remove leading slash if present
 	filePath = strings.TrimPrefix(filePath, "/")
 
 	// Construct the S3 URI
-	return fmt.Sprintf("s3://%s/%s", bucket, filePath), nil
+	return fmt.Sprintf("s3://%s/%s", bucket, filePath)
 }
 
 func ConvertS3URIToURL(s3URI string) (string, error) {
@@ -78,3 +122,4 @@ func ConvertS3URIToURL(s3URI string) (string, error) {
 	// Construct the HTTPS URL
 	return fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucket, encodedPath), nil
 }
+

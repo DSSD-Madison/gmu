@@ -32,6 +32,10 @@ func Filters(c echo.Context, queries *db.Queries) error {
 	}
 
 	results := models.MakeQuery(query, selectedFilters)
+	err := addImagesToResults(results, c, queries)
+	if err != nil {
+		return err;
+	}
 
 	return c.Render(http.StatusOK, "results-container", results)
 }
