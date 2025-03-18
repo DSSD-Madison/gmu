@@ -1,15 +1,16 @@
 package routes
 
 import (
+	"github.com/DSSD-Madison/gmu/db"
 	"github.com/labstack/echo/v4"
 )
 
 // InitRoutes registers all the application routes
-func InitRoutes(e *echo.Echo) {
-	// Home Route
+func InitRoutes(e *echo.Echo, db_querier *db.Queries) {
 	e.GET("/", Home)
 
-	// Search Routes
-	e.GET("/search", Search)
+	e.GET("/search", func(c echo.Context) error {
+		return Search(c, db_querier)
+	})
 	e.POST("/search/suggestions", SearchSuggestions)
 }

@@ -9,6 +9,7 @@ type KendraResult struct {
 	Title    string
 	Excerpts []Excerpt
 	Link     string
+	Image    string
 }
 
 type PageStatus struct {
