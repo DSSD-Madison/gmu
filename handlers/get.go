@@ -3,8 +3,9 @@ package handlers
 import (
 	"context"
 
-	"github.com/DSSD-Madison/gmu/db"
 	"github.com/labstack/echo/v4"
+
+	"github.com/DSSD-Madison/gmu/db"
 )
 
 type DBDocumentQuerier interface {

@@ -110,7 +110,7 @@ func main() {
 	}
 	defer sqlDB.Close()
 
-	queries := db.New(sqlDB)
+	db_querier := db.New(sqlDB)
 
 	// Static file handlers
 	e.Static("/images", "static/images")
@@ -121,7 +121,7 @@ func main() {
 	e.Renderer = models.NewTemplate()
 
 	// Routes
-	routes.InitRoutes(e, queries)
+	routes.InitRoutes(e, db_querier)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":8080"))

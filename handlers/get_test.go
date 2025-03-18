@@ -9,11 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DSSD-Madison/gmu/db"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/DSSD-Madison/gmu/db"
 )
 
 // Create a testable version of the handler function that accepts an interface

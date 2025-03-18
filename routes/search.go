@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/DSSD-Madison/gmu/db"
+	"github.com/DSSD-Madison/gmu/internal/db_helpers"
 	"github.com/DSSD-Madison/gmu/models"
 )
 
@@ -28,7 +29,7 @@ func SearchSuggestions(c echo.Context) error {
 	return c.Render(http.StatusOK, "suggestions", suggestions)
 }
 
-func Search(c echo.Context, queries *db.Queries) error {
+func Search(c echo.Context, db_querier *db.Queries) error {
 	query := c.FormValue("query")
 	pageNum := c.FormValue("page")
 
@@ -71,14 +72,14 @@ func Search(c echo.Context, queries *db.Queries) error {
 		return c.Render(http.StatusOK, "search-standalone", urlData)
 	} else if target == "results-container" {
 		if len(filterList) == 0 {
-			results, err := getResults(c, queries, query, filters, num)
+			results, err := getResults(c, db_querier, query, filters, num)
 			if err != nil {
 				return err
 			}
 			return c.Render(http.StatusOK, "results", results)
 		} 
 		tempResults := models.MakeQuery(query, nil, 1)
-		results, err := getResults(c, queries, query, filters, num)
+		results, err := getResults(c, db_querier, query, filters, num)
 		if err != nil {
 			return err
 		}
@@ -86,13 +87,13 @@ func Search(c echo.Context, queries *db.Queries) error {
 		selectFilters(filters, &results)
 		return c.Render(http.StatusOK, "results", results)
 	} else if target == "results-content-container" {
-		results, err := getResults(c, queries, query, filters, num)
+		results, err := getResults(c, db_querier, query, filters, num)
 		if err != nil {
 			return err
 		}
 		return c.Render(http.StatusOK, "results-container", results)
 	} else if target == "results-and-pagination" {
-		results, err := getResults(c, queries, query, filters, num)
+		results, err := getResults(c, db_querier, query, filters, num)
 		if err != nil {
 			return err
 		}
@@ -105,7 +106,7 @@ func Search(c echo.Context, queries *db.Queries) error {
 
 func getResults(c echo.Context, queries *db.Queries, query string, filters url.Values, num int) (models.KendraResults, error) {
 	results := models.MakeQuery(query, filters, num)
-	err := addImagesToResults(results, c, queries)
+	err := db_helpers.AddImagesToResults(results, c, queries)
 	if err != nil {
 		return models.KendraResults{}, err
 	}

@@ -6,11 +6,11 @@ import (
 )
 
 // InitRoutes registers all the application routes
-func InitRoutes(e *echo.Echo, queries *db.Queries) {
+func InitRoutes(e *echo.Echo, db_querier *db.Queries) {
 	e.GET("/", Home)
 
 	e.GET("/search", func(c echo.Context) error {
-		return Search(c, queries)
+		return Search(c, db_querier)
 	})
 	e.POST("/search/suggestions", SearchSuggestions)
 }
