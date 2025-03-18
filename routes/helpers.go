@@ -24,7 +24,6 @@ func addImagesToResults(results models.KendraResults, c echo.Context, queries *d
 	}
 
 	for key, kendraResult := range results.Results {
-
 		s3URI := ConvertToS3URI(kendraResult.Link)
 		if s3URI == "" {
 			continue

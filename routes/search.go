@@ -71,30 +71,45 @@ func Search(c echo.Context, queries *db.Queries) error {
 		return c.Render(http.StatusOK, "search-standalone", urlData)
 	} else if target == "results-container" {
 		if len(filterList) == 0 {
-			results := models.MakeQuery(query, filters, num)
+			results, err := getResults(c, queries, query, filters, num)
+			if err != nil {
+				return err
+			}
 			return c.Render(http.StatusOK, "results", results)
-		}
+		} 
 		tempResults := models.MakeQuery(query, nil, 1)
-		results := models.MakeQuery(query, filters, num)
-		results.Filters = tempResults.Filters
-
-		selectFilters(filters, &results)
-		err := addImagesToResults(results, c, queries)
+		results, err := getResults(c, queries, query, filters, num)
 		if err != nil {
 			return err
 		}
-		
+		results.Filters = tempResults.Filters
+		selectFilters(filters, &results)
 		return c.Render(http.StatusOK, "results", results)
 	} else if target == "results-content-container" {
-		results := models.MakeQuery(query, filters, num)
+		results, err := getResults(c, queries, query, filters, num)
+		if err != nil {
+			return err
+		}
 		return c.Render(http.StatusOK, "results-container", results)
 	} else if target == "results-and-pagination" {
-		results := models.MakeQuery(query, filters, num)
+		results, err := getResults(c, queries, query, filters, num)
+		if err != nil {
+			return err
+		}
 		return c.Render(http.StatusOK, "results-and-pagination", results)
 	} else {
 		return c.Render(http.StatusOK, "search", urlData)
 	}
 
+}
+
+func getResults(c echo.Context, queries *db.Queries, query string, filters url.Values, num int) (models.KendraResults, error) {
+	results := models.MakeQuery(query, filters, num)
+	err := addImagesToResults(results, c, queries)
+	if err != nil {
+		return models.KendraResults{}, err
+	}
+	return results, nil
 }
 
 func selectFilters(filters url.Values, results *models.KendraResults) {
