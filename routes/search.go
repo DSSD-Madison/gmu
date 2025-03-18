@@ -1,8 +1,10 @@
 package routes
 
 import (
-	"fmt"
 	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 
@@ -27,13 +29,37 @@ func SearchSuggestions(c echo.Context) error {
 
 func Search(c echo.Context) error {
 	query := c.FormValue("query")
-	fmt.Printf("query: %s\n", query)
-	fmt.Printf("resp: %+v\n", c.Request().Header)
+	pageNum := c.FormValue("page")
+
+	filters, _ := c.FormParams()
+
+	delete(filters, "query")
+	delete(filters, "page")
 
 	if len(query) == 0 {
 		return Home(c)
 	}
 
+	num, err := strconv.Atoi(strings.TrimSpace(pageNum))
+	if err != nil {
+		num = 1
+	}
+
+	var filterList []models.Filter
+
+	for key, values := range filters {
+		filterList = append(filterList, models.Filter{
+			Name:            key,
+			SelectedFilters: values,
+		})
+	}
+
+	urlData := models.UrlData{
+		Query:        query,
+		Filters:      filterList,
+		Page:         num,
+		IsStoringUrl: true,
+	}
 	if len(query) < MinQueryLength {
 		return echo.NewHTTPError(http.StatusBadRequest, "Query too short")
 	}
@@ -41,13 +67,41 @@ func Search(c echo.Context) error {
 	target := c.Request().Header.Get("HX-Target")
 
 	if target == "root" || target == "" {
-		return c.Render(http.StatusOK, "search-standalone", query)
+		return c.Render(http.StatusOK, "search-standalone", urlData)
 	} else if target == "results-container" {
-		fmt.Println("results doing")
-		results := models.MakeQuery(query, nil)
+		if len(filterList) == 0 {
+			results := models.MakeQuery(query, filters, num)
+			return c.Render(http.StatusOK, "results", results)
+		}
+		tempResults := models.MakeQuery(query, nil, 1)
+		results := models.MakeQuery(query, filters, num)
+		results.Filters = tempResults.Filters
+
+		selectFilters(filters, &results)
 		return c.Render(http.StatusOK, "results", results)
+	} else if target == "results-content-container" {
+		results := models.MakeQuery(query, filters, num)
+		return c.Render(http.StatusOK, "results-container", results)
+	} else if target == "results-and-pagination" {
+		results := models.MakeQuery(query, filters, num)
+		return c.Render(http.StatusOK, "results-and-pagination", results)
 	} else {
-		return c.Render(http.StatusOK, "search", query)
+		return c.Render(http.StatusOK, "search", urlData)
 	}
 
+}
+
+func selectFilters(filters url.Values, results *models.KendraResults) {
+	for i, cat := range results.Filters {
+		if selectedOptions, exists := filters[cat.Category]; exists {
+			for idx, o := range cat.Options {
+				for _, selected := range selectedOptions {
+					if o.Label == selected {
+						results.Filters[i].Options[idx].Selected = true
+						break
+					}
+				}
+			}
+		}
+	}
 }

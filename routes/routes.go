@@ -12,7 +12,4 @@ func InitRoutes(e *echo.Echo) {
 	// Search Routes
 	e.GET("/search", Search)
 	e.POST("/search/suggestions", SearchSuggestions)
-
-	// Filters Route
-	e.POST("/filters", Filters)
 }

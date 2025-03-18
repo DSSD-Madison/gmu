@@ -11,11 +11,21 @@ type KendraResult struct {
 	Link     string
 }
 
+type PageStatus struct {
+	CurrentPage int
+	HasPrev     bool
+	HasNext     bool
+	PrevPage    int
+	NextPage    int
+}
+
 type KendraResults struct {
-	Results map[string]KendraResult
-	Query   string
-	Count   int
-	Filters []FilterCategory
+	Results      map[string]KendraResult
+	Query        string
+	Count        int
+	PageStatus   PageStatus
+	Filters      []FilterCategory
+	IsStoringUrl bool
 }
 
 type KendraSuggestions struct {
@@ -23,12 +33,25 @@ type KendraSuggestions struct {
 }
 
 type FilterOption struct {
-	Label string
-	Count int32
+	Label    string
+	Selected bool
+	Count    int32
 }
 
 type FilterCategory struct {
 	Category string
 	Options  []FilterOption
 	Name     string
+}
+
+type Filter struct {
+	Name            string
+	SelectedFilters []string
+}
+
+type UrlData struct {
+	IsStoringUrl bool
+	Query        string
+	Filters      []Filter
+	Page         int
 }
