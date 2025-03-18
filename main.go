@@ -103,7 +103,7 @@ func main() {
 	}
 	defer dbpool.Close()
 
-	// // Create a *sql.DB instance using the pgx driver
+	// Create a *sql.DB instance using the pgx driver
 	sqlDB, err := sql.Open("pgx", databaseURL)
 	if err != nil {
 		log.Fatalf("Unable to initialize sql.DB: %v", err)
