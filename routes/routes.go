@@ -13,8 +13,4 @@ func InitRoutes(e *echo.Echo, queries *db.Queries) {
 		return Search(c, queries)
 	})
 	e.POST("/search/suggestions", SearchSuggestions)
-
-	e.POST("/filters", func(c echo.Context) error {
-		return Filters(c, queries)
-	})
 }

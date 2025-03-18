@@ -1,9 +1,10 @@
 {{define "sidecolumn"}}
-<aside id="sidecolmn" class="mx-6 w-72 px-4">
+<aside id="sidecolumn" class="mx-6 w-72 px-4">
 	<form
-			hx-post="/filters"
+			hx-get="/search"
+			hx-push-url="true"
 			hx-trigger="click from:#apply-filters-btn"
-			hx-target="#results-content-container"
+			hx-target="#results-and-pagination"
 			hx-include="#searchbar"
 			hx-swap="innerHTML"
 	>
@@ -21,8 +22,9 @@
 					<input
 							type="checkbox"
 							class="mr-2 accent-blue-600"
-							name="filters[{{ $filter.Category }}][]"
+							name="{{ $filter.Category }}"
 							value="{{ $option.Label }}"
+							{{ if $option.Selected }}checked{{ end }}
 					>
 					<span class="flex-grow">{{ $option.Label }}</span>
 					<span class="text-xs text-gray-600">({{ $option.Count }})</span>
@@ -35,7 +37,7 @@
 		<button
 				id="apply-filters-btn"
 				type="submit"
-				class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition"
+				class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 cursor-pointer transition"
 		>
 			Apply Filters
 		</button>

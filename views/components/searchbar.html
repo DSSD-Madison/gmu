@@ -27,8 +27,16 @@ hover:[&_input]:rounded-t-3xl
 	   hx-trigger="input changed delay:250ms"
 	   hx-target="#suggestions"
 	   hx-swap="innerHTML"
-	   value="{{ . }}"
+	   value="{{ .Query }}"
 >
+{{ if .IsStoringUrl }}
+{{ range $_, $filter := .Filters }}
+{{ range $filter.SelectedFilters }}
+<input type="hidden" name="{{ $filter.Name }}" value="{{ . }}">
+{{ end }}
+{{ end }}
+<input type="hidden" name="page" value="{{.Page}}">
+{{ end }}
 {{ end }}
 
 <!-- Standard Searchbar -->
