@@ -21,12 +21,13 @@ type PageStatus struct {
 }
 
 type KendraResults struct {
+	IsStoringUrl bool
 	Results      map[string]KendraResult
 	Query        string
 	Count        int
 	PageStatus   PageStatus
 	Filters      []FilterCategory
-	IsStoringUrl bool
+	UrlData 	 UrlData
 }
 
 type KendraSuggestions struct {

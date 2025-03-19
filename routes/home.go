@@ -3,9 +3,11 @@ package routes
 import (
 	"net/http"
 
+	"github.com/DSSD-Madison/gmu/components"
+	"github.com/DSSD-Madison/gmu/models"
 	"github.com/labstack/echo/v4"
 )
 
 func Home(c echo.Context) error {
-	return c.Render(http.StatusOK, "index", nil)
+	return models.Render(c, http.StatusOK, components.Home())
 }

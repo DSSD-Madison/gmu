@@ -10,6 +10,7 @@ import (
 
 	"github.com/DSSD-Madison/gmu/db"
 	"github.com/DSSD-Madison/gmu/internal/db_helpers"
+	"github.com/DSSD-Madison/gmu/components"
 	"github.com/DSSD-Madison/gmu/models"
 )
 
@@ -26,7 +27,7 @@ func SearchSuggestions(c echo.Context) error {
 	if err != nil {
 		return nil
 	}
-	return c.Render(http.StatusOK, "suggestions", suggestions)
+	return models.Render(c, http.StatusOK, components.Suggestions(suggestions))
 }
 
 func Search(c echo.Context, db_querier *db.Queries) error {
@@ -68,16 +69,16 @@ func Search(c echo.Context, db_querier *db.Queries) error {
 	// Check if the request is coming from HTMX
 	target := c.Request().Header.Get("HX-Target")
 
-	if target == "root" || target == "" {
-		return c.Render(http.StatusOK, "search-standalone", urlData)
+	if target == "root" {
+		return models.Render(c, http.StatusOK, components.Search(models.KendraResults{UrlData: urlData}))
 	} else if target == "results-container" {
 		if len(filterList) == 0 {
 			results, err := getResults(c, db_querier, query, filters, num)
 			if err != nil {
 				return err
 			}
-			return c.Render(http.StatusOK, "results", results)
-		} 
+			return models.Render(c, http.StatusOK, components.ResultsPage(results))
+		}
 		tempResults := models.MakeQuery(query, nil, 1)
 		results, err := getResults(c, db_querier, query, filters, num)
 		if err != nil {
@@ -85,21 +86,21 @@ func Search(c echo.Context, db_querier *db.Queries) error {
 		}
 		results.Filters = tempResults.Filters
 		selectFilters(filters, &results)
-		return c.Render(http.StatusOK, "results", results)
+		return models.Render(c, http.StatusOK, components.ResultsPage(results))
 	} else if target == "results-content-container" {
 		results, err := getResults(c, db_querier, query, filters, num)
 		if err != nil {
 			return err
 		}
-		return c.Render(http.StatusOK, "results-container", results)
+		return models.Render(c, http.StatusOK, components.ResultsContainer(results))
 	} else if target == "results-and-pagination" {
 		results, err := getResults(c, db_querier, query, filters, num)
 		if err != nil {
 			return err
 		}
-		return c.Render(http.StatusOK, "results-and-pagination", results)
+		return models.Render(c, http.StatusOK, components.ResultsAndPagination(results))
 	} else {
-		return c.Render(http.StatusOK, "search", urlData)
+		return models.Render(c, http.StatusOK, components.SearchHome(models.KendraResults{UrlData: urlData}))
 	}
 
 }

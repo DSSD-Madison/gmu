@@ -143,6 +143,7 @@ func MakeQuery(query string, filters map[string][]string, pageNum int) KendraRes
 	}
 
 	results.Query = query
+	results.UrlData.Query = results.Query
 	return results
 }
 

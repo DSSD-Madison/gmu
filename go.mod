@@ -21,6 +21,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
+require github.com/a-h/templ v0.3.833 // indirect
+
 require (
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.24 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.24 // indirect
