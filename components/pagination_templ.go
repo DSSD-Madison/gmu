@@ -10,8 +10,9 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"encoding/json"
-	"github.com/DSSD-Madison/gmu/models"
 	"strconv"
+
+	"github.com/DSSD-Madison/gmu/models"
 )
 
 func paginationJSON(page int) string {
@@ -52,7 +53,7 @@ func Pagination(status models.PageStatus) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(paginationJSON(status.PrevPage))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pagination.templ`, Line: 22, Col: 45}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pagination.templ`, Line: 23, Col: 45}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -70,7 +71,7 @@ func Pagination(status models.PageStatus) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(status.CurrentPage))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pagination.templ`, Line: 30, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pagination.templ`, Line: 31, Col: 80}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -88,7 +89,7 @@ func Pagination(status models.PageStatus) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(paginationJSON(status.NextPage))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pagination.templ`, Line: 38, Col: 44}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/pagination.templ`, Line: 39, Col: 44}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {

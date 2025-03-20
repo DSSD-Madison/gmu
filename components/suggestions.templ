@@ -1,7 +1,10 @@
 package components
 
-import "github.com/DSSD-Madison/gmu/models"
-import "encoding/json"
+import (
+    "encoding/json"
+
+    "github.com/DSSD-Madison/gmu/models"
+)
 
 func suggestionsJSON(suggestion string) string {
 	bytes, _ := json.Marshal(map[string]string{"query": suggestion})

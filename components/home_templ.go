@@ -10,6 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"encoding/json"
+
 	"github.com/DSSD-Madison/gmu/models"
 )
 
@@ -102,7 +103,7 @@ func Search(results models.KendraResults) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(searchHeadersJSON())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/home.templ`, Line: 29, Col: 148}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/home.templ`, Line: 30, Col: 148}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {

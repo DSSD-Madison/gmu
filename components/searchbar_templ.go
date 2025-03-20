@@ -9,8 +9,9 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/DSSD-Madison/gmu/models"
 	"strconv"
+
+	"github.com/DSSD-Madison/gmu/models"
 )
 
 var searchbar_classes = `relative w-full not-has-[p]:focus-within:[&_input]:rounded-3xl not-has-[p]:focus-within:[&_input]:border-blue-400 has-[p]:focus-within:[&_input]:rounded-t-3xl has-[p]:focus-within:[&_input]:border-blue-400 not-has-[p]:not-focus-within:[&_input]:rounded-3xl has-[p]:not-focus-within:[&_input]:rounded-3xl hover:[&_input]:rounded-t-3xl`
@@ -126,7 +127,7 @@ func Searchbar(data models.UrlData, oob bool) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(data.Query)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/searchbar.templ`, Line: 31, Col: 22}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/searchbar.templ`, Line: 32, Col: 22}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -146,7 +147,7 @@ func Searchbar(data models.UrlData, oob bool) templ.Component {
 					var templ_7745c5c3_Var6 string
 					templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(filter.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/searchbar.templ`, Line: 36, Col: 43}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/searchbar.templ`, Line: 37, Col: 43}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 					if templ_7745c5c3_Err != nil {
@@ -159,7 +160,7 @@ func Searchbar(data models.UrlData, oob bool) templ.Component {
 					var templ_7745c5c3_Var7 string
 					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(str)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/searchbar.templ`, Line: 36, Col: 57}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/searchbar.templ`, Line: 37, Col: 57}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 					if templ_7745c5c3_Err != nil {
@@ -178,7 +179,7 @@ func Searchbar(data models.UrlData, oob bool) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(data.Page))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/searchbar.templ`, Line: 39, Col: 65}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/searchbar.templ`, Line: 40, Col: 65}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {

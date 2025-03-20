@@ -8,8 +8,10 @@ package components
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/DSSD-Madison/gmu/models"
-import "strconv"
+import (
+	"github.com/DSSD-Madison/gmu/models"
+	"strconv"
+)
 
 func sidecolumn(results models.KendraResults) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -44,7 +46,7 @@ func sidecolumn(results models.KendraResults) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(filter.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/sidecolumn.templ`, Line: 19, Col: 42}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/sidecolumn.templ`, Line: 21, Col: 42}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -67,7 +69,7 @@ func sidecolumn(results models.KendraResults) templ.Component {
 					var templ_7745c5c3_Var3 string
 					templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(filter.Category)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/sidecolumn.templ`, Line: 31, Col: 33}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/sidecolumn.templ`, Line: 33, Col: 33}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 					if templ_7745c5c3_Err != nil {
@@ -80,7 +82,7 @@ func sidecolumn(results models.KendraResults) templ.Component {
 					var templ_7745c5c3_Var4 string
 					templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(option.Label)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/sidecolumn.templ`, Line: 32, Col: 31}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/sidecolumn.templ`, Line: 34, Col: 31}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 					if templ_7745c5c3_Err != nil {
@@ -98,7 +100,7 @@ func sidecolumn(results models.KendraResults) templ.Component {
 					var templ_7745c5c3_Var5 string
 					templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(filter.Category)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/sidecolumn.templ`, Line: 37, Col: 33}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/sidecolumn.templ`, Line: 39, Col: 33}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 					if templ_7745c5c3_Err != nil {
@@ -111,7 +113,7 @@ func sidecolumn(results models.KendraResults) templ.Component {
 					var templ_7745c5c3_Var6 string
 					templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(option.Label)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/sidecolumn.templ`, Line: 38, Col: 31}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/sidecolumn.templ`, Line: 40, Col: 31}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 					if templ_7745c5c3_Err != nil {
@@ -129,7 +131,7 @@ func sidecolumn(results models.KendraResults) templ.Component {
 				var templ_7745c5c3_Var7 string
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(option.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/sidecolumn.templ`, Line: 40, Col: 46}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/sidecolumn.templ`, Line: 42, Col: 46}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
@@ -142,7 +144,7 @@ func sidecolumn(results models.KendraResults) templ.Component {
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(int(option.Count)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/sidecolumn.templ`, Line: 41, Col: 78}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/sidecolumn.templ`, Line: 43, Col: 78}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {

@@ -8,8 +8,11 @@ package components
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/DSSD-Madison/gmu/models"
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/DSSD-Madison/gmu/models"
+)
 
 func suggestionsJSON(suggestion string) string {
 	bytes, _ := json.Marshal(map[string]string{"query": suggestion})
@@ -45,7 +48,7 @@ func Suggestions(suggestions models.KendraSuggestions) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(suggestionsJSON(suggestion))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/suggestions.templ`, Line: 13, Col: 141}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/suggestions.templ`, Line: 16, Col: 141}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -58,7 +61,7 @@ func Suggestions(suggestions models.KendraSuggestions) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(suggestion)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/suggestions.templ`, Line: 13, Col: 156}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/suggestions.templ`, Line: 16, Col: 156}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {

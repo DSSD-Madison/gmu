@@ -9,8 +9,9 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/DSSD-Madison/gmu/models"
 	"strconv"
+
+	"github.com/DSSD-Madison/gmu/models"
 )
 
 func ResultsPage(results models.KendraResults) templ.Component {
@@ -135,7 +136,7 @@ func ResultCard(result models.KendraResult) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(string(result.Image))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/results.templ`, Line: 29, Col: 32}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/results.templ`, Line: 30, Col: 32}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -157,7 +158,7 @@ func ResultCard(result models.KendraResult) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(result.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/results.templ`, Line: 32, Col: 18}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/results.templ`, Line: 33, Col: 18}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -175,7 +176,7 @@ func ResultCard(result models.KendraResult) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(excerpt.Text)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/results.templ`, Line: 36, Col: 44}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/results.templ`, Line: 37, Col: 44}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -197,7 +198,7 @@ func ResultCard(result models.KendraResult) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(excerpt.PageNum))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/results.templ`, Line: 38, Col: 180}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `components/results.templ`, Line: 39, Col: 180}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
