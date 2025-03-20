@@ -5,11 +5,11 @@ import (
 )
 
 // InitRoutes registers all the application routes
-func InitRoutes(e *echo.Echo) {
+func InitRoutes(e *echo.Echo, h *Handler) {
 	// Home Route
-	e.GET("/", Home)
+	e.GET("/", h.Home)
 
 	// Search Routes
-	e.GET("/search", Search)
-	e.POST("/search/suggestions", SearchSuggestions)
+	e.GET("/search", h.Search)
+	e.POST("/search/suggestions", h.SearchSuggestions)
 }

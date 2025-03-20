@@ -13,7 +13,7 @@ import (
 
 const MinQueryLength = 3
 
-func SearchSuggestions(c echo.Context) error {
+func (h *Handler) SearchSuggestions(c echo.Context) error {
 	query := c.FormValue("query")
 
 	if len(query) == 0 {
@@ -27,7 +27,7 @@ func SearchSuggestions(c echo.Context) error {
 	return c.Render(http.StatusOK, "suggestions", suggestions)
 }
 
-func Search(c echo.Context) error {
+func (h *Handler) Search(c echo.Context) error {
 	query := c.FormValue("query")
 	pageNum := c.FormValue("page")
 
@@ -37,7 +37,7 @@ func Search(c echo.Context) error {
 	delete(filters, "page")
 
 	if len(query) == 0 {
-		return Home(c)
+		return h.Home(c)
 	}
 
 	num, err := strconv.Atoi(strings.TrimSpace(pageNum))

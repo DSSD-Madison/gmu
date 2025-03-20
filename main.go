@@ -80,11 +80,13 @@ func main() {
 	e.Static("/css", "static/css")
 	e.Static("/svg", "static/svg")
 
+	handler := routes.NewHandler(logger)
+
 	// Renderer
 	e.Renderer = models.NewTemplate()
 
 	// Routes
-	routes.InitRoutes(e)
+	routes.InitRoutes(e, &handler)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":8080"))
