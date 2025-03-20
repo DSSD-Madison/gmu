@@ -32,7 +32,7 @@ jobs:
 
       - name: Build and Test
         run: |
-          make install-linux
+          make install-all-linux
           go build -o gmu -buildvcs=false
           ./tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify
 
