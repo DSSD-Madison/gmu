@@ -8,8 +8,8 @@ import (
 	"log/slog"
 	"os"
 
-	 _ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jackc/pgx/v4/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -117,11 +117,13 @@ func main() {
 	e.Static("/css", "static/css")
 	e.Static("/svg", "static/svg")
 
+	handler := routes.NewHandler(logger, db_querier)
+
 	// Renderer
 	e.Renderer = models.NewTemplate()
 
 	// Routes
-	routes.InitRoutes(e, db_querier)
+	routes.InitRoutes(e, &handler)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":8080"))
