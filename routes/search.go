@@ -15,7 +15,7 @@ import (
 
 const MinQueryLength = 3
 
-func SearchSuggestions(c echo.Context) error {
+func (h *Handler) SearchSuggestions(c echo.Context) error {
 	query := c.FormValue("query")
 
 	if len(query) == 0 {
@@ -29,7 +29,7 @@ func SearchSuggestions(c echo.Context) error {
 	return c.Render(http.StatusOK, "suggestions", suggestions)
 }
 
-func Search(c echo.Context, db_querier *db.Queries) error {
+func (h *Handler) Search(c echo.Context) error {
 	query := c.FormValue("query")
 	pageNum := c.FormValue("page")
 
@@ -39,7 +39,7 @@ func Search(c echo.Context, db_querier *db.Queries) error {
 	delete(filters, "page")
 
 	if len(query) == 0 {
-		return Home(c)
+		return h.Home(c)
 	}
 
 	num, err := strconv.Atoi(strings.TrimSpace(pageNum))
@@ -72,14 +72,14 @@ func Search(c echo.Context, db_querier *db.Queries) error {
 		return c.Render(http.StatusOK, "search-standalone", urlData)
 	} else if target == "results-container" {
 		if len(filterList) == 0 {
-			results, err := getResults(c, db_querier, query, filters, num)
+			results, err := getResults(c, h.db, query, filters, num)
 			if err != nil {
 				return err
 			}
 			return c.Render(http.StatusOK, "results", results)
 		} 
 		tempResults := models.MakeQuery(query, nil, 1)
-		results, err := getResults(c, db_querier, query, filters, num)
+		results, err := getResults(c, h.db, query, filters, num)
 		if err != nil {
 			return err
 		}
@@ -87,13 +87,13 @@ func Search(c echo.Context, db_querier *db.Queries) error {
 		selectFilters(filters, &results)
 		return c.Render(http.StatusOK, "results", results)
 	} else if target == "results-content-container" {
-		results, err := getResults(c, db_querier, query, filters, num)
+		results, err := getResults(c, h.db, query, filters, num)
 		if err != nil {
 			return err
 		}
 		return c.Render(http.StatusOK, "results-container", results)
 	} else if target == "results-and-pagination" {
-		results, err := getResults(c, db_querier, query, filters, num)
+		results, err := getResults(c, h.db, query, filters, num)
 		if err != nil {
 			return err
 		}
