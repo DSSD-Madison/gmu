@@ -8,14 +8,15 @@ import (
 	"log/slog"
 	"os"
 
-	 _ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jackc/pgx/v4/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
 	"github.com/DSSD-Madison/gmu/db"
 	"github.com/DSSD-Madison/gmu/internal"
+	"github.com/DSSD-Madison/gmu/models"
 	"github.com/DSSD-Madison/gmu/routes"
 )
 
@@ -115,8 +116,11 @@ func main() {
 	e.Static("/css", "static/css")
 	e.Static("/svg", "static/svg")
 
+
+	handler := routes.NewHandler(db_querier, models.NewKendraQueryQueue())
+
 	// Routes
-	routes.InitRoutes(e, db_querier)
+	routes.InitRoutes(e, handler)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":8080"))

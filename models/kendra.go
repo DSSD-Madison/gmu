@@ -10,13 +10,42 @@ import (
 	"github.com/DSSD-Madison/gmu/internal"
 )
 
+type QueryExecutor interface {
+	EnqueueQuery(query kendra.QueryInput) QueryResult
+}
+
+type KendraClientExecutor struct {
+	client *kendra.Client
+}
+
+func kendraClient() *kendra.Client {
+	return kendra.New(opts)
+}
+
+func (e *KendraClientExecutor) EnqueueQuery(query kendra.QueryInput) QueryResult {
+	out, err := e.client.Query(context.TODO(), &query)
+	if err != nil {
+		log.Printf("Kendra Query Failed: %q", err)
+		return QueryResult{
+			Results: KendraResults{},
+			Error:   err,
+		}
+	}
+
+	results := queryOutputToResults(*out)
+
+	return QueryResult{
+		Results: results,
+		Error:   nil,
+	}
+}
+
 var opts = kendra.Options{
 	Credentials:      prov,
 	Region:           region,
 	RetryMaxAttempts: 10,
 }
 
-var client = kendra.New(opts)
 
 func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	kendraResults := KendraResults{
@@ -85,7 +114,7 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	return kendraResults
 }
 
-func MakeQuery(query string, filters map[string][]string, pageNum int) KendraResults {
+func MakeQuery(executor QueryExecutor, query string, filters map[string][]string, pageNum int) (KendraResults, error) {
 	kendraFilters := types.AttributeFilter{
 		AndAllFilters: make([]types.AttributeFilter, len(filters)),
 	}
@@ -125,13 +154,13 @@ func MakeQuery(query string, filters map[string][]string, pageNum int) KendraRes
 		QueryText:       &query,
 		PageNumber:      &page,
 	}
-	out, err := client.Query(context.TODO(), &kendraQuery)
 
-	// TODO: this needs to be fixed to a proper error
-	if err != nil {
-		log.Printf("Kendra Query Failed %+filterCategory", err)
+	queryResults := executor.EnqueueQuery(kendraQuery)
+
+	if queryResults.Error != nil {
+		return KendraResults{}, queryResults.Error
 	}
-	results := queryOutputToResults(*out)
+	results := queryResults.Results
 
 	totalPages := (results.Count + 9) / 10
 
@@ -145,7 +174,7 @@ func MakeQuery(query string, filters map[string][]string, pageNum int) KendraRes
 
 	results.Query = query
 	results.UrlData.Query = results.Query
-	return results
+	return results, nil
 }
 
 func querySuggestionsOutputToSuggestions(out kendra.GetQuerySuggestionsOutput) KendraSuggestions {
@@ -165,7 +194,7 @@ func GetSuggestions(query string) (KendraSuggestions, error) {
 		IndexId:   &indexId,
 		QueryText: &query,
 	}
-	out, err := client.GetQuerySuggestions(context.TODO(), &kendraQuery)
+	out, err := kendraClient().GetQuerySuggestions(context.TODO(), &kendraQuery)
 	if err != nil {
 		log.Printf("Kendra Suggestions Query Failed %+v", err)
 		return KendraSuggestions{}, err
