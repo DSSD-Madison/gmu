@@ -8,7 +8,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/DSSD-Madison/gmu/db"
 	"github.com/DSSD-Madison/gmu/internal/db_helpers"
 	"github.com/DSSD-Madison/gmu/components"
 	"github.com/DSSD-Madison/gmu/models"
@@ -30,7 +29,8 @@ func SearchSuggestions(c echo.Context) error {
 	return models.Render(c, http.StatusOK, components.Suggestions(suggestions))
 }
 
-func Search(c echo.Context, db_querier *db.Queries) error {
+func Search(c echo.Context, h Handler) error {
+
 	query := c.FormValue("query")
 	pageNum := c.FormValue("page")
 
@@ -66,6 +66,7 @@ func Search(c echo.Context, db_querier *db.Queries) error {
 	if len(query) < MinQueryLength {
 		return echo.NewHTTPError(http.StatusBadRequest, "Query too short")
 	}
+
 	// Check if the request is coming from HTMX
 	target := c.Request().Header.Get("HX-Target")
 
@@ -73,14 +74,14 @@ func Search(c echo.Context, db_querier *db.Queries) error {
 		return models.Render(c, http.StatusOK, components.Search(models.KendraResults{UrlData: urlData}))
 	} else if target == "results-container" {
 		if len(filterList) == 0 {
-			results, err := getResults(c, db_querier, query, filters, num)
+			results, err := getResults(c, h, query, filters, num)
 			if err != nil {
 				return err
 			}
 			return models.Render(c, http.StatusOK, components.ResultsPage(results))
 		}
-		tempResults := models.MakeQuery(query, nil, 1)
-		results, err := getResults(c, db_querier, query, filters, num)
+		tempResults, err := models.MakeQuery(h.q ,query, nil, 1)
+		results, err := getResults(c, h, query, filters, num)
 		if err != nil {
 			return err
 		}
@@ -88,13 +89,13 @@ func Search(c echo.Context, db_querier *db.Queries) error {
 		selectFilters(filters, &results)
 		return models.Render(c, http.StatusOK, components.ResultsPage(results))
 	} else if target == "results-content-container" {
-		results, err := getResults(c, db_querier, query, filters, num)
+		results, err := getResults(c, h, query, filters, num)
 		if err != nil {
 			return err
 		}
 		return models.Render(c, http.StatusOK, components.ResultsContainer(results))
 	} else if target == "results-and-pagination" {
-		results, err := getResults(c, db_querier, query, filters, num)
+		results, err := getResults(c, h, query, filters, num)
 		if err != nil {
 			return err
 		}
@@ -102,12 +103,15 @@ func Search(c echo.Context, db_querier *db.Queries) error {
 	} else {
 		return models.Render(c, http.StatusOK, components.SearchHome(models.KendraResults{UrlData: urlData}))
 	}
-
 }
 
-func getResults(c echo.Context, queries *db.Queries, query string, filters url.Values, num int) (models.KendraResults, error) {
-	results := models.MakeQuery(query, filters, num)
-	err := db_helpers.AddImagesToResults(results, c, queries)
+func getResults(c echo.Context, h Handler, query string, filters url.Values, num int) (models.KendraResults, error) {
+	results, err := models.MakeQuery(h.q, query, filters, num)
+	if err != nil {
+		return models.KendraResults{}, err
+	}
+
+	err = db_helpers.AddImagesToResults(results, c, h.db)
 	if err != nil {
 		return models.KendraResults{}, err
 	}
