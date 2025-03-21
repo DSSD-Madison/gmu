@@ -1,0 +1,47 @@
+package components
+
+import (
+	"encoding/json"
+	"strconv"
+
+	"github.com/DSSD-Madison/gmu/models"
+)
+
+func paginationJSON(page int) string {
+	bytes, _ := json.Marshal(map[string]string{"page": strconv.Itoa(page)})
+	return string(bytes)
+}
+
+templ Pagination(status models.PageStatus) {
+	<div class="flex justify-center items-center space-x-2 mt-4 p-4 bg-gray-100 rounded-lg shadow">
+		if (status.HasPrev) {
+			<button
+					hx-get="/search"
+					hx-push-url="true"
+					hx-target="#results-and-pagination"
+					hx-include="#searchbar, #sidecolumn"
+					hx-vals={paginationJSON(status.PrevPage)}
+					hx-swap="innerHTML"
+					class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+			>
+				Previous
+			</button>
+		}
+
+		<span class="px-4 py-2 bg-gray-300 rounded">{ strconv.Itoa(status.CurrentPage) }</span>
+
+		if (status.HasNext) {
+			<button
+				hx-get="/search"
+				hx-push-url="true"
+				hx-target="#results-and-pagination"
+				hx-include="#searchbar, #sidecolumn"
+				hx-vals={paginationJSON(status.NextPage)}
+				hx-swap="innerHTML"
+				class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+				>
+				Next
+				</button>
+		}
+	</div>
+}

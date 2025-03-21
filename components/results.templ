@@ -1,0 +1,54 @@
+package components
+
+import (
+	"strconv"
+
+	"github.com/DSSD-Madison/gmu/models"
+)
+
+templ ResultsPage(results models.KendraResults) {
+	<div id="grid-container" class="pt-10 pr-10 grid grid-cols-[1fr_3fr] grid-rows-[auto_1fr_auto] bg-white w-full gap-4">
+		@sidecolumn(results)
+		<div id="results-and-pagination">
+			@ResultsAndPagination(results)
+		</div>
+	</div>
+	@Searchbar(results.UrlData, true)
+	@suggestions_container(true)
+}
+
+templ ResultsAndPagination(results models.KendraResults) {
+	@ResultsContainer(results)
+    <div class="col-span-2">
+		@Pagination(results.PageStatus)
+    </div>
+}
+
+
+templ ResultCard(result models.KendraResult) {
+	<div class="hover:-translate-y-1 hover:scale-103 ease-in-out transition p-4 bg-white rounded-md shadow-md flex items-start space-x-4">
+		<img src={string(result.Image)} alt="Preview" class="w-24 h-24 object-cover rounded-md">
+		<div>
+			<a href={ templ.URL(result.Link) } target="_blank" rel="noopener noreferrer" class="text-lg font-semibold underline">
+				{ result.Title }
+			</a>
+			for _, excerpt := range result.Excerpts {
+				<div class="inline">
+					<p class="text-gray-600">{ excerpt.Text }
+						<sup>
+							<a class="text-blue-500" target="_blank" rel="noopener noreferrer" href={ templ.URL(result.Link + "#page=" + strconv.Itoa(excerpt.PageNum))}>[{ strconv.Itoa(excerpt.PageNum) }]</a>
+						</sup>
+					</p>
+				</div>
+			}
+		</div>
+	</div>
+}
+
+templ ResultsContainer(results models.KendraResults) {
+	<div id="results-content-container" class="space-y-6">
+		for _, result := range results.Results {
+			@ResultCard(result)
+		}
+	</div>
+}

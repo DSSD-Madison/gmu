@@ -1,0 +1,52 @@
+package components
+
+import (
+	"encoding/json"
+
+	"github.com/DSSD-Madison/gmu/models"
+)
+
+templ Home() {
+	@Base("") {
+		<div class="flex flex-col items-center justify-start min-h-screen pt-80">
+			<h2 class="text-xl font-semibold text-gray-700 py-3">Better Evidence Project</h2>
+			<form hx-get="/search" hx-swap="innerHTML" hx-target="#root" hx-push-url="true" class="flex flex-row w-3/8">
+				@SearchbarContainer(models.KendraResults{}, false)
+			</form>
+		</div>
+	}
+}
+
+func searchHeadersJSON() string {
+	bytes, _ := json.Marshal(map[string]string{"init": "true"})
+	return string(bytes)
+}
+
+// The partial response for page pre-loading
+templ Search(results models.KendraResults) {
+	<div class="grid place-items-center relative">
+		<img src="images/Banner.jpeg" class="col-start-1 row-start-1 object-cover top-0 z-1 w-full h-auto"/>
+		<div id="formwrapper" class="col-start-1 row-start-1 z-2 flex justify-center items-center w-full" hx-indicator="#indicator">
+			<form hx-get="/search" hx-target="#results-container" hx-swap="innerHTML" hx-trigger="load, submit" class="w-3/8" hx-headers={searchHeadersJSON()} hx-push-url="true">
+				@SearchbarContainer(results, false)
+			</form>
+		</div>
+		<div id="results-container" class="min-h-screen w-full px-4">
+			<div id="grid-container" class="pt-10 pr-10 grid grid-cols-[1fr_3fr] bg-white w-full">
+				<aside id="sidecolmn" class="mx-10 w-64 bg-white">
+					@skeleton()
+				</aside>
+				<div id="results-content-container" class="space-y-6">
+					@skeleton()
+					@skeleton()
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+templ SearchHome(results models.KendraResults) {
+	@Base("") {
+		@Search(results)
+	}
+}

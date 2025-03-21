@@ -3,7 +3,7 @@ tmp_dir = "tmp"
 
 [build]
 bin = "./tmp/main"
-cmd = "./tailwindcss -i static/css/input.css -o static/css/output.css && go build -o ./tmp/main main.go"
+cmd = "./tailwindcss -i static/css/input.css -o static/css/output.css && templ generate && go build -o ./tmp/main main.go"
 exclude_dir = ["tmp"]
 include_dir = ["cmd", "views", "static", "models", "routes", "handlers", "db"]
 include_ext = ["go", "html"]

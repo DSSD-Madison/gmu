@@ -16,12 +16,10 @@ import (
 
 	"github.com/DSSD-Madison/gmu/db"
 	"github.com/DSSD-Madison/gmu/internal"
-	"github.com/DSSD-Madison/gmu/models"
 	"github.com/DSSD-Madison/gmu/routes"
 )
 
 func main() {
-
 	var logger *slog.Logger
 
 	err := godotenv.Load()
@@ -116,9 +114,6 @@ func main() {
 	e.Static("/images", "static/images")
 	e.Static("/css", "static/css")
 	e.Static("/svg", "static/svg")
-
-	// Renderer
-	e.Renderer = models.NewTemplate()
 
 	// Routes
 	routes.InitRoutes(e, db_querier)

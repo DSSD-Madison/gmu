@@ -1,0 +1,42 @@
+package components
+
+import (
+	"strconv"
+
+	"github.com/DSSD-Madison/gmu/models"
+)
+
+var searchbar_classes = `relative w-full not-has-[p]:focus-within:[&_input]:rounded-3xl not-has-[p]:focus-within:[&_input]:border-blue-400 has-[p]:focus-within:[&_input]:rounded-t-3xl has-[p]:focus-within:[&_input]:border-blue-400 not-has-[p]:not-focus-within:[&_input]:rounded-3xl has-[p]:not-focus-within:[&_input]:rounded-3xl hover:[&_input]:rounded-t-3xl`
+
+templ SearchbarContainer(results models.KendraResults, oob bool) {
+	<div if oob { hx-swap-oob="true" } id="searchbar" class={ searchbar_classes }>
+		@Searchbar(results.UrlData, false)
+		@suggestions_container(false)
+		@indicator()
+	</div>
+}
+
+templ Searchbar(data models.UrlData, oob bool) {
+	<input class="text-2xl peer border-2 px-6 py-3 w-full outline-none bg-white"
+	   id="searchquery"
+	   autocomplete="off"
+	   placeholder="Begin Your Search Here..."
+	   type="text"
+	   name="query"
+	   hx-push-url="false"
+	   hx-post="/search/suggestions"
+	   hx-trigger="input changed delay:250ms"
+	   hx-target="#suggestions"
+	   hx-swap="innerHTML"
+	   if oob { hx-swap-oob="true" }
+	   value={ data.Query }
+	/>
+	if data.IsStoringUrl {
+		for _, filter := range data.Filters {
+			for _, str := range filter.SelectedFilters {
+				<input type="hidden" name={ filter.Name } value={ str }/>
+			}
+		}
+		<input type="hidden" name="page" value={strconv.Itoa(data.Page)}/>
+	}
+}
