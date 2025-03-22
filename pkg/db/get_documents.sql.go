@@ -13,7 +13,7 @@ import (
 
 const getDocumentsByURIs = `-- name: GetDocumentsByURIs :many
 SELECT id, file_name, title, abstract, publish_date, source, indexed_by_kendra, s3_file, s3_file_preview, pdf_link, created_at, deleted_at
-FROM documents 
+FROM documents
 WHERE s3_file = ANY($1::text[])
 `
 
