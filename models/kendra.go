@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/aws/aws-sdk-go-v2/service/kendra"
@@ -10,12 +11,25 @@ import (
 	"github.com/DSSD-Madison/gmu/internal"
 )
 
-var opts = kendra.Options{
-	Credentials: prov,
-	Region:      region,
+type KendraClient struct {
+	client *kendra.Client
+	config Config
 }
 
-var client = kendra.New(opts)
+func NewKendraClient(config Config) (*KendraClient, error) {
+	opts := kendra.Options{
+		Credentials: config.Credentials,
+		Region: config.Region,
+	}
+
+	client := kendra.New(opts)
+	if client == nil {
+		err := fmt.Errorf("Error making kendra client")
+		return &KendraClient{}, err
+	}
+
+	return &KendraClient{client, config}, nil
+} 
 
 func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	kendraResults := KendraResults{
@@ -84,7 +98,7 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	return kendraResults
 }
 
-func MakeQuery(query string, filters map[string][]string, pageNum int) KendraResults {
+func (c KendraClient) MakeQuery(query string, filters map[string][]string, pageNum int) KendraResults {
 	kendraFilters := types.AttributeFilter{
 		AndAllFilters: make([]types.AttributeFilter, len(filters)),
 	}
@@ -120,11 +134,11 @@ func MakeQuery(query string, filters map[string][]string, pageNum int) KendraRes
 	page := int32(pageNum)
 	kendraQuery := kendra.QueryInput{
 		AttributeFilter: &kendraFilters,
-		IndexId:         &indexId,
+		IndexId:         &c.config.IndexID,
 		QueryText:       &query,
 		PageNumber:      &page,
 	}
-	out, err := client.Query(context.TODO(), &kendraQuery)
+	out, err := c.client.Query(context.TODO(), &kendraQuery)
 
 	// TODO: this needs to be fixed to a proper error
 	if err != nil {
@@ -159,12 +173,12 @@ func querySuggestionsOutputToSuggestions(out kendra.GetQuerySuggestionsOutput) K
 	return suggestions
 }
 
-func GetSuggestions(query string) (KendraSuggestions, error) {
+func (c KendraClient) GetSuggestions(query string) (KendraSuggestions, error) {
 	kendraQuery := kendra.GetQuerySuggestionsInput{
-		IndexId:   &indexId,
+		IndexId:   &c.config.IndexID,
 		QueryText: &query,
 	}
-	out, err := client.GetQuerySuggestions(context.TODO(), &kendraQuery)
+	out, err := c.client.GetQuerySuggestions(context.TODO(), &kendraQuery)
 	if err != nil {
 		log.Printf("Kendra Suggestions Query Failed %+v", err)
 		return KendraSuggestions{}, err
