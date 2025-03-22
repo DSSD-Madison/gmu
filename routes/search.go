@@ -8,7 +8,6 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/DSSD-Madison/gmu/db"
 	"github.com/DSSD-Madison/gmu/internal/db_helpers"
 	"github.com/DSSD-Madison/gmu/components"
 	"github.com/DSSD-Madison/gmu/models"
@@ -16,13 +15,13 @@ import (
 
 const MinQueryLength = 3
 
-func SearchSuggestions(c echo.Context) error {
+func (h *Handler) SearchSuggestions(c echo.Context) error {
 	query := c.FormValue("query")
 
 	if len(query) == 0 {
 		return nil
 	}
-	suggestions, err := models.GetSuggestions(query)
+	suggestions, err := h.kendra.GetSuggestions(query)
 	// TODO: add error status code
 	if err != nil {
 		return nil
@@ -30,7 +29,7 @@ func SearchSuggestions(c echo.Context) error {
 	return models.Render(c, http.StatusOK, components.Suggestions(suggestions))
 }
 
-func Search(c echo.Context, db_querier *db.Queries) error {
+func (h *Handler) Search(c echo.Context) error {
 	query := c.FormValue("query")
 	pageNum := c.FormValue("page")
 
@@ -40,7 +39,7 @@ func Search(c echo.Context, db_querier *db.Queries) error {
 	delete(filters, "page")
 
 	if len(query) == 0 {
-		return Home(c)
+		return h.Home(c)
 	}
 
 	num, err := strconv.Atoi(strings.TrimSpace(pageNum))
@@ -73,14 +72,14 @@ func Search(c echo.Context, db_querier *db.Queries) error {
 		return models.Render(c, http.StatusOK, components.Search(models.KendraResults{UrlData: urlData}))
 	} else if target == "results-container" {
 		if len(filterList) == 0 {
-			results, err := getResults(c, db_querier, query, filters, num)
+			results, err := h.getResults(c, query, filters, num)
 			if err != nil {
 				return err
 			}
 			return models.Render(c, http.StatusOK, components.ResultsPage(results))
 		}
-		tempResults := models.MakeQuery(query, nil, 1)
-		results, err := getResults(c, db_querier, query, filters, num)
+		tempResults := h.kendra.MakeQuery(query, nil, 1)
+		results, err := h.getResults(c, query, filters, num)
 		if err != nil {
 			return err
 		}
@@ -88,13 +87,13 @@ func Search(c echo.Context, db_querier *db.Queries) error {
 		selectFilters(filters, &results)
 		return models.Render(c, http.StatusOK, components.ResultsPage(results))
 	} else if target == "results-content-container" {
-		results, err := getResults(c, db_querier, query, filters, num)
+		results, err := h.getResults(c, query, filters, num)
 		if err != nil {
 			return err
 		}
 		return models.Render(c, http.StatusOK, components.ResultsContainer(results))
 	} else if target == "results-and-pagination" {
-		results, err := getResults(c, db_querier, query, filters, num)
+		results, err := h.getResults(c, query, filters, num)
 		if err != nil {
 			return err
 		}
@@ -105,9 +104,9 @@ func Search(c echo.Context, db_querier *db.Queries) error {
 
 }
 
-func getResults(c echo.Context, queries *db.Queries, query string, filters url.Values, num int) (models.KendraResults, error) {
-	results := models.MakeQuery(query, filters, num)
-	err := db_helpers.AddImagesToResults(results, c, queries)
+func (h Handler) getResults(c echo.Context, query string, filters url.Values, num int) (models.KendraResults, error) {
+	results := h.kendra.MakeQuery(query, filters, num)
+	err := db_helpers.AddImagesToResults(results, c, h.db)
 	if err != nil {
 		return models.KendraResults{}, err
 	}

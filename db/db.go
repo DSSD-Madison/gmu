@@ -7,6 +7,12 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/joho/godotenv"
 )
 
 type DBTX interface {
@@ -16,7 +22,7 @@ type DBTX interface {
 	QueryRowContext(context.Context, string, ...interface{}) *sql.Row
 }
 
-func New(db DBTX) *Queries {
+func NewQuerier(db DBTX) *Queries {
 	return &Queries{db: db}
 }
 
@@ -28,4 +34,56 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
 		db: tx,
 	}
+}
+
+func DBUrl(config *Config) string {
+	if config.DBHost == "" || config.DBUser == "" || config.DBName == "" || config.DBPassword == "" {
+		log.Fatal("Database environment variables are not set properly")
+	}
+
+	databaseURL := fmt.Sprintf(
+		"postgres://%s:%s@%s/%s?sslmode=disable",
+		config.DBUser, config.DBPassword, config.DBHost, config.DBName,
+	)
+
+	return databaseURL
+}
+
+func NewPool(dbUrl string) (*pgxpool.Pool, error) {
+	dbpool, err := pgxpool.Connect(context.Background(), dbUrl)
+	if err != nil {
+		log.Fatalf("Unable to connect to database: %v", err)
+		return nil, err
+	}
+	
+	return dbpool, nil
+}
+
+func NewDB(pool *pgxpool.Pool, dbUrl string) (*sql.DB, error) {
+	sqlDB, err := sql.Open("pgx", dbUrl)
+	if err != nil {
+		log.Fatalf("Unable to initialize sql.DB: %v", err)
+		return nil, err
+	}
+	return sqlDB, nil
+}
+
+type Config struct {
+	DBHost string
+	DBUser string
+	DBName string
+	DBPassword string
+}
+
+func LoadConfig() (*Config, error) {
+	if err := godotenv.Load(); err != nil {
+		return nil, err
+	}
+
+	return &Config{
+		DBHost: os.Getenv("PROD_HOST"),
+		DBUser: os.Getenv("PROD_USER"),
+		DBName: os.Getenv("PROD_DB"),
+		DBPassword: os.Getenv("PROD_PASSWORD"),
+	}, nil
 }

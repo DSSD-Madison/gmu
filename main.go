@@ -1,40 +1,31 @@
 package main
 
 import (
-	"context"
-	"database/sql"
-	"fmt"
 	"log"
 	"log/slog"
 	"os"
 
-	 _ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/joho/godotenv"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
 	"github.com/DSSD-Madison/gmu/db"
 	"github.com/DSSD-Madison/gmu/internal"
+	"github.com/DSSD-Madison/gmu/models"
 	"github.com/DSSD-Madison/gmu/routes"
 )
 
 func main() {
 	var logger *slog.Logger
 
-	err := godotenv.Load()
+	appConfig, err := internal.LoadConfig()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal("Error loading config: %q", err)
+		os.Exit(1)
 	}
 
-	mode, exist := os.LookupEnv("MODE")
-	if !exist {
-		mode = "dev"
-	}
-
-	levelStr, exist := os.LookupEnv("LOG_LEVEL")
 	var level slog.Level
-	switch levelStr {
+	switch appConfig.LogLevel {
 	case "debug":
 		level = slog.LevelDebug
 	case "info":
@@ -48,7 +39,7 @@ func main() {
 	}
 
 	loggerOpts := internal.HandlerOptions{
-		Mode:  mode,
+		Mode:  appConfig.Mode,
 		Level: level,
 	}
 
@@ -80,43 +71,42 @@ func main() {
 		},
 	}))
 
-	host := os.Getenv("PROD_HOST")
-	user := os.Getenv("PROD_USER")
-	dbname := os.Getenv("PROD_DB")
-	password := os.Getenv("PROD_PASSWORD")
-
-	if host == "" || user == "" || dbname == "" || password == "" {
-		log.Fatal("Database environment variables are not set properly")
+	dbConfig, err := db.LoadConfig()
+	if err != nil {
+		log.Fatalf("Unable to load db config: %q", err)
 	}
 
-	databaseURL := fmt.Sprintf(
-		"postgres://%s:%s@%s/%s?sslmode=disable",
-		user, password, host, dbname,
-	)
-
-	// Connect to PostgreSQL using pgxpool
-	dbpool, err := pgxpool.Connect(context.Background(), databaseURL)
+	databaseURL := db.DBUrl(dbConfig)
+	dbpool, err := db.NewPool(databaseURL)
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v", err)
 	}
 	defer dbpool.Close()
 
-	// Create a *sql.DB instance using the pgx driver
-	sqlDB, err := sql.Open("pgx", databaseURL)
-	if err != nil {
-		log.Fatalf("Unable to initialize sql.DB: %v", err)
-	}
+	sqlDB, err := db.NewDB(dbpool, databaseURL)
 	defer sqlDB.Close()
 
-	db_querier := db.New(sqlDB)
+	db_querier := db.NewQuerier(sqlDB)
 
 	// Static file handlers
 	e.Static("/images", "static/images")
 	e.Static("/css", "static/css")
 	e.Static("/svg", "static/svg")
 
+
+	kendraConfig, err := models.LoadConfig()
+	if err != nil {
+		log.Fatalf("Could not load AWS/Kendra config: %q", err)
+	}
+	kendraClient, err := models.NewKendraClient(*kendraConfig)
+	if err != nil {
+		log.Fatalf("Could not initialize kendra client: %q", err)
+	}
+
+	routesHandler := routes.NewHandler(db_querier, kendraClient)
+
 	// Routes
-	routes.InitRoutes(e, db_querier)
+	routes.InitRoutes(e, routesHandler)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":8080"))
