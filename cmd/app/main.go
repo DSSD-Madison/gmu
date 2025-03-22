@@ -6,14 +6,17 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"os"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
+	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 	"github.com/DSSD-Madison/gmu/pkg/config"
 	"github.com/DSSD-Madison/gmu/pkg/db"
+	db_util "github.com/DSSD-Madison/gmu/pkg/db/util"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/DSSD-Madison/gmu/routes"
 )
@@ -73,9 +76,10 @@ func main() {
 		},
 	}))
 
-	dbConfig, err := db.LoadConfig()
+	dbConfig, err := db_util.LoadConfig()
 	if err != nil {
-		log.Fatalf("Unable to load db config: %q", err)
+		logHandler.Error("Unable to load db config", "err", err)
+		os.Exit(1)
 	}
 
 	databaseURL := fmt.Sprintf(
@@ -87,6 +91,7 @@ func main() {
 	dbpool, err := pgxpool.Connect(context.Background(), databaseURL)
 	if err != nil {
 		logHandler.Error("Unable to connect to database", "err", err)
+		os.Exit(1)
 	}
 	defer dbpool.Close()
 
@@ -94,10 +99,26 @@ func main() {
 	sqlDB, err := sql.Open("pgx", databaseURL)
 	if err != nil {
 		logHandler.Error("Unable to initialize sql.DB", "err", err)
+		os.Exit(1)
 	}
 	defer sqlDB.Close()
 
 	dbQuerier := db.New(sqlDB)
+
+
+	kendraConfig, err := awskendra.LoadConfig()
+	if err != nil {
+		logHandler.Error("Could not load AWS Kendra config", "err", err)
+		os.Exit(1)
+	}
+
+	kendraClient, err := awskendra.NewKendraClient(*kendraConfig)
+	if err != nil {
+		logHandler.Error("Could not initialize kendra client", "err", err)
+		os.Exit(1)
+	}
+
+	routesHandler := routes.NewHandler(dbQuerier, kendraClient, logHandler)
 
 	// Static file handlers
 	e.Static("/images", "web/assets/images")
@@ -105,7 +126,7 @@ func main() {
 	e.Static("/svg", "web/assets/svg")
 
 	// Routes
-	routes.InitRoutes(e, dbQuerier)
+	routes.InitRoutes(e, routesHandler)
 
 	// Start server
 	e.Logger.Fatal(e.Start(":8080"))

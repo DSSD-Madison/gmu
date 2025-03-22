@@ -5,21 +5,22 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/DSSD-Madison/gmu/pkg/awskendra"
+	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
 )
 
-func SearchSuggestions(c echo.Context) error {
+func (h *Handler) SearchSuggestions(c echo.Context) error {
 	query := c.FormValue("query")
 
-	if len(query) == 0 {
+	if query == "" {
 		return nil
 	}
-	suggestions, err := awskendra.GetSuggestions(query)
+
+	suggestions, err := h.kendra.GetSuggestions(query)
 	// TODO: add error status code
 	if err != nil {
 		return nil
 	}
-	return awskendra.Render(c, http.StatusOK, components.Suggestions(suggestions))
-}
 
+	return web.Render(c, http.StatusOK, components.Suggestions(suggestions))
+}
