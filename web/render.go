@@ -1,4 +1,4 @@
-package awskendra
+package web
 
 import (
 	"github.com/a-h/templ"

@@ -6,94 +6,99 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
 
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
-	"github.com/DSSD-Madison/gmu/pkg/db"
 	db_util "github.com/DSSD-Madison/gmu/pkg/db/util"
+	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
 )
 
 const MinQueryLength = 3
 
-func Search(c echo.Context, db_querier *db.Queries) error {
+func (h *Handler) Search(c echo.Context) error {
 	query := c.FormValue("query")
-	pageNum := c.FormValue("page")
+	pageNumStr := c.FormValue("page")
 
 	filters, _ := c.FormParams()
-
 	delete(filters, "query")
 	delete(filters, "page")
 
-	if len(query) == 0 {
-		return Home(c)
+	if query == "" {
+		return h.Home(c)
 	}
 
-	num, err := strconv.Atoi(strings.TrimSpace(pageNum))
+	if len(query) < MinQueryLength {
+		return echo.NewHTTPError(http.StatusBadRequest, "Query too short")
+	}
+
+	pageNum := parsePageNum(pageNumStr)
+
+	filterList := convertFilterstoKendra(filters)
+
+	urlData := awskendra.UrlData{
+		Query:        query,
+		Filters:      filterList,
+		Page:         pageNum,
+		IsStoringUrl: true,
+	}
+
+	// Check if the request is coming from HTMX
+	target := c.Request().Header.Get("HX-Target")
+	if target == "root" {
+		return web.Render(c, http.StatusOK, components.Search(awskendra.KendraResults{UrlData: urlData}))
+	}
+
+	results, err := h.getResults(c, query, filters, pageNum)
 	if err != nil {
-		num = 1
+		return err
 	}
 
-	var filterList []awskendra.Filter
+	component := selectComponentTarget(target, urlData, results)
 
+	if target == "results-container" && len(filterList) > 0 {
+		tempResults := h.kendra.MakeQuery(query, nil, 1)
+		results.Filters = tempResults.Filters
+		selectFilters(filters, &results)
+	}
+
+	return web.Render(c, http.StatusOK, component)
+}
+
+func parsePageNum(pageNumStr string) int {
+	num, err := strconv.Atoi(strings.TrimSpace(pageNumStr))
+	if err != nil || num < 1 {
+		return 1
+	}
+	return num
+}
+
+func selectComponentTarget(target string, urlData awskendra.UrlData, results awskendra.KendraResults) templ.Component {
+	switch target {
+	case "results-container", "results-content-container":
+		return components.ResultsPage(results)
+	case "results-and-pagination":
+		return components.ResultsAndPagination(results)
+	default:
+		return components.SearchHome(awskendra.KendraResults{UrlData: urlData})
+	}
+}
+
+func convertFilterstoKendra(filters url.Values) []awskendra.Filter {
+	var filterList []awskendra.Filter
 	for key, values := range filters {
 		filterList = append(filterList, awskendra.Filter{
 			Name:            key,
 			SelectedFilters: values,
 		})
 	}
-
-	urlData := awskendra.UrlData{
-		Query:        query,
-		Filters:      filterList,
-		Page:         num,
-		IsStoringUrl: true,
-	}
-	if len(query) < MinQueryLength {
-		return echo.NewHTTPError(http.StatusBadRequest, "Query too short")
-	}
-	// Check if the request is coming from HTMX
-	target := c.Request().Header.Get("HX-Target")
-
-	if target == "root" {
-		return awskendra.Render(c, http.StatusOK, components.Search(awskendra.KendraResults{UrlData: urlData}))
-	} else if target == "results-container" {
-		if len(filterList) == 0 {
-			results, err := getResults(c, db_querier, query, filters, num)
-			if err != nil {
-				return err
-			}
-			return awskendra.Render(c, http.StatusOK, components.ResultsPage(results))
-		}
-		tempResults := awskendra.MakeQuery(query, nil, 1)
-		results, err := getResults(c, db_querier, query, filters, num)
-		if err != nil {
-			return err
-		}
-		results.Filters = tempResults.Filters
-		selectFilters(filters, &results)
-		return awskendra.Render(c, http.StatusOK, components.ResultsPage(results))
-	} else if target == "results-content-container" {
-		results, err := getResults(c, db_querier, query, filters, num)
-		if err != nil {
-			return err
-		}
-		return awskendra.Render(c, http.StatusOK, components.ResultsContainer(results))
-	} else if target == "results-and-pagination" {
-		results, err := getResults(c, db_querier, query, filters, num)
-		if err != nil {
-			return err
-		}
-		return awskendra.Render(c, http.StatusOK, components.ResultsAndPagination(results))
-	} else {
-		return awskendra.Render(c, http.StatusOK, components.SearchHome(awskendra.KendraResults{UrlData: urlData}))
-	}
-
+	return filterList
 }
 
-func getResults(c echo.Context, queries *db.Queries, query string, filters url.Values, num int) (awskendra.KendraResults, error) {
-	results := awskendra.MakeQuery(query, filters, num)
-	db_util.AddImagesToResults(results, c, queries)
+func (h *Handler) getResults(c echo.Context, query string, filters url.Values, num int) (awskendra.KendraResults, error) {
+	results := h.kendra.MakeQuery(query, filters, num)
+	db_util.AddImagesToResults(results, c, h.db)
 	return results, nil
 }
 
