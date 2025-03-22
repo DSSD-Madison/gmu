@@ -23,18 +23,18 @@ jobs:
         run: |
           go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
           export PATH=$HOME/go/bin:/usr/local/go/bin:$PATH
-          rm -rf ./db/*.go
+          rm -rf ./pkg/db/*.go
           sqlc generate
       
       - name: Run Backend Unit Tests
         run: |
-          go test -v ./handlers/...
+          go test -v ./pkg/db/handlers/...
 
       - name: Build and Test
         run: |
           make install-all-linux
-          go build -o gmu -buildvcs=false
-          ./tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify
+          go build -o gmu -buildvcs=false ./cmd/app/main.go
+          ./tools/tailwindcss -i ./web/assets/css/input.css -o ./web/assets/css/output.css --minify
 
   deploy:
     name: Deploy to EC2
@@ -63,6 +63,6 @@ jobs:
             sqlc generate
             go test -v ./handlers/...
             make install-linux
-            ./tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify
-            go build -o gmu -buildvcs=false
+            ./tools/tailwindcss -i ./web/assets/css/input.css -o ./web/assets/css/output.css --minify
+            go build -o gmu ./cmd/app/main.go -buildvcs=false
             sudo systemctl restart goapp
