@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"github.com/DSSD-Madison/gmu/db"
+	"github.com/DSSD-Madison/gmu/pkg/db"
 	"github.com/labstack/echo/v4"
 )
 

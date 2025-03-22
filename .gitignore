@@ -1,6 +1,8 @@
-static/css/output.css
+web/assets/css/output.css
 .env
 tmp
 .idea
 tailwindcss
 /bin
+tools
+venv

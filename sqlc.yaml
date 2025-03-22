@@ -1,7 +1,7 @@
 version: "1"
 packages:
   - name: "db"
-    path: "./db"
-    queries: "./queries"
+    path: "./pkg/db"
+    queries: "./pkg/queries"
     schema: "schema.sql"
     engine: "postgresql"

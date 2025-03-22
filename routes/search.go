@@ -8,27 +8,13 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/DSSD-Madison/gmu/db"
-	"github.com/DSSD-Madison/gmu/internal/db_helpers"
-	"github.com/DSSD-Madison/gmu/components"
-	"github.com/DSSD-Madison/gmu/models"
+	"github.com/DSSD-Madison/gmu/pkg/awskendra"
+	"github.com/DSSD-Madison/gmu/pkg/db"
+	db_util "github.com/DSSD-Madison/gmu/pkg/db/util"
+	"github.com/DSSD-Madison/gmu/web/components"
 )
 
 const MinQueryLength = 3
-
-func SearchSuggestions(c echo.Context) error {
-	query := c.FormValue("query")
-
-	if len(query) == 0 {
-		return nil
-	}
-	suggestions, err := models.GetSuggestions(query)
-	// TODO: add error status code
-	if err != nil {
-		return nil
-	}
-	return models.Render(c, http.StatusOK, components.Suggestions(suggestions))
-}
 
 func Search(c echo.Context, db_querier *db.Queries) error {
 	query := c.FormValue("query")
@@ -48,16 +34,16 @@ func Search(c echo.Context, db_querier *db.Queries) error {
 		num = 1
 	}
 
-	var filterList []models.Filter
+	var filterList []awskendra.Filter
 
 	for key, values := range filters {
-		filterList = append(filterList, models.Filter{
+		filterList = append(filterList, awskendra.Filter{
 			Name:            key,
 			SelectedFilters: values,
 		})
 	}
 
-	urlData := models.UrlData{
+	urlData := awskendra.UrlData{
 		Query:        query,
 		Filters:      filterList,
 		Page:         num,
@@ -70,48 +56,48 @@ func Search(c echo.Context, db_querier *db.Queries) error {
 	target := c.Request().Header.Get("HX-Target")
 
 	if target == "root" {
-		return models.Render(c, http.StatusOK, components.Search(models.KendraResults{UrlData: urlData}))
+		return awskendra.Render(c, http.StatusOK, components.Search(awskendra.KendraResults{UrlData: urlData}))
 	} else if target == "results-container" {
 		if len(filterList) == 0 {
 			results, err := getResults(c, db_querier, query, filters, num)
 			if err != nil {
 				return err
 			}
-			return models.Render(c, http.StatusOK, components.ResultsPage(results))
+			return awskendra.Render(c, http.StatusOK, components.ResultsPage(results))
 		}
-		tempResults := models.MakeQuery(query, nil, 1)
+		tempResults := awskendra.MakeQuery(query, nil, 1)
 		results, err := getResults(c, db_querier, query, filters, num)
 		if err != nil {
 			return err
 		}
 		results.Filters = tempResults.Filters
 		selectFilters(filters, &results)
-		return models.Render(c, http.StatusOK, components.ResultsPage(results))
+		return awskendra.Render(c, http.StatusOK, components.ResultsPage(results))
 	} else if target == "results-content-container" {
 		results, err := getResults(c, db_querier, query, filters, num)
 		if err != nil {
 			return err
 		}
-		return models.Render(c, http.StatusOK, components.ResultsContainer(results))
+		return awskendra.Render(c, http.StatusOK, components.ResultsContainer(results))
 	} else if target == "results-and-pagination" {
 		results, err := getResults(c, db_querier, query, filters, num)
 		if err != nil {
 			return err
 		}
-		return models.Render(c, http.StatusOK, components.ResultsAndPagination(results))
+		return awskendra.Render(c, http.StatusOK, components.ResultsAndPagination(results))
 	} else {
-		return models.Render(c, http.StatusOK, components.SearchHome(models.KendraResults{UrlData: urlData}))
+		return awskendra.Render(c, http.StatusOK, components.SearchHome(awskendra.KendraResults{UrlData: urlData}))
 	}
 
 }
 
-func getResults(c echo.Context, queries *db.Queries, query string, filters url.Values, num int) (models.KendraResults, error) {
-	results := models.MakeQuery(query, filters, num)
-	db_helpers.AddImagesToResults(results, c, queries)
+func getResults(c echo.Context, queries *db.Queries, query string, filters url.Values, num int) (awskendra.KendraResults, error) {
+	results := awskendra.MakeQuery(query, filters, num)
+	db_util.AddImagesToResults(results, c, queries)
 	return results, nil
 }
 
-func selectFilters(filters url.Values, results *models.KendraResults) {
+func selectFilters(filters url.Values, results *awskendra.KendraResults) {
 	for i, cat := range results.Filters {
 		if selectedOptions, exists := filters[cat.Category]; exists {
 			for idx, o := range cat.Options {
@@ -125,5 +111,3 @@ func selectFilters(filters url.Values, results *models.KendraResults) {
 		}
 	}
 }
-
-
