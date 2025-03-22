@@ -8,33 +8,27 @@ import (
 	"log/slog"
 	"os"
 
-	 _ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/joho/godotenv"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
+	"github.com/DSSD-Madison/gmu/pkg/config"
+	"github.com/DSSD-Madison/gmu/pkg/db"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/DSSD-Madison/gmu/routes"
-	"github.com/DSSD-Madison/gmu/pkg/db"
 )
 
 func main() {
 	var logHandler *slog.Logger
 
-	err := godotenv.Load()
+	appConfig, err := config.LoadConfig()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
-	mode, exist := os.LookupEnv("MODE")
-	if !exist {
-		mode = "dev"
-	}
-
-	levelStr, exist := os.LookupEnv("LOG_LEVEL")
 	var level slog.Level
-	switch levelStr {
+	switch appConfig.LogLevel {
 	case "debug":
 		level = slog.LevelDebug
 	case "info":
@@ -48,7 +42,7 @@ func main() {
 	}
 
 	loggerOpts := logger.HandlerOptions{
-		Mode:  mode,
+		Mode:  appConfig.Mode,
 		Level: level,
 	}
 
