@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
-	"os"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -74,18 +73,14 @@ func main() {
 		},
 	}))
 
-	host := os.Getenv("PROD_HOST")
-	user := os.Getenv("PROD_USER")
-	dbname := os.Getenv("PROD_DB")
-	password := os.Getenv("PROD_PASSWORD")
-
-	if host == "" || user == "" || dbname == "" || password == "" {
-		logHandler.Error("Database environment variables are not set properly")
+	dbConfig, err := db.LoadConfig()
+	if err != nil {
+		log.Fatalf("Unable to load db config: %q", err)
 	}
 
 	databaseURL := fmt.Sprintf(
 		"postgres://%s:%s@%s/%s?sslmode=disable",
-		user, password, host, dbname,
+		dbConfig.DBUser, dbConfig.DBPassword, dbConfig.DBHost, dbConfig.DBName,
 	)
 
 	// Connect to PostgreSQL using pgxpool
