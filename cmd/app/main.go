@@ -16,7 +16,7 @@ import (
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 	"github.com/DSSD-Madison/gmu/pkg/config"
 	"github.com/DSSD-Madison/gmu/pkg/db"
-	db_helpers "github.com/DSSD-Madison/gmu/pkg/db/helpers"
+	db_util "github.com/DSSD-Madison/gmu/pkg/db/util"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/DSSD-Madison/gmu/routes"
 )
@@ -76,7 +76,7 @@ func main() {
 		},
 	}))
 
-	dbConfig, err := db_helpers.LoadConfig()
+	dbConfig, err := db_util.LoadConfig()
 	if err != nil {
 		l.Error("Unable to load db config", "err", err)
 		os.Exit(1)

@@ -10,7 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
-	"github.com/DSSD-Madison/gmu/pkg/db/helpers"
+	"github.com/DSSD-Madison/gmu/pkg/db/util"
 	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
 )
@@ -98,7 +98,7 @@ func convertFilterstoKendra(filters url.Values) []awskendra.Filter {
 
 func (h *Handler) getResults(c echo.Context, query string, filters url.Values, num int) (awskendra.KendraResults, error) {
 	results := h.kendra.MakeQuery(query, filters, num)
-	err := helpers.AddImagesToResults(results, c, h.db)
+	err := util.AddImagesToResults(results, c, h.db)
 	if err != nil {
 		return awskendra.KendraResults{}, err
 	}
