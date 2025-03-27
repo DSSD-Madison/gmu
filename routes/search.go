@@ -35,7 +35,7 @@ func (h *Handler) Search(c echo.Context) error {
 
 	pageNum := parsePageNum(pageNumStr)
 
-	filterList := buildFilterList(filters)
+	filterList := convertFilterstoKendra(filters)
 
 	urlData := awskendra.UrlData{
 		Query:        query,
@@ -85,7 +85,7 @@ func selectComponentTarget(target string, urlData awskendra.UrlData, results aws
 	}
 }
 
-func buildFilterList(filters url.Values) []awskendra.Filter {
+func convertFilterstoKendra(filters url.Values) []awskendra.Filter {
 	var filterList []awskendra.Filter
 	for key, values := range filters {
 		filterList = append(filterList, awskendra.Filter{
