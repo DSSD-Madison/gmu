@@ -103,7 +103,7 @@ func main() {
 	}
 	defer sqlDB.Close()
 
-	db_querier := db.New(sqlDB)
+	dbQuerier := db.New(sqlDB)
 
 
 	kendraConfig, err := awskendra.LoadConfig()
@@ -118,7 +118,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	routesHandler := routes.NewHandler(db_querier, kendraClient, l)
+	routesHandler := routes.NewHandler(dbQuerier, kendraClient, l)
 
 	// Static file handlers
 	e.Static("/images", "web/assets/images")
