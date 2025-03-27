@@ -34,11 +34,6 @@ func LoadConfig() (*Config, error) {
 	}, nil
 }
 
-type AWSHandler struct {
-	Config Config
-	Provider aws.Credentials
-}
-
 type Provider struct {
 	Credentials aws.Credentials
 }
