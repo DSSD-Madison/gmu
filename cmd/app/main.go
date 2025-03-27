@@ -22,7 +22,7 @@ import (
 )
 
 func main() {
-	var l *slog.Logger
+	var logHandler *slog.Logger
 
 	appConfig, err := config.LoadConfig()
 	if err != nil {
@@ -48,7 +48,7 @@ func main() {
 		Level: level,
 	}
 
-	l = slog.New(logger.NewHandler(&loggerOpts))
+	logHandler = slog.New(logger.NewHandler(&loggerOpts))
 
 	e := echo.New()
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
@@ -59,13 +59,13 @@ func main() {
 		HandleError: true, // forwards error to the global error handler, so it can decide appropriate status code
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
 			if v.Error == nil {
-				l.LogAttrs(c.Request().Context(), slog.LevelInfo, "REQUEST",
+				logHandler.LogAttrs(c.Request().Context(), slog.LevelInfo, "REQUEST",
 					slog.String("uri", v.URI),
 					slog.Int("status", v.Status),
 					slog.String("ip", v.RemoteIP),
 				)
 			} else {
-				l.LogAttrs(c.Request().Context(), slog.LevelError, "REQUEST ERROR",
+				logHandler.LogAttrs(c.Request().Context(), slog.LevelError, "REQUEST ERROR",
 					slog.String("uri", v.URI),
 					slog.Int("status", v.Status),
 					slog.String("err", v.Error.Error()),
@@ -78,7 +78,7 @@ func main() {
 
 	dbConfig, err := db_util.LoadConfig()
 	if err != nil {
-		l.Error("Unable to load db config", "err", err)
+		logHandler.Error("Unable to load db config", "err", err)
 		os.Exit(1)
 	}
 
@@ -90,7 +90,7 @@ func main() {
 	// Connect to PostgreSQL using pgxpool
 	dbpool, err := pgxpool.Connect(context.Background(), databaseURL)
 	if err != nil {
-		l.Error("Unable to connect to database", "err", err)
+		logHandler.Error("Unable to connect to database", "err", err)
 		os.Exit(1)
 	}
 	defer dbpool.Close()
@@ -98,7 +98,7 @@ func main() {
 	// Create a *sql.DB instance using the pgx driver
 	sqlDB, err := sql.Open("pgx", databaseURL)
 	if err != nil {
-		l.Error("Unable to initialize sql.DB", "err", err)
+		logHandler.Error("Unable to initialize sql.DB", "err", err)
 		os.Exit(1)
 	}
 	defer sqlDB.Close()
@@ -108,17 +108,17 @@ func main() {
 
 	kendraConfig, err := awskendra.LoadConfig()
 	if err != nil {
-		l.Error("Could not load AWS Kendra config", "err", err)
+		logHandler.Error("Could not load AWS Kendra config", "err", err)
 		os.Exit(1)
 	}
 
 	kendraClient, err := awskendra.NewKendraClient(*kendraConfig)
 	if err != nil {
-		l.Error("Could not initialize kendra client", "err", err)
+		logHandler.Error("Could not initialize kendra client", "err", err)
 		os.Exit(1)
 	}
 
-	routesHandler := routes.NewHandler(dbQuerier, kendraClient, l)
+	routesHandler := routes.NewHandler(dbQuerier, kendraClient, logHandler)
 
 	// Static file handlers
 	e.Static("/images", "web/assets/images")
