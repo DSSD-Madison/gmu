@@ -17,22 +17,6 @@ import (
 
 const MinQueryLength = 3
 
-func (h *Handler) SearchSuggestions(c echo.Context) error {
-	query := c.FormValue("query")
-
-	if query == "" {
-		return nil
-	}
-
-	suggestions, err := h.kendra.GetSuggestions(query)
-	// TODO: add error status code
-	if err != nil {
-		return nil
-	}
-
-	return web.Render(c, http.StatusOK, components.Suggestions(suggestions))
-}
-
 func (h *Handler) Search(c echo.Context) error {
 	query := c.FormValue("query")
 	pageNumStr := c.FormValue("page")
