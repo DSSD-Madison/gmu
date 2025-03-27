@@ -5,10 +5,10 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/DSSD-Madison/gmu/pkg/awskendra"
+	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
 )
 
 func (h *Handler) Home(c echo.Context) error {
-	return awskendra.Render(c, http.StatusOK, components.Home())
+	return web.Render(c, http.StatusOK, components.Home())
 }

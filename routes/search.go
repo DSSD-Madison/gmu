@@ -11,6 +11,7 @@ import (
 
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 	"github.com/DSSD-Madison/gmu/pkg/db/helpers"
+	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
 )
 
@@ -29,7 +30,7 @@ func (h *Handler) SearchSuggestions(c echo.Context) error {
 		return nil
 	}
 
-	return awskendra.Render(c, http.StatusOK, components.Suggestions(suggestions))
+	return web.Render(c, http.StatusOK, components.Suggestions(suggestions))
 }
 
 func (h *Handler) Search(c echo.Context) error {
@@ -62,7 +63,7 @@ func (h *Handler) Search(c echo.Context) error {
 	// Check if the request is coming from HTMX
 	target := c.Request().Header.Get("HX-Target")
 	if target == "root" {
-		return awskendra.Render(c, http.StatusOK, components.Search(awskendra.KendraResults{UrlData: urlData}))
+		return web.Render(c, http.StatusOK, components.Search(awskendra.KendraResults{UrlData: urlData}))
 	}
 
 	results, err := h.getResults(c, query, filters, pageNum)
@@ -78,7 +79,7 @@ func (h *Handler) Search(c echo.Context) error {
 		selectFilters(filters, &results)
 	}
 
-	return awskendra.Render(c, http.StatusOK, component)
+	return web.Render(c, http.StatusOK, component)
 }
 
 func parsePageNum(pageNumStr string) int {
