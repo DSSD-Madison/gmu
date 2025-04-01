@@ -1,0 +1,59 @@
+package components
+
+import (
+    "strconv"
+    "github.com/DSSD-Madison/gmu/pkg/awskendra"
+)
+
+templ sidecolumn(results awskendra.KendraResults) {
+	<aside id="sidecolumn" class="mx-6 w-72 px-4">
+		<form
+				hx-get="/search"
+				hx-push-url="true"
+				hx-trigger="click from:#apply-filters-btn"
+				hx-target="#results-and-pagination"
+				hx-include="#searchbar"
+				hx-swap="innerHTML"
+		>
+			for _, filter := range results.Filters {
+				<details class="mb-4 shadow rounded-lg overflow-hidden group/filter">
+					<summary class="text-base select-none p-3 bg-gray-100 hover:bg-gray-200 flex justify-between items-center cursor-pointer">
+						<p class="font-medium">{ filter.Name }</p>
+						<svg class="w-4 h-4 transition-transform group-open/filter:rotate-90" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+							<path d="M12.95 10.707l.707-.707L8 4.343 6.586 5.757 10.828 10l-4.242 4.243L8 15.657l4.95-4.95z"/>
+						</svg>
+					</summary>
+					<div class="bg-white p-2 flex flex-col divide-y divide-gray-200">
+						for _, option := range filter.Options {
+							<label class="flex items-center p-1 cursor-pointer hover:bg-blue-50 text-sm">
+								if option.Selected {
+									<input
+											type="checkbox"
+											class="mr-2 accent-blue-600"
+											name={ filter.Category }
+											value={ option.Label }
+											checked/>
+								} else {
+									<input type="checkbox"
+											class="mr-2 accent-blue-600"
+											name={ filter.Category }
+											value={ option.Label }/>
+								}
+								<span class="flex-grow">{ option.Label }</span>
+								<span class="text-xs text-gray-600">({ strconv.Itoa(int(option.Count)) })</span>
+							</label>
+						}
+					</div>
+				</details>
+
+			}
+			<button
+					id="apply-filters-btn"
+					type="submit"
+					class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 cursor-pointer transition"
+			>
+				Apply Filters
+			</button>
+		</form>
+	</aside>
+}

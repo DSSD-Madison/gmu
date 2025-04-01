@@ -3,10 +3,10 @@ tmp_dir = "tmp"
 
 [build]
 bin = "./tmp/main"
-cmd = "./tailwindcss -i static/css/input.css -o static/css/output.css && templ generate && go build -o ./tmp/main main.go"
-exclude_dir = ["tmp"]
-include_dir = ["cmd", "views", "static", "models", "routes", "handlers", "db"]
-include_ext = ["go", "html"]
+cmd = "./tools/tailwindcss -i web/assets/css/input.css -o web/assets/css/output.css && templ generate && go build -o ./tmp/main cmd/app/main.go"
+exclude_dir = ["tmp", "web/assets", "web/components", "web/components/*.go"]
+include_dir = ["cmd", "web", "pkg", "internal", "routes"]
+include_ext = ["go", "templ"]
 
 [misc]
 clean_on_exit = false
