@@ -62,7 +62,7 @@ jobs:
             rm -rf ./db/*.go
             sqlc generate
             go test -v ./handlers/...
-            make install-linux
+            make install-all-linux
             ./tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify
             go build -o gmu -buildvcs=false
             sudo systemctl restart goapp
