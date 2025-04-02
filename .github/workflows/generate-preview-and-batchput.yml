@@ -1,0 +1,49 @@
+name: Generate Preview & Batch Put
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs daily at midnight UTC
+  push:
+    branches:
+      - main
+      - batch-put
+
+jobs:
+  process-pdfs:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}  # Use a GitHub Secret for security
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          role-session-name: GitHubActionsSession
+          aws-region: us-east-1
+
+      - name: Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Install Dependencies
+        run: |
+          pip install boto3 pymupdf pillow pypdf2
+
+      - name: Run first_page.py
+        run: python first_page.py
+
+      - name: Run batchput.py
+        run: python batchput.py
+
+
+
