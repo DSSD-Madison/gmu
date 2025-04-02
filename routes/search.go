@@ -107,10 +107,7 @@ func Search(c echo.Context, db_querier *db.Queries) error {
 
 func getResults(c echo.Context, queries *db.Queries, query string, filters url.Values, num int) (models.KendraResults, error) {
 	results := models.MakeQuery(query, filters, num)
-	err := db_helpers.AddImagesToResults(results, c, queries)
-	if err != nil {
-		return models.KendraResults{}, err
-	}
+	db_helpers.AddImagesToResults(results, c, queries)
 	return results, nil
 }
 

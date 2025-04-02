@@ -12,7 +12,7 @@ import (
 )
 
 const getDocumentsByURIs = `-- name: GetDocumentsByURIs :many
-SELECT id, file_name, title, abstract, category, publish_date, source, region_id, s3_file, s3_file_preview, pdf_link, created_at, deleted_at
+SELECT id, file_name, title, abstract, publish_date, source, indexed_by_kendra, s3_file, s3_file_preview, pdf_link, created_at, deleted_at
 FROM documents 
 WHERE s3_file = ANY($1::text[])
 `
@@ -31,10 +31,9 @@ func (q *Queries) GetDocumentsByURIs(ctx context.Context, dollar_1 []string) ([]
 			&i.FileName,
 			&i.Title,
 			&i.Abstract,
-			&i.Category,
 			&i.PublishDate,
 			&i.Source,
-			&i.RegionID,
+			&i.IndexedByKendra,
 			&i.S3File,
 			&i.S3FilePreview,
 			&i.PdfLink,

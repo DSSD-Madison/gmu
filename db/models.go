@@ -15,10 +15,21 @@ type Author struct {
 	Name string
 }
 
+type Category struct {
+	ID   uuid.UUID
+	Name string
+}
+
 type DocAuthor struct {
 	ID       uuid.UUID
 	DocID    uuid.NullUUID
 	AuthorID uuid.NullUUID
+}
+
+type DocCategory struct {
+	ID         uuid.UUID
+	DocID      uuid.NullUUID
+	CategoryID uuid.NullUUID
 }
 
 type DocKeyword struct {
@@ -27,20 +38,25 @@ type DocKeyword struct {
 	KeywordID uuid.NullUUID
 }
 
+type DocRegion struct {
+	ID       uuid.UUID
+	DocID    uuid.NullUUID
+	RegionID uuid.NullUUID
+}
+
 type Document struct {
-	ID            uuid.UUID
-	FileName      string
-	Title         string
-	Abstract      sql.NullString
-	Category      sql.NullString
-	PublishDate   sql.NullTime
-	Source        sql.NullString
-	RegionID      uuid.NullUUID
-	S3File        string
-	S3FilePreview sql.NullString
-	PdfLink       sql.NullString
-	CreatedAt     sql.NullTime
-	DeletedAt     sql.NullTime
+	ID              uuid.UUID
+	FileName        string
+	Title           string
+	Abstract        sql.NullString
+	PublishDate     sql.NullTime
+	Source          sql.NullString
+	IndexedByKendra sql.NullBool
+	S3File          string
+	S3FilePreview   sql.NullString
+	PdfLink         sql.NullString
+	CreatedAt       sql.NullTime
+	DeletedAt       sql.NullTime
 }
 
 type Keyword struct {

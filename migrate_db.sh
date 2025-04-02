@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Move to the script's parent directory
-cd "$(dirname "$0")/.."
-
 # Load environment variables from .env file
 set -a
 source .env

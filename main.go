@@ -80,10 +80,10 @@ func main() {
 		},
 	}))
 
-	host := os.Getenv("PROD_HOST")
-	user := os.Getenv("PROD_USER")
-	dbname := os.Getenv("PROD_DB")
-	password := os.Getenv("PROD_PASSWORD")
+	host := os.Getenv("DB_HOST")
+	user := os.Getenv("DB_USER")
+	dbname := os.Getenv("DB_NAME")
+	password := os.Getenv("DB_PASSWORD")
 
 	if host == "" || user == "" || dbname == "" || password == "" {
 		log.Fatal("Database environment variables are not set properly")
