@@ -23,8 +23,6 @@ jobs:
         run: |
           go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
           export PATH=$HOME/go/bin:/usr/local/go/bin:$PATH
-          rm -rf ./db/*.go
-          sqlc generate
       
       - name: Run Backend Unit Tests
         run: |
@@ -59,8 +57,6 @@ jobs:
             git pull origin main
             go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
             echo "$HOME/go/bin" >> $GITHUB_PATH
-            rm -rf ./db/*.go
-            sqlc generate
             go test -v ./handlers/...
             make install-all-linux
             ./tailwindcss -i ./static/css/input.css -o ./static/css/output.css --minify
