@@ -15,28 +15,13 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/DSSD-Madison/gmu/db"
+	"github.com/DSSD-Madison/gmu/handlers"
 )
 
 // Create a testable version of the handler function that accepts an interface
 // instead of the concrete *db.Queries type
 type DBQuerier interface {
 	GetDocumentsByURIs(ctx context.Context, uris []string) ([]db.Document, error)
-}
-
-// GetDocumentsTest wraps the actual handler for testing
-func GetDocumentsTest(c echo.Context, querier DBQuerier, uris []string) (map[string]db.Document, error) {
-	documents, err := querier.GetDocumentsByURIs(c.Request().Context(), uris)
-	if err != nil {
-		return nil, err
-	}
-
-	documentMap := make(map[string]db.Document)
-
-	for _, document := range documents {
-		documentMap[document.S3File] = document
-	}
-
-	return documentMap, nil
 }
 
 // MockDBQueries implements our DBQuerier interface for testing
@@ -66,24 +51,24 @@ type HandlersTestSuite struct {
 func (suite *HandlersTestSuite) SetupTest() {
 	// Create a new Echo instance
 	suite.echo = echo.New()
-	
+
 	// Create a new request and response recorder
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
-	
+
 	// Create an Echo context
 	suite.ctx = suite.echo.NewContext(req, rec)
-	
+
 	// Create a new mock
 	suite.mockQuery = &MockDBQueries{}
-	
+
 	// Setup sample data
 	suite.doc1ID = uuid.New()
 	suite.doc2ID = uuid.New()
 	suite.regionID1 = uuid.New()
 	suite.regionID2 = uuid.New()
 	suite.now = sql.NullTime{Time: time.Now(), Valid: true}
-	
+
 	// Create sample documents
 	suite.sampleDocs = []db.Document{
 		{
@@ -123,22 +108,22 @@ func (suite *HandlersTestSuite) SetupTest() {
 func (suite *HandlersTestSuite) TestGetDocumentsSuccessful() {
 	// Test data
 	uris := []string{"doc1.pdf", "doc2.pdf"}
-	
+
 	// Setup expectations
 	suite.mockQuery.GetDocumentsByURIsFunc = func(ctx context.Context, u []string) ([]db.Document, error) {
 		assert.Equal(suite.T(), uris, u, "URIs should match")
 		return suite.sampleDocs, nil
 	}
-	
+
 	// Expected result
 	expected := map[string]db.Document{
 		"doc1.pdf": suite.sampleDocs[0],
 		"doc2.pdf": suite.sampleDocs[1],
 	}
-	
+
 	// Call the function
-	result, err := GetDocumentsTest(suite.ctx, suite.mockQuery, uris)
-	
+	result, err := handlers.GetDocuments(suite.ctx, suite.mockQuery, uris)
+
 	// Assert results
 	suite.NoError(err)
 	suite.Equal(expected, result)
@@ -149,16 +134,16 @@ func (suite *HandlersTestSuite) TestGetDocumentsDatabaseError() {
 	// Test data
 	uris := []string{"doc1.pdf", "doc2.pdf"}
 	expectedErr := errors.New("database error")
-	
+
 	// Setup expectations
 	suite.mockQuery.GetDocumentsByURIsFunc = func(ctx context.Context, u []string) ([]db.Document, error) {
 		assert.Equal(suite.T(), uris, u, "URIs should match")
 		return nil, expectedErr
 	}
-	
+
 	// Call the function
-	result, err := GetDocumentsTest(suite.ctx, suite.mockQuery, uris)
-	
+	result, err := handlers.GetDocuments(suite.ctx, suite.mockQuery, uris)
+
 	// Assert results
 	suite.Error(err)
 	suite.Equal(expectedErr.Error(), err.Error())
@@ -169,16 +154,16 @@ func (suite *HandlersTestSuite) TestGetDocumentsDatabaseError() {
 func (suite *HandlersTestSuite) TestGetDocumentsEmptyURIs() {
 	// Test data
 	uris := []string{}
-	
+
 	// Setup expectations
 	suite.mockQuery.GetDocumentsByURIsFunc = func(ctx context.Context, u []string) ([]db.Document, error) {
 		assert.Equal(suite.T(), uris, u, "URIs should match")
 		return []db.Document{}, nil
 	}
-	
+
 	// Call the function
-	result, err := GetDocumentsTest(suite.ctx, suite.mockQuery, uris)
-	
+	result, err := handlers.GetDocuments(suite.ctx, suite.mockQuery, uris)
+
 	// Assert results
 	suite.NoError(err)
 	suite.Equal(map[string]db.Document{}, result)
@@ -201,22 +186,22 @@ func (suite *HandlersTestSuite) TestGetDocumentsMappingLogic() {
 			S3File:   "same-key.pdf",
 		},
 	}
-	
+
 	uris := []string{"same-key.pdf"}
-	
+
 	// Setup expectations
 	suite.mockQuery.GetDocumentsByURIsFunc = func(ctx context.Context, u []string) ([]db.Document, error) {
 		assert.Equal(suite.T(), uris, u, "URIs should match")
 		return docs, nil
 	}
-	
+
 	// Call the function
-	result, err := GetDocumentsTest(suite.ctx, suite.mockQuery, uris)
-	
+	result, err := handlers.GetDocuments(suite.ctx, suite.mockQuery, uris)
+
 	// Assert results
 	suite.NoError(err)
 	suite.Len(result, 1)
-	
+
 	// The last document should win in case of duplicate keys
 	suite.Equal("Overwriting Document", result["same-key.pdf"].Title)
 }
@@ -225,3 +210,4 @@ func (suite *HandlersTestSuite) TestGetDocumentsMappingLogic() {
 func TestHandlersSuite(t *testing.T) {
 	suite.Run(t, new(HandlersTestSuite))
 }
+
