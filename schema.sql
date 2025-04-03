@@ -43,6 +43,18 @@ CREATE TABLE public.authors (
 ALTER TABLE public.authors OWNER TO postgres;
 
 --
+-- Name: categories; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.categories (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.categories OWNER TO postgres;
+
+--
 -- Name: doc_authors; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -54,6 +66,19 @@ CREATE TABLE public.doc_authors (
 
 
 ALTER TABLE public.doc_authors OWNER TO postgres;
+
+--
+-- Name: doc_categories; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.doc_categories (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    doc_id uuid,
+    category_id uuid
+);
+
+
+ALTER TABLE public.doc_categories OWNER TO postgres;
 
 --
 -- Name: doc_keywords; Type: TABLE; Schema: public; Owner: postgres
@@ -69,6 +94,19 @@ CREATE TABLE public.doc_keywords (
 ALTER TABLE public.doc_keywords OWNER TO postgres;
 
 --
+-- Name: doc_regions; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.doc_regions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    doc_id uuid,
+    region_id uuid
+);
+
+
+ALTER TABLE public.doc_regions OWNER TO postgres;
+
+--
 -- Name: documents; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -77,10 +115,9 @@ CREATE TABLE public.documents (
     file_name character varying(255) NOT NULL,
     title text NOT NULL,
     abstract text,
-    category character varying(100),
     publish_date date,
     source character varying(255),
-    region_id uuid,
+    indexed_by_kendra boolean DEFAULT false,
     s3_file character varying(1024) NOT NULL,
     s3_file_preview character varying(1024),
     pdf_link character varying(1024),
@@ -132,6 +169,22 @@ ALTER TABLE ONLY public.authors
 
 
 --
+-- Name: categories categories_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.categories
+    ADD CONSTRAINT categories_name_key UNIQUE (name);
+
+
+--
+-- Name: categories categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.categories
+    ADD CONSTRAINT categories_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: doc_authors doc_authors_doc_id_author_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -148,6 +201,22 @@ ALTER TABLE ONLY public.doc_authors
 
 
 --
+-- Name: doc_categories doc_categories_doc_id_category_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.doc_categories
+    ADD CONSTRAINT doc_categories_doc_id_category_id_key UNIQUE (doc_id, category_id);
+
+
+--
+-- Name: doc_categories doc_categories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.doc_categories
+    ADD CONSTRAINT doc_categories_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: doc_keywords doc_keywords_doc_id_keyword_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -161,6 +230,22 @@ ALTER TABLE ONLY public.doc_keywords
 
 ALTER TABLE ONLY public.doc_keywords
     ADD CONSTRAINT doc_keywords_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: doc_regions doc_regions_doc_id_region_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.doc_regions
+    ADD CONSTRAINT doc_regions_doc_id_region_id_key UNIQUE (doc_id, region_id);
+
+
+--
+-- Name: doc_regions doc_regions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.doc_regions
+    ADD CONSTRAINT doc_regions_pkey PRIMARY KEY (id);
 
 
 --
@@ -228,6 +313,13 @@ ALTER TABLE ONLY public.regions
 
 
 --
+-- Name: idx_categories_name; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_categories_name ON public.categories USING btree (name);
+
+
+--
 -- Name: idx_doc_authors_author_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -239,6 +331,20 @@ CREATE INDEX idx_doc_authors_author_id ON public.doc_authors USING btree (author
 --
 
 CREATE INDEX idx_doc_authors_doc_id ON public.doc_authors USING btree (doc_id);
+
+
+--
+-- Name: idx_doc_categories_category_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_doc_categories_category_id ON public.doc_categories USING btree (category_id);
+
+
+--
+-- Name: idx_doc_categories_doc_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_doc_categories_doc_id ON public.doc_categories USING btree (doc_id);
 
 
 --
@@ -256,10 +362,17 @@ CREATE INDEX idx_doc_keywords_keyword_id ON public.doc_keywords USING btree (key
 
 
 --
--- Name: idx_documents_category; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_doc_regions_doc_id; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX idx_documents_category ON public.documents USING btree (category);
+CREATE INDEX idx_doc_regions_doc_id ON public.doc_regions USING btree (doc_id);
+
+
+--
+-- Name: idx_doc_regions_region_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_doc_regions_region_id ON public.doc_regions USING btree (region_id);
 
 
 --
@@ -293,6 +406,22 @@ ALTER TABLE ONLY public.doc_authors
 
 
 --
+-- Name: doc_categories doc_categories_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.doc_categories
+    ADD CONSTRAINT doc_categories_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id) ON DELETE CASCADE;
+
+
+--
+-- Name: doc_categories doc_categories_doc_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.doc_categories
+    ADD CONSTRAINT doc_categories_doc_id_fkey FOREIGN KEY (doc_id) REFERENCES public.documents(id) ON DELETE CASCADE;
+
+
+--
 -- Name: doc_keywords doc_keywords_doc_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -309,11 +438,19 @@ ALTER TABLE ONLY public.doc_keywords
 
 
 --
--- Name: documents documents_region_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: doc_regions doc_regions_doc_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.documents
-    ADD CONSTRAINT documents_region_id_fkey FOREIGN KEY (region_id) REFERENCES public.regions(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.doc_regions
+    ADD CONSTRAINT doc_regions_doc_id_fkey FOREIGN KEY (doc_id) REFERENCES public.documents(id) ON DELETE CASCADE;
+
+
+--
+-- Name: doc_regions doc_regions_region_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.doc_regions
+    ADD CONSTRAINT doc_regions_region_id_fkey FOREIGN KEY (region_id) REFERENCES public.regions(id) ON DELETE CASCADE;
 
 
 --

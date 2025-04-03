@@ -48,7 +48,6 @@ func (m *MockDBQueries) GetDocumentsByURIs(ctx context.Context, uris []string) (
 	return m.GetDocumentsByURIsFunc(ctx, uris)
 }
 
-// HandlersTestSuite defines the test suite
 type HandlersTestSuite struct {
 	suite.Suite
 	echo       *echo.Echo
@@ -57,64 +56,48 @@ type HandlersTestSuite struct {
 	sampleDocs []db.Document
 	doc1ID     uuid.UUID
 	doc2ID     uuid.UUID
-	regionID1  uuid.UUID
-	regionID2  uuid.UUID
 	now        sql.NullTime
 }
 
-// SetupTest runs before each test
 func (suite *HandlersTestSuite) SetupTest() {
-	// Create a new Echo instance
 	suite.echo = echo.New()
-	
-	// Create a new request and response recorder
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
-	
-	// Create an Echo context
 	suite.ctx = suite.echo.NewContext(req, rec)
-	
-	// Create a new mock
 	suite.mockQuery = &MockDBQueries{}
-	
-	// Setup sample data
+
 	suite.doc1ID = uuid.New()
 	suite.doc2ID = uuid.New()
-	suite.regionID1 = uuid.New()
-	suite.regionID2 = uuid.New()
 	suite.now = sql.NullTime{Time: time.Now(), Valid: true}
-	
-	// Create sample documents
+
 	suite.sampleDocs = []db.Document{
 		{
-			ID:            suite.doc1ID,
-			FileName:      "doc1.pdf",
-			Title:         "Document 1",
-			Abstract:      sql.NullString{String: "Abstract 1", Valid: true},
-			Category:      sql.NullString{String: "Category 1", Valid: true},
-			PublishDate:   suite.now,
-			Source:        sql.NullString{String: "Source 1", Valid: true},
-			RegionID:      uuid.NullUUID{UUID: suite.regionID1, Valid: true},
-			S3File:        "doc1.pdf",
-			S3FilePreview: sql.NullString{String: "preview1.pdf", Valid: true},
-			PdfLink:       sql.NullString{String: "http://example.com/doc1.pdf", Valid: true},
-			CreatedAt:     suite.now,
-			DeletedAt:     sql.NullTime{Valid: false},
+			ID:              suite.doc1ID,
+			FileName:        "doc1.pdf",
+			Title:           "Document 1",
+			Abstract:        sql.NullString{String: "Abstract 1", Valid: true},
+			PublishDate:     suite.now,
+			Source:          sql.NullString{String: "Source 1", Valid: true},
+			IndexedByKendra: sql.NullBool{Bool: true, Valid: true},
+			S3File:          "doc1.pdf",
+			S3FilePreview:   sql.NullString{String: "preview1.pdf", Valid: true},
+			PdfLink:         sql.NullString{String: "http://example.com/doc1.pdf", Valid: true},
+			CreatedAt:       suite.now,
+			DeletedAt:       sql.NullTime{Valid: false},
 		},
 		{
-			ID:            suite.doc2ID,
-			FileName:      "doc2.pdf",
-			Title:         "Document 2",
-			Abstract:      sql.NullString{String: "Abstract 2", Valid: true},
-			Category:      sql.NullString{String: "Category 2", Valid: true},
-			PublishDate:   suite.now,
-			Source:        sql.NullString{String: "Source 2", Valid: true},
-			RegionID:      uuid.NullUUID{UUID: suite.regionID2, Valid: true},
-			S3File:        "doc2.pdf",
-			S3FilePreview: sql.NullString{String: "preview2.pdf", Valid: true},
-			PdfLink:       sql.NullString{String: "http://example.com/doc2.pdf", Valid: true},
-			CreatedAt:     suite.now,
-			DeletedAt:     sql.NullTime{Valid: false},
+			ID:              suite.doc2ID,
+			FileName:        "doc2.pdf",
+			Title:           "Document 2",
+			Abstract:        sql.NullString{String: "Abstract 2", Valid: true},
+			PublishDate:     suite.now,
+			Source:          sql.NullString{String: "Source 2", Valid: true},
+			IndexedByKendra: sql.NullBool{Bool: false, Valid: true},
+			S3File:          "doc2.pdf",
+			S3FilePreview:   sql.NullString{String: "preview2.pdf", Valid: true},
+			PdfLink:         sql.NullString{String: "http://example.com/doc2.pdf", Valid: true},
+			CreatedAt:       suite.now,
+			DeletedAt:       sql.NullTime{Valid: false},
 		},
 	}
 }

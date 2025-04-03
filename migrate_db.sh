@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Move to the script's parent directory
-cd "$(dirname "$0")/.."
-
 # Load environment variables from .env file
 set -a
 source .env
@@ -11,7 +8,7 @@ set +a
 DUMP_FILE="prod_dump.sqlc"
 
 echo "Dumping production database..."
-PGPASSWORD=$PROD_PASSWORD pg_dump -h $PROD_HOST -U $PROD_USER -d $PROD_DB -F c -f $DUMP_FILE
+PGPASSWORD=$PROD_PASSWORD pg_dump -h $PROD_HOST -U $PROD_USER -d $PROD_NAME -F c -f $DUMP_FILE
 
 if [ $? -ne 0 ]; then
   echo "Error: Failed to dump the database."
