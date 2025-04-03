@@ -18,8 +18,6 @@ func AddImagesToResults(results models.KendraResults, c echo.Context, queries *d
 	if err != nil {
 		log.Printf("GetDocuments failed: %v\n", err)
 	}
-	log.Printf(
-		"%v\n\n",documentMap)
 
 	for key, kendraResult := range results.Results {
 		s3URI := ConvertToS3URI(kendraResult.Link)
