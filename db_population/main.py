@@ -36,14 +36,14 @@ def migrate(bucket_name, file_key):
         logger.info(f"Preview found for {file_key}")
         document_data["s3_file_preview"] = s3_file_preview
     else:
-        logger.error(f"Preview not found for {file_key}")
+        logger.warning(f"Preview not found for {file_key}")
 
     if json_data:
         logger.info(f"json_data found for {file_key}")
         new_json = convert_metadata_to_document(json_data)
         document_data.update(new_json)
     else:
-        logger.error(f"json_data not found for {file_key}")
+        logger.warning(f"json_data not found for {file_key}")
 
     # Insert or update the document
     add_or_update_document(document_data)

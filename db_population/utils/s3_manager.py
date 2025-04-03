@@ -25,7 +25,6 @@ def get_s3_buckets():
         response = s3.list_buckets()
         bucket_names = [bucket["Name"] for bucket in response.get("Buckets", [])]
         logger.info(f"Found {len(bucket_names)} S3 buckets.")
-        print(bucket_names)
         return bucket_names
     except (BotoCoreError, ClientError) as e:
         logger.error(f"Error listing S3 buckets: {e}")
@@ -99,7 +98,7 @@ def convert_metadata_to_document(metadata):
             "Title", metadata.get("Title", "")
         ),  # Prioritize Attributes.Title
         "pdf_link": attributes.get("Link"),  # S3 file link
-        "region": attributes.get("Region", ["Unknown"])[0],  # Default to 'Unknown'
+        "region": [attributes.get("Region", ["Unknown"])[0]],  # Default to 'Unknown'
         "authors": attributes.get("_authors", []),  # List of authors
         "publish_date": attributes.get("Date_Published"),  # Publication date
         "source": attributes.get("source", ["Unknown"])[0],  # Default to 'Unknown'

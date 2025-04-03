@@ -20,6 +20,21 @@ class DynamicRegion(Base):
     __table__ = metadata.tables["regions"]
 
 
+class DynamicDocRegion(Base):
+    __tablename__ = "doc_regions"
+    __table__ = metadata.tables["doc_regions"]
+
+
+class DynamicCategory(Base):
+    __tablename__ = "categories"
+    __table__ = metadata.tables["categories"]
+
+
+class DynamicDocCategory(Base):
+    __tablename__ = "doc_categories"
+    __table__ = metadata.tables["doc_categories"]
+
+
 class DynamicAuthor(Base):
     __tablename__ = "authors"
     __table__ = metadata.tables["authors"]

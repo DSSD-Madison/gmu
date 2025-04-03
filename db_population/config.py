@@ -33,9 +33,11 @@ PROD_DATABASE_URL = (
 
 # Determine which database to use
 if os.getenv("TEST_MODE"):
+    print("Running on local database.")
     DATABASE_URL = LOCAL_DATABASE_URL  # Use local DB for testing
 else:
-    DATABASE_URL = PROD_DATABASE_URL if PROD_DATABASE_URL else LOCAL_DATABASE_URL
+    print("Running on production database.")
+    DATABASE_URL = PROD_DATABASE_URL
 
 # AWS Credentials
 AWS_S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
