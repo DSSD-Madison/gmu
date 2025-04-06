@@ -125,12 +125,12 @@ func selectComponentTarget(target string, r searchRequest, results awskendra.Ken
 }
 
 func convertFilterstoKendra(filters url.Values) []awskendra.Filter {
-	var filterList []awskendra.Filter
+	filterList := make([]awskendra.Filter, len(filters))
+	i := 0
 	for key, values := range filters {
-		filterList = append(filterList, awskendra.Filter{
-			Name:            key,
-			SelectedFilters: values,
-		})
+		filterList[i].Name = key
+		filterList[i].SelectedFilters = values
+		i += 1
 	}
 	return filterList
 }
