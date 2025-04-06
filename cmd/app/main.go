@@ -101,10 +101,14 @@ func main() {
 		logHandler.Error("Unable to initialize sql.DB", "err", err)
 		os.Exit(1)
 	}
-	defer sqlDB.Close()
+	defer func(sqlDB *sql.DB) {
+		err := sqlDB.Close()
+		if err != nil {
+			logHandler.Error("Failed to close sql.DB", "err", err)
+		}
+	}(sqlDB)
 
 	dbQuerier := db.New(sqlDB)
-
 
 	kendraConfig, err := awskendra.LoadConfig()
 	if err != nil {
