@@ -1,8 +1,10 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -17,21 +19,22 @@ import (
 
 const MinQueryLength = 3
 
-func (h *Handler) Search(c echo.Context) error {
+type searchRequest struct {
+	query         string
+	pageNum       int
+	kendraFilters []awskendra.Filter
+	filters       url.Values
+	urlData       awskendra.UrlData
+	target        string
+}
+
+func parseSearchRequest(c echo.Context) searchRequest {
 	query := c.FormValue("query")
 	pageNumStr := c.FormValue("page")
 
 	filters, _ := c.FormParams()
 	delete(filters, "query")
 	delete(filters, "page")
-
-	if query == "" {
-		return h.Home(c)
-	}
-
-	if len(query) < MinQueryLength {
-		return echo.NewHTTPError(http.StatusBadRequest, "Query too short")
-	}
 
 	pageNum := parsePageNum(pageNumStr)
 
@@ -46,23 +49,35 @@ func (h *Handler) Search(c echo.Context) error {
 
 	// Check if the request is coming from HTMX
 	target := c.Request().Header.Get("HX-Target")
-	if target == "root" {
-		return web.Render(c, http.StatusOK, components.Search(awskendra.KendraResults{UrlData: urlData}))
+
+	return searchRequest{
+		query:         query,
+		pageNum:       pageNum,
+		kendraFilters: filterList,
+		filters:       filters,
+		urlData:       urlData,
+		target:        target,
+	}
+}
+
+func (h *Handler) Search(c echo.Context) error {
+	r := parseSearchRequest(c)
+	if r.query == "" {
+		return h.Home(c)
 	}
 
-	results, err := h.getResults(c, query, filters, pageNum)
+	if len(r.query) < MinQueryLength {
+		return echo.NewHTTPError(http.StatusBadRequest, "Query too short")
+	}
+
+	results, err := selectResultsFromTarget(r.target, r, h, c)
 	if err != nil {
 		return err
 	}
-
-	component := selectComponentTarget(target, urlData, results)
-
-	if target == "results-container" && len(filterList) > 0 {
-		tempResults := h.kendra.MakeQuery(query, nil, 1)
-		results.Filters = tempResults.Filters
-		selectFilters(filters, &results)
+	component, err := selectComponentTarget(r.target, r, results)
+	if err != nil {
+		return err
 	}
-
 	return web.Render(c, http.StatusOK, component)
 }
 
@@ -74,14 +89,38 @@ func parsePageNum(pageNumStr string) int {
 	return num
 }
 
-func selectComponentTarget(target string, urlData awskendra.UrlData, results awskendra.KendraResults) templ.Component {
+func selectResultsFromTarget(target string, r searchRequest, h *Handler, c echo.Context) (awskendra.KendraResults, error) {
 	switch target {
-	case "results-container", "results-content-container":
-		return components.ResultsPage(results)
-	case "results-and-pagination":
-		return components.ResultsAndPagination(results)
+	case "root", "":
+		return awskendra.KendraResults{UrlData: r.urlData}, nil
+	case "results-container", "results-content-container", "results-and-pagination":
+		results, err := h.getResults(c, r.query, r.filters, r.pageNum)
+		if err != nil {
+			return awskendra.KendraResults{}, err
+		}
+		if r.target == "results-container" && len(r.kendraFilters) > 0 {
+			tempResults := h.kendra.MakeQuery(r.query, nil, 1)
+			results.Filters = tempResults.Filters
+			selectFilters(r.filters, &results)
+		}
+		return results, nil
 	default:
-		return components.SearchHome(awskendra.KendraResults{UrlData: urlData})
+		return awskendra.KendraResults{}, fmt.Errorf("Failed to select results from target header.")
+	}
+}
+
+func selectComponentTarget(target string, r searchRequest, results awskendra.KendraResults) (templ.Component, error) {
+	switch target {
+	case "root":
+		return components.Search(awskendra.KendraResults{UrlData: r.urlData}), nil
+	case "":
+		return components.SearchHome(awskendra.KendraResults{UrlData: r.urlData}), nil
+	case "results-container", "results-content-container":
+		return components.ResultsPage(results), nil
+	case "results-and-pagination":
+		return components.ResultsAndPagination(results), nil
+	default:
+		return templ.NopComponent, fmt.Errorf("Failed to determine target component from target header.")
 	}
 }
 
@@ -106,11 +145,8 @@ func selectFilters(filters url.Values, results *awskendra.KendraResults) {
 	for i, cat := range results.Filters {
 		if selectedOptions, exists := filters[cat.Category]; exists {
 			for idx, o := range cat.Options {
-				for _, selected := range selectedOptions {
-					if o.Label == selected {
-						results.Filters[i].Options[idx].Selected = true
-						break
-					}
+				if slices.Contains(selectedOptions, o.Label) {
+					results.Filters[i].Options[idx].Selected = true
 				}
 			}
 		}
