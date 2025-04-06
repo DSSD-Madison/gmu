@@ -15,7 +15,8 @@ install-tailwind:
 	@echo "Downloading Tailwind..."
 	curl -sLO $(TAILWIND_BASE_URL)$(FILE) 
 	chmod +x $(FILE)  
-	mv $(FILE) tailwindcss
+	mkdir -p tools
+	mv $(FILE) tools/tailwindcss
 
 install-air:
 	@echo "Installing Air..."
@@ -23,4 +24,4 @@ install-air:
 
 install-templ:
 	@echo "Installing Templ..."
-	go install github.com/a-h/templ/cmd/templ@latest
+	go install github.com/a-h/templ/cmd/templ@v0.3.833
