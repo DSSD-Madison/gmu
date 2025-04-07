@@ -17,7 +17,13 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y golang
+          sudo apt install -y golang postgresql-client
+          
+      - name: Install Flyway
+        run: |
+          wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/9.22.3/flyway-commandline-9.22.3-linux-x64.tar.gz | tar xvz
+          sudo mv flyway-9.22.3 /opt/flyway
+          sudo ln -s /opt/flyway/flyway /usr/local/bin/flyway
           
       - name: Generate SQLC code
         run: |
@@ -57,6 +63,15 @@ jobs:
             cd /var/www/go-htmx-app
             git stash
             git pull origin main
+          
+            if ! command -v flyway &> /dev/null; then
+              wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/9.22.3/flyway-commandline-9.22.3-linux-x64.tar.gz | tar xvz
+              sudo mv flyway-9.22.3 /opt/flyway
+              sudo ln -s /opt/flyway/flyway /usr/local/bin/flyway
+            fi
+            
+            flyway migrate -configFiles=flyway.prod.conf
+            
             go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
             echo "$HOME/go/bin" >> $GITHUB_PATH
             go test -v ./handlers/...

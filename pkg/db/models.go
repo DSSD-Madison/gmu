@@ -6,6 +6,7 @@ package db
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -44,6 +45,7 @@ type DocRegion struct {
 	RegionID uuid.NullUUID
 }
 
+// Removed test column as it was only for demonstration purposes
 type Document struct {
 	ID              uuid.UUID
 	FileName        string
@@ -57,6 +59,19 @@ type Document struct {
 	PdfLink         sql.NullString
 	CreatedAt       sql.NullTime
 	DeletedAt       sql.NullTime
+}
+
+type FlywaySchemaHistory struct {
+	InstalledRank int32
+	Version       sql.NullString
+	Description   string
+	Type          string
+	Script        string
+	Checksum      sql.NullInt32
+	InstalledBy   string
+	InstalledOn   time.Time
+	ExecutionTime int32
+	Success       bool
 }
 
 type Keyword struct {
