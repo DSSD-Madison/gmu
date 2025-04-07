@@ -1,21 +1,16 @@
 package main
 
 import (
-	"context"
-	"database/sql"
-	"fmt"
 	"log"
 	"log/slog"
 	"os"
 
-	"github.com/jackc/pgx/v4/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 	"github.com/DSSD-Madison/gmu/pkg/config"
-	"github.com/DSSD-Madison/gmu/pkg/db"
 	db_util "github.com/DSSD-Madison/gmu/pkg/db/util"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/DSSD-Madison/gmu/routes"
@@ -76,39 +71,18 @@ func main() {
 		},
 	}))
 
-	dbConfig, err := db_util.LoadConfig()
+	dbh, err := db_util.NewDBHandler()
 	if err != nil {
-		logHandler.Error("Unable to load db config", "err", err)
+		logHandler.Error("Failed to initialize DB Handler", "err", err)
 		os.Exit(1)
 	}
 
-	databaseURL := fmt.Sprintf(
-		"postgres://%s:%s@%s/%s?sslmode=disable",
-		dbConfig.DBUser, dbConfig.DBPassword, dbConfig.DBHost, dbConfig.DBName,
-	)
-
-	// Connect to PostgreSQL using pgxpool
-	dbpool, err := pgxpool.Connect(context.Background(), databaseURL)
-	if err != nil {
-		logHandler.Error("Unable to connect to database", "err", err)
-		os.Exit(1)
-	}
-	defer dbpool.Close()
-
-	// Create a *sql.DB instance using the pgx driver
-	sqlDB, err := sql.Open("pgx", databaseURL)
-	if err != nil {
-		logHandler.Error("Unable to initialize sql.DB", "err", err)
-		os.Exit(1)
-	}
-	defer func(sqlDB *sql.DB) {
-		err := sqlDB.Close()
+	defer func(dbh *db_util.DBHandler) {
+		err := dbh.Close()
 		if err != nil {
-			logHandler.Error("Failed to close sql.DB", "err", err)
+			logHandler.Error("Failed to close DB connections", "err", err)
 		}
-	}(sqlDB)
-
-	dbQuerier := db.New(sqlDB)
+	}(dbh)
 
 	kendraConfig, err := awskendra.LoadConfig()
 	if err != nil {
@@ -122,7 +96,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	routesHandler := routes.NewHandler(dbQuerier, kendraClient, logHandler)
+	routesHandler := routes.NewHandler(dbh.Querier, kendraClient, logHandler)
 
 	// Static file handlers
 	e.Static("/images", "web/assets/images")
