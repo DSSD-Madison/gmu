@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/labstack/echo/v4"
+	"github.com/lib/pq"
 
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 	"github.com/DSSD-Madison/gmu/pkg/db"
@@ -40,6 +41,32 @@ func AddImagesToResults(results awskendra.KendraResults, c echo.Context, queries
 		} else {
 			kendraResult.Image = "https://placehold.co/120x120/webp"
 		}
+		kendraResult.Abstract = document.Abstract.String
+		if document.PublishDate.Valid {
+			kendraResult.PublishDate = document.PublishDate.Time.Format("2006-01-02")
+		}
+
+		var tempScanner pq.StringArray
+		err := tempScanner.Scan(document.AuthorNames.(string))
+		if err == nil {
+			kendraResult.Authors = tempScanner
+		}
+
+		err = tempScanner.Scan(document.CategoryNames.(string))
+		if err == nil {
+			kendraResult.Categories = tempScanner
+		}
+
+		err = tempScanner.Scan(document.KeywordNames.(string))
+		if err == nil {
+			kendraResult.Keywords = tempScanner
+		}
+
+		err = tempScanner.Scan(document.RegionNames.(string))
+		if err == nil {
+			kendraResult.Regions = tempScanner
+		}
+
 		results.Results[key] = kendraResult
 	}
 
