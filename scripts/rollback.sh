@@ -34,6 +34,12 @@ if [ -z "$DB_HOST" ] || [ -z "$DB_USER" ] || [ -z "$DB_NAME" ] || [ -z "$DB_PASS
     exit 1
 fi
 
+# Export environment variables for Flyway
+export DB_HOST
+export DB_USER
+export DB_NAME
+export DB_PASSWORD
+
 # Get current version from flyway
 echo "Getting current schema version..."
 # Get Schema version directly from the info output

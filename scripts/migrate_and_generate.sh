@@ -41,6 +41,12 @@ fi
 
 echo "Running Flyway migrations for $ENV environment..."
 
+# Export environment variables for Flyway
+export DB_HOST
+export DB_USER
+export DB_NAME
+export DB_PASSWORD
+
 # First, try to baseline the database if needed
 echo "Attempting to baseline the database..."
 flyway -configFiles=$CONFIG_FILE baseline

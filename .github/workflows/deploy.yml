@@ -25,26 +25,10 @@ jobs:
           sudo mv flyway-9.22.3 /opt/flyway
           sudo ln -s /opt/flyway/flyway /usr/local/bin/flyway
           
-      - name: Run Flyway Migrations (Test)
-        run: |
-          flyway -configFiles=flyway.conf migrate
-          
-      - name: Generate Schema.sql (Test)
-        run: |
-          PGPASSWORD=${{ secrets.DB_PASSWORD }} pg_dump \
-            --host=${{ secrets.DB_HOST }} \
-            --username=${{ secrets.DB_USER }} \
-            --dbname=${{ secrets.DB_NAME }} \
-            --schema-only \
-            --no-owner \
-            --no-privileges \
-            > schema.sql
-          
-      - name: Generate SQLC code
+      - name: Generate SQLC code (using existing schema.sql)
         run: |
           go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
           export PATH=$HOME/go/bin:/usr/local/go/bin:$PATH
-          rm -rf ./pkg/db/*.go
           sqlc generate
       
       - name: Run Backend Unit Tests
@@ -73,6 +57,7 @@ jobs:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USERNAME }}
           key: ${{ secrets.AWS_EC2_SSH_KEY }}
+          envs: DB_HOST,DB_USER,DB_NAME,DB_PASSWORD
           script: |
             export PATH=$HOME/go/bin:/usr/local/go/bin:$PATH
             cd /var/www/go-htmx-app
@@ -87,6 +72,10 @@ jobs:
             
             # Run Flyway migrations
             echo "Running database migrations..."
+            export DB_HOST=${{ secrets.DB_HOST }}
+            export DB_USER=${{ secrets.DB_USER }}
+            export DB_NAME=${{ secrets.DB_NAME }}
+            export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             flyway migrate -configFiles=flyway.prod.conf
             
             # Check if migrations were successful
@@ -97,10 +86,10 @@ jobs:
             
             # Generate schema.sql file
             echo "Generating schema.sql file..."
-            PGPASSWORD=${{ secrets.DB_PASSWORD }} pg_dump \
-              --host=${{ secrets.DB_HOST }} \
-              --username=${{ secrets.DB_USER }} \
-              --dbname=${{ secrets.DB_NAME }} \
+            PGPASSWORD=$DB_PASSWORD pg_dump \
+              --host=$DB_HOST \
+              --username=$DB_USER \
+              --dbname=$DB_NAME \
               --schema-only \
               --no-owner \
               --no-privileges \
