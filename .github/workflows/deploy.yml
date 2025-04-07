@@ -25,6 +25,21 @@ jobs:
           sudo mv flyway-9.22.3 /opt/flyway
           sudo ln -s /opt/flyway/flyway /usr/local/bin/flyway
           
+      - name: Run Flyway Migrations (Test)
+        run: |
+          flyway -configFiles=flyway.conf migrate
+          
+      - name: Generate Schema.sql (Test)
+        run: |
+          PGPASSWORD=${{ secrets.DB_PASSWORD }} pg_dump \
+            --host=${{ secrets.DB_HOST }} \
+            --username=${{ secrets.DB_USER }} \
+            --dbname=${{ secrets.DB_NAME }} \
+            --schema-only \
+            --no-owner \
+            --no-privileges \
+            > schema.sql
+          
       - name: Generate SQLC code
         run: |
           go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
@@ -70,12 +85,41 @@ jobs:
               sudo ln -s /opt/flyway/flyway /usr/local/bin/flyway
             fi
             
+            # Run Flyway migrations
+            echo "Running database migrations..."
             flyway migrate -configFiles=flyway.prod.conf
             
+            # Check if migrations were successful
+            if [ $? -ne 0 ]; then
+              echo "Error: Database migrations failed"
+              exit 1
+            fi
+            
+            # Generate schema.sql file
+            echo "Generating schema.sql file..."
+            PGPASSWORD=${{ secrets.DB_PASSWORD }} pg_dump \
+              --host=${{ secrets.DB_HOST }} \
+              --username=${{ secrets.DB_USER }} \
+              --dbname=${{ secrets.DB_NAME }} \
+              --schema-only \
+              --no-owner \
+              --no-privileges \
+              > schema.sql
+            
+            # Install SQLC and generate code
+            echo "Installing SQLC and generating code..."
             go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
             echo "$HOME/go/bin" >> $GITHUB_PATH
+            sqlc generate
+            
+            # Run tests, build, and deploy
+            echo "Running tests..."
             go test -v ./handlers/...
+            
+            echo "Building application..."
             make install-all-linux
             ./tools/tailwindcss -i ./web/assets/css/input.css -o ./web/assets/css/output.css --minify
             go build -o gmu -buildvcs=false ./cmd/app/main.go
+            
+            echo "Restarting application..."
             sudo systemctl restart goapp
