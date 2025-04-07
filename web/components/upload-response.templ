@@ -1,0 +1,18 @@
+// File: web/components/upload_response.templ
+package components
+
+// UploadResponse renders a simple success or error message.
+// Used primarily for HTMX responses on the upload page for errors.
+templ UploadResponse(success bool, message string) {
+	if success {
+		// Green text for success messages
+		<div class="text-green-600 p-2">
+			{ message }
+		</div>
+	} else {
+		// Red text for error messages
+		<div class="text-red-600 font-semibold p-2">
+			Error: { message }
+		</div>
+	}
+}
