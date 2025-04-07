@@ -26,32 +26,23 @@ templ ResultsAndPagination(results awskendra.KendraResults) {
 }
 
 
-// Updated to accept the ExtendedKendraResult (or modify your original struct)
 templ ResultCard(result awskendra.KendraResult) {
-	// The <details> element provides the expand/collapse functionality
 	<details class="group bg-white rounded-lg shadow-md overflow-hidden">
-		// The <summary> contains the always-visible part and acts as the click target
 		<summary class="list-none cursor-pointer p-4 hover:bg-gray-50 transition duration-150 ease-in-out">
-			// Apply the original hover effects to the summary or its content if desired
 			<div class="flex items-start space-x-4 group-hover:-translate-y-1 group-hover:scale-[1.02] ease-in-out transition-transform duration-150">
 				if result.Image != "" {
-					// Use object-contain or object-cover based on desired image behavior
 					<img src={ result.Image } alt="Preview" class="w-24 h-24 object-cover rounded-md flex-shrink-0"/>
 				} else {
-					// Placeholder if no image
 					<div class="w-24 h-24 bg-gray-200 rounded-md flex items-center justify-center text-gray-400 text-sm flex-shrink-0">No Preview</div>
 				}
 				<div class="flex-grow">
-					// Title link
 					<a href={ templ.URL(result.Link) } target="_blank" rel="noopener noreferrer" class="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline">
 						{ result.Title }
 					</a>
-					// Excerpts
 					<div class="mt-1 space-y-1">
 						for _, excerpt := range result.Excerpts {
 							<p class="text-sm text-gray-700 leading-relaxed">
 								{ excerpt.Text }
-								// Link to specific page number
 								<a class="ml-1 text-blue-500 hover:text-blue-700 text-xs align-super" target="_blank" rel="noopener noreferrer" href={ templ.URL(result.Link + "#page=" + strconv.Itoa(excerpt.PageNum))}>
 									[{ strconv.Itoa(excerpt.PageNum) }]
 								</a>
@@ -59,8 +50,6 @@ templ ResultCard(result awskendra.KendraResult) {
 						}
 					</div>
 				</div>
-				// Optional: Add a subtle indicator for expansion? (e.g., chevron)
-				// This would typically be inside the summary as well
 				<div class="self-center text-gray-400 group-open:rotate-90 transition-transform duration-300">
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
 						<path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
@@ -70,13 +59,8 @@ templ ResultCard(result awskendra.KendraResult) {
 		</summary>
 
 		// --- Collapsible Content ---
-		// This div contains the metadata that is initially hidden
-		// Tailwind's 'open:' variant targets elements when the parent <details> is open
 		<div class="px-4 pb-4 pt-2 border-t border-gray-200 bg-gray-50">
 			<div class="space-y-3 text-sm">
-
-				// Example Metadata Fields (Adjust field names based on your struct)
-
 				if len(result.Authors) > 0 {
 					<div class="flex">
 						<dt class="w-24 font-medium text-gray-600 flex-shrink-0">Author(s):</dt>
@@ -121,32 +105,6 @@ templ ResultCard(result awskendra.KendraResult) {
 
 			</div>
 		</div>
-
-		// --- Animation Classes (Applied Indirectly via <details> state) ---
-		// While we don't apply animation classes directly here, the browser+CSS handle it.
-		// For smoother CSS-only animation, you might need custom CSS targeting `details[open] > div`
-		// to transition max-height and opacity, but browser defaults are often okay.
-		// Example (if needed, add this to your global CSS):
-		/*
-		details > summary {
-		  list-style: none; // Hide marker in non-webkit
-		}
-		details > summary::-webkit-details-marker {
-		  display: none; // Hide marker in webkit
-		}
-		details .collapsible-content { // Add this class to the inner div if using custom CSS
-		  max-height: 0;
-		  opacity: 0;
-		  overflow: hidden;
-		  transition: max-height 0.3s ease-out, opacity 0.2s ease-in;
-		}
-		details[open] .collapsible-content {
-		  max-height: 1000px; // Set to a sufficiently large value
-		  opacity: 1;
-		  transition: max-height 0.4s ease-in, opacity 0.3s 0.1s ease-in; // Adjust timing
-		}
-		*/
-
 	</details>
 }
 
