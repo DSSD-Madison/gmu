@@ -47,7 +47,7 @@ func Home() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col items-center justify-start min-h-screen pt-80\"><h2 class=\"text-xl font-semibold text-gray-700 py-3\">Better Evidence Project</h2><form hx-get=\"/search\" hx-swap=\"innerHTML\" hx-target=\"#root\" hx-push-url=\"true\" class=\"flex flex-row w-3/8\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col items-center justify-start min-h-screen pt-80\"><h2 class=\"text-xl font-semibold text-gray-700 py-3 dark:text-white\">Better Evidence Project</h2><form hx-get=\"/search\" hx-swap=\"innerHTML\" hx-target=\"#root\" hx-push-url=\"true\" class=\"flex flex-row w-3/8\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

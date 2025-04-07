@@ -128,6 +128,7 @@ func main() {
 	e.Static("/images", "web/assets/images")
 	e.Static("/css", "web/assets/css")
 	e.Static("/svg", "web/assets/svg")
+	e.Static("/js", "web/assets/js")
 
 	// Routes
 	routes.InitRoutes(e, routesHandler)

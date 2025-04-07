@@ -110,7 +110,7 @@ func Searchbar(data awskendra.UrlData, oob bool) templ.Component {
 			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<input class=\"text-2xl peer border-2 px-6 py-3 w-full outline-none bg-white\" id=\"searchquery\" autocomplete=\"off\" placeholder=\"Begin Your Search Here...\" type=\"text\" name=\"query\" hx-push-url=\"false\" hx-post=\"/search/suggestions\" hx-trigger=\"input changed delay:250ms\" hx-target=\"#suggestions\" hx-swap=\"innerHTML\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<input class=\"text-2xl peer border-2 px-6 py-3 w-full outline-none bg-white dark:border-gray-600 dark:bg-gray-800 dark:text-white\" id=\"searchquery\" autocomplete=\"off\" placeholder=\"Begin Your Search Here...\" type=\"text\" name=\"query\" hx-push-url=\"false\" hx-post=\"/search/suggestions\" hx-trigger=\"input changed delay:250ms\" hx-target=\"#suggestions\" hx-swap=\"innerHTML\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
