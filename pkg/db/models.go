@@ -45,7 +45,6 @@ type DocRegion struct {
 	RegionID uuid.NullUUID
 }
 
-// Removed test column as it was only for demonstration purposes
 type Document struct {
 	ID              uuid.UUID
 	FileName        string
@@ -75,8 +74,8 @@ type FlywaySchemaHistory struct {
 }
 
 type Keyword struct {
-	ID      uuid.UUID
-	Keyword string
+	ID   uuid.UUID
+	Name string
 }
 
 type Region struct {

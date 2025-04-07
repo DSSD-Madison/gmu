@@ -70,7 +70,7 @@ jobs:
             export DB_USER=${{ secrets.DB_USER }}
             export DB_NAME=${{ secrets.DB_NAME }}
             export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            flyway migrate -configFiles=flyway.prod.conf
+            flyway migrate -configFiles=flyway.conf
             
             # Check if migrations were successful
             if [ $? -ne 0 ]; then

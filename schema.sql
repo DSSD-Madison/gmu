@@ -113,13 +113,6 @@ CREATE TABLE public.documents (
 
 
 --
--- Name: TABLE documents; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public.documents IS 'Removed test column as it was only for demonstration purposes';
-
-
---
 -- Name: flyway_schema_history; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -143,7 +136,7 @@ CREATE TABLE public.flyway_schema_history (
 
 CREATE TABLE public.keywords (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    keyword character varying(255) NOT NULL
+    name character varying(255) NOT NULL
 );
 
 
@@ -298,7 +291,7 @@ ALTER TABLE ONLY public.flyway_schema_history
 --
 
 ALTER TABLE ONLY public.keywords
-    ADD CONSTRAINT keywords_keyword_key UNIQUE (keyword);
+    ADD CONSTRAINT keywords_keyword_key UNIQUE (name);
 
 
 --

@@ -1,1 +1,2 @@
-ALTER TABLE public.documents DROP COLUMN IF EXISTS test;
+-- Rollback: Rename name column back to keyword in keywords table
+ALTER TABLE public.keywords RENAME COLUMN name TO keyword; 

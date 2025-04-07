@@ -17,19 +17,14 @@ else
     exit 1
 fi
 
-# Set the appropriate Flyway config file
+# Confirm before proceeding with production
 if [ "$ENV" = "prod" ]; then
-    CONFIG_FILE="flyway.prod.conf"
-    
-    # Confirm before proceeding with production
     read -p "WARNING: You are about to run migrations on the PRODUCTION database. Are you sure? (y/N) " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
         echo "Operation cancelled."
         exit 1
     fi
-else
-    CONFIG_FILE="flyway.conf"
 fi
 
 # Check if required environment variables are set
@@ -49,10 +44,10 @@ export DB_PASSWORD
 
 # First, try to baseline the database if needed
 echo "Attempting to baseline the database..."
-flyway -configFiles=$CONFIG_FILE baseline
+flyway -configFiles=flyway.conf baseline
 
 # Then run migrations
-flyway -configFiles=$CONFIG_FILE migrate
+flyway -configFiles=flyway.conf migrate
 
 if [ $? -eq 0 ]; then
     echo "Migrations completed successfully."

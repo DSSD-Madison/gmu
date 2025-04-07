@@ -20,11 +20,14 @@ else
     exit 1
 fi
 
-# Set the appropriate Flyway config file
+# Confirm before proceeding with production
 if [ "$ENV" = "prod" ]; then
-    CONFIG_FILE="flyway.prod.conf"
-else
-    CONFIG_FILE="flyway.conf"
+    read -p "WARNING: You are about to rollback migrations on the PRODUCTION database. Are you sure? (y/N) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Operation cancelled."
+        exit 1
+    fi
 fi
 
 # Check if environment variables are set
@@ -43,7 +46,7 @@ export DB_PASSWORD
 # Get current version from flyway
 echo "Getting current schema version..."
 # Get Schema version directly from the info output
-FLYWAY_INFO=$(flyway -configFiles=$CONFIG_FILE info)
+FLYWAY_INFO=$(flyway -configFiles=flyway.conf info)
 echo "Flyway info output:"
 echo "$FLYWAY_INFO"
 
@@ -64,17 +67,6 @@ echo "Target version: $TARGET_VERSION"
 if [ "$TARGET_VERSION" -ge "$CURRENT_VERSION" ] 2>/dev/null; then
   echo "Error: Target version must be less than current version."
   exit 1
-fi
-
-# If production environment, ask for confirmation
-if [ "$ENV" = "prod" ]; then
-  echo "WARNING: You are about to rollback the PRODUCTION database!"
-  read -p "Are you sure you want to continue? (y/N) " -n 1 -r
-  echo
-  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "Rollback cancelled."
-    exit 1
-  fi
 fi
 
 # Execute rollbacks for all versions from current down to target+1
