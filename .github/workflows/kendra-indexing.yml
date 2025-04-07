@@ -1,0 +1,54 @@
+name: Kendra Document Indexing
+
+on:
+  schedule:
+    # Run at 8 AM UTC (adjust time as needed)
+    - cron: '0 8 * * *'
+  push:
+    branches:
+      - main  # Change this to your specific branch name
+
+jobs:
+  index-documents:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r scripts/requirements.txt
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Create .env file
+        run: |
+          cat << EOF > scripts/.env
+          ROLE_ARN=${{ secrets.ROLE_ARN }}
+          INDEX_ID=${{ secrets.INDEX_ID }}
+          DB_HOST=${{ secrets.DB_HOST }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          EOF
+
+      - name: Run indexing script
+        run: |
+          cd scripts
+          python batchput.py
+        env:
+          ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          SECRET_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1 
