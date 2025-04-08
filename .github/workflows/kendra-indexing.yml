@@ -6,7 +6,7 @@ on:
     - cron: '0 8 * * *'
   push:
     branches:
-      - main  # Change this to your specific branch name
+      - batch-put # Change this to your specific branch name
 
 jobs:
   index-documents:
@@ -47,6 +47,22 @@ jobs:
           EOF
 
       - name: Run indexing script
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          INDEX_ID: ${{ secrets.INDEX_ID }}
+          ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+        run: python scripts/batchput.py
+
+      - name: Check indexing status
         run: |
-          cd scripts
-          python batchput.py 
+          echo "Checking Kendra indexing status..."
+          # Get the list of documents being indexed
+          aws kendra list-data-sources --index-id ${{ secrets.INDEX_ID }} --query "Status=SYNCING" --output json
+          
+          # Get sync status
+          aws kendra describe-index --index-id ${{ secrets.INDEX_ID }} --output json
+          
+          echo "Note: Full indexing may take several hours. Check the Kendra console for detailed status." 
