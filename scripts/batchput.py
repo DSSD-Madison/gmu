@@ -26,7 +26,6 @@ DB_NAME = os.getenv('DB_NAME')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
 
 def get_db_connection():
-    """Create and return a database connection"""
     return psycopg2.connect(
         host=DB_HOST,
         database=DB_NAME,
@@ -35,10 +34,9 @@ def get_db_connection():
     )
 
 def get_unindexed_documents(conn) -> List[Dict[str, Any]]:
-    """Fetch documents that haven't been indexed by Kendra"""
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute("""
-            SELECT id, file_name, title, abstract, publish_date, source, s3_file
+            SELECT id, file_name, title, publish_date, source, s3_file
             FROM documents
             WHERE indexed_by_kendra = false
             AND deleted_at IS NULL
@@ -46,53 +44,49 @@ def get_unindexed_documents(conn) -> List[Dict[str, Any]]:
         return cur.fetchall()
 
 def convert_s3_uri_to_url(s3_uri: str) -> str:
-    """Convert S3 URI to HTTPS URL"""
     if not s3_uri.startswith("s3://"):
         raise ValueError(f"Invalid S3 URI: {s3_uri}")
-
-    uri_parts = s3_uri[len("s3://"):]
-    parts = uri_parts.split("/", 1)
-
-    if len(parts) != 2:
-        raise ValueError(f"S3 URI format is incorrect: {s3_uri}")
-
-    bucket, file_path = parts
+    bucket, file_path = s3_uri[len("s3://"):].split("/", 1)
     encoded_path = urllib.parse.quote(file_path)
-
     return f"https://{bucket}.s3.amazonaws.com/{encoded_path}"
 
+def truncate(value: str, max_length: int = 2048) -> str:
+    return value[:max_length] if value and len(value) > max_length else value
+
 def create_kendra_document(doc: Dict[str, Any]) -> Dict[str, Any]:
-    """Create a Kendra document from database record"""
     s3_uri = doc['s3_file']
+
+    # Skip temp/system files
+    if s3_uri.endswith('.temp') or os.path.basename(s3_uri).startswith('.'):
+        raise ValueError(f"Skipping temp/system file: {s3_uri}")
+
     bucket, key = s3_uri.replace('s3://', '').split('/', 1)
-    
+
     attributes = [
         {'Key': '_file_type', 'Value': {'StringValue': 'PDF'}},
-        {'Key': 'Title', 'Value': {'StringValue': doc['title']}},
+        {'Key': 'Region', 'Value': {'StringListValue': ['Nepal']}},
+        {'Key': 'Subject_Keywords', 'Value': {'StringListValue': [
+            'safety', 'security', 'security forces',
+            'community police engagement', 'collaboration', 'research', 'justice'
+        ]}},
+        {'Key': 'source', 'Value': {'StringListValue': [truncate(doc['source'])] if doc['source'] else []}},
+        {'Key': '_authors', 'Value': {'StringListValue': ['Search for Common Ground (SFCG)']}},
+        {'Key': 'Title', 'Value': {'StringValue': truncate(doc['title'])}},
         {'Key': '_source_uri', 'Value': {'StringValue': convert_s3_uri_to_url(s3_uri)}}
     ]
 
-    # Add optional attributes if they exist
-    if doc['abstract']:
-        attributes.append({'Key': 'Abstract', 'Value': {'StringValue': doc['abstract']}})
-    if doc['source']:
-        attributes.append({'Key': 'source', 'Value': {'StringListValue': [doc['source']]}})
-    if doc['publish_date']:
-        attributes.append({'Key': 'publish_date', 'Value': {'StringValue': doc['publish_date'].isoformat()}})
-
     return {
-        'Id': s3_uri,  # Using S3 URI as document ID
+        'Id': s3_uri,
         'S3Path': {
             'Bucket': bucket,
             'Key': key
         },
         'ContentType': 'PDF',
         'Attributes': attributes,
-        'Title': doc['title']
+        'Title': truncate(doc['title'])
     }
 
 def update_document_indexed_status(conn, doc_id: str):
-    """Update the document's indexed_by_kendra status in the database"""
     with conn.cursor() as cur:
         cur.execute("""
             UPDATE documents
@@ -102,49 +96,67 @@ def update_document_indexed_status(conn, doc_id: str):
     conn.commit()
 
 def main():
-    # Validate required environment variables
     if not role_arn:
         raise ValueError("ROLE_ARN environment variable is not set")
     if not index_id:
         raise ValueError("INDEX_ID environment variable is not set")
 
-    # Initialize AWS clients
-    kendra = boto3.client('kendra', region_name='us-east-1')
+    sts = boto3.client('sts', region_name='us-east-1')
+    creds = sts.assume_role(RoleArn=role_arn, RoleSessionName=role_session_name)['Credentials']
 
-    # Connect to database
+    kendra = boto3.client(
+        'kendra',
+        region_name='us-east-1',
+        aws_access_key_id=creds['AccessKeyId'],
+        aws_secret_access_key=creds['SecretAccessKey'],
+        aws_session_token=creds['SessionToken']
+    )
+
     conn = get_db_connection()
-    
+
     try:
-        # Get unindexed documents
         documents = get_unindexed_documents(conn)
         logger.info(f"Found {len(documents)} documents to index")
 
-        # Process documents in batches of 10 (Kendra's batch limit)
         batch_size = 10
         for i in range(0, len(documents), batch_size):
             batch = documents[i:i + batch_size]
-            kendra_docs = [create_kendra_document(doc) for doc in batch]
-            
-            # Submit batch to Kendra
-            response = kendra.batch_put_document(
-                IndexId=index_id,
-                Documents=kendra_docs,
-                RoleArn=role_arn
-            )
+            kendra_docs = []
+            valid_docs = []
 
-            # Handle failed documents
-            if response.get('FailedDocuments'):
-                for failed_doc in response['FailedDocuments']:
-                    logger.error(f"Failed to index document {failed_doc['Id']}: {failed_doc['ErrorMessage']}")
-            else:
-                # Update database for successfully indexed documents
-                for doc in batch:
-                    update_document_indexed_status(conn, doc['id'])
-                logger.info(f"Successfully indexed batch of {len(batch)} documents")
+            for doc in batch:
+                try:
+                    k_doc = create_kendra_document(doc)
+                    kendra_docs.append(k_doc)
+                    valid_docs.append(doc)
+                except Exception as skip_reason:
+                    logger.warning(f"Skipping document {doc['s3_file']}: {skip_reason}")
 
-    except Exception as e:
-        logger.error(f"Error during indexing: {str(e)}")
-        raise
+            if not kendra_docs:
+                continue
+
+            try:
+                response = kendra.batch_put_document(
+                    IndexId=index_id,
+                    Documents=kendra_docs,
+                    RoleArn=role_arn
+                )
+
+                failed = response.get('FailedDocuments', [])
+                if failed:
+                    for fail in failed:
+                        logger.error(f"Failed to index document {fail['Id']}: {fail['ErrorMessage']}")
+                else:
+                    for doc in valid_docs:
+                        update_document_indexed_status(conn, doc['id'])
+                    logger.info(f"Successfully indexed batch of {len(valid_docs)} documents")
+
+            except kendra.exceptions.ValidationException as ve:
+                logger.error(f"ValidationException: {ve}")
+            except Exception as e:
+                logger.error(f"Unexpected error: {e}")
+                raise
+
     finally:
         conn.close()
 
