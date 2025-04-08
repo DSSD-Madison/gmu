@@ -41,7 +41,6 @@ def get_unindexed_documents(conn) -> List[Dict[str, Any]]:
                 d.title,
                 d.s3_file,
                 d.source,
-                -- Many-to-many region
                 (
                     SELECT array_agg(r.name)
                     FROM doc_regions dr
@@ -91,15 +90,21 @@ def create_kendra_document(doc: Dict[str, Any]) -> Dict[str, Any]:
     ]
 
     if doc.get('regions'):
-        attributes.append({'Key': 'Region', 'Value': {'StringListValue': doc['regions']}})
+        regions = [r for r in doc['regions'] if r and r.strip()]
+        if regions:
+            attributes.append({'Key': 'Region', 'Value': {'StringListValue': regions}})
     
     if doc.get('keywords'):
-        attributes.append({'Key': 'Subject_Keywords', 'Value': {'StringListValue': doc['keywords']}})
+        keywords = [k for k in doc['keywords'] if k and k.strip()]
+        if keywords:
+            attributes.append({'Key': 'Subject_Keywords', 'Value': {'StringListValue': keywords}})
     
     if doc.get('authors'):
-        attributes.append({'Key': '_authors', 'Value': {'StringListValue': doc['authors']}})
+        authors = [a for a in doc['authors'] if a and a.strip()]
+        if authors:
+            attributes.append({'Key': '_authors', 'Value': {'StringListValue': authors}})
     
-    if doc.get('source'):
+    if doc.get('source') and doc['source'].strip():
         attributes.append({'Key': 'source', 'Value': {'StringListValue': [truncate(doc['source'])]}})
 
     return {
