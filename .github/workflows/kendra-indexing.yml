@@ -57,10 +57,11 @@ jobs:
       - name: Check indexing status
         run: |
           echo "Checking Kendra indexing status..."
-          # Get the list of documents being indexed
-          aws kendra list-data-sources --index-id ${{ secrets.AWS_INDEX_ID }} --query "Status=SYNCING" --output json
-          
-          # Get sync status
-          aws kendra describe-index --index-id ${{ secrets.AWS_INDEX_ID }} --output json
-          
-          echo "Note: Full indexing may take several hours. Check the Kendra console for detailed status." 
+
+          echo "Data sources (raw):"
+          aws kendra list-data-sources --index-id ${{ secrets.AWS_INDEX_ID }} --output json
+
+          echo "Indexing status:"
+          aws kendra describe-index --index-id ${{ secrets.AWS_INDEX_ID }} --query "Status" --output text
+
+          echo "Note: Full indexing may take several hours. Check the Kendra console for detailed status."
