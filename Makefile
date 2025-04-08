@@ -32,6 +32,7 @@ install-sqlc-arm64:
 	chmod +x sqlc
 	mkdir -p tools
 	mv sqlc tools/sqlc
+	$(MAKE) add-tools-to-path
 
 install-sqlc-x64:
 	@echo "Installing sqlc ($(SQLC_VERSION)) for macOS x64..."
@@ -39,6 +40,7 @@ install-sqlc-x64:
 	chmod +x sqlc
 	mkdir -p tools
 	mv sqlc tools/sqlc
+	$(MAKE) add-tools-to-path
 
 install-sqlc-linux:
 	@echo "Installing sqlc ($(SQLC_VERSION)) for Linux x64..."
@@ -46,3 +48,14 @@ install-sqlc-linux:
 	chmod +x sqlc
 	mkdir -p tools
 	mv sqlc tools/sqlc
+	$(MAKE) add-tools-to-path
+
+add-tools-to-path:
+	@echo "Ensuring tools/ directory is in PATH..."
+	@if ! echo $$PATH | grep -q "$(pwd)/tools"; then \
+		echo "export PATH=\$$PATH:$(pwd)/tools" >> ~/.bashrc 2>/dev/null || true; \
+		echo "export PATH=\$$PATH:$(pwd)/tools" >> ~/.zshrc 2>/dev/null || true; \
+	fi
+	@export PATH=$$PATH:$(pwd)/tools
+
+
