@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: Deploy
 
 on:
   push:
@@ -7,34 +7,6 @@ on:
   pull_request:
 
 jobs:
-  build-test:
-    name: Test Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y golang postgresql-client
-          
-      - name: Generate SQLC code (using existing schema.sql)
-        run: |
-          go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-          export PATH=$HOME/go/bin:/usr/local/go/bin:$PATH
-          sqlc generate
-      
-      - name: Run Backend Unit Tests
-        run: |
-          go test -v ./pkg/db/handlers/...
-
-      - name: Build and Test
-        run: |
-          make install-all-linux
-          go build -o gmu -buildvcs=false ./cmd/app/main.go
-          ./tools/tailwindcss -i ./web/assets/css/input.css -o ./web/assets/css/output.css --minify
-
   deploy:
     name: Deploy to EC2
     runs-on: ubuntu-latest
@@ -64,7 +36,6 @@ jobs:
               sudo ln -s /opt/flyway/flyway /usr/local/bin/flyway
             fi
             
-            # Run Flyway migrations
             echo "Running database migrations..."
             export DB_HOST=${{ secrets.DB_HOST }}
             export DB_USER=${{ secrets.DB_USER }}
@@ -72,13 +43,11 @@ jobs:
             export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             flyway migrate -configFiles=flyway.conf
             
-            # Check if migrations were successful
             if [ $? -ne 0 ]; then
               echo "Error: Database migrations failed"
               exit 1
             fi
             
-            # Generate schema.sql file
             echo "Generating schema.sql file..."
             PGPASSWORD=$DB_PASSWORD pg_dump \
               --host=$DB_HOST \
@@ -89,13 +58,11 @@ jobs:
               --no-privileges \
               > schema.sql
             
-            # Install SQLC and generate code
             echo "Installing SQLC and generating code..."
             go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
             echo "$HOME/go/bin" >> $GITHUB_PATH
             sqlc generate
             
-            # Run tests, build, and deploy
             echo "Running tests..."
             go test -v ./handlers/...
             

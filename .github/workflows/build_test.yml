@@ -1,0 +1,34 @@
+name: Build and Test
+
+on:
+  pull_request:
+
+jobs:
+  build-test:
+    name: Test Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y golang postgresql-client
+          
+      - name: Generate SQLC code (using existing schema.sql)
+        run: |
+          go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+          export PATH=$HOME/go/bin:/usr/local/go/bin:$PATH
+          sqlc generate
+      
+      - name: Run Backend Unit Tests
+        run: |
+          go test -v ./pkg/db/handlers/...
+
+      - name: Build and Test
+        run: |
+          make install-all-linux
+          go build -o gmu -buildvcs=false ./cmd/app/main.go
+          ./tools/tailwindcss -i ./web/assets/css/input.css -o ./web/assets/css/output.css --minify
+
