@@ -117,7 +117,7 @@ func Search(results awskendra.KendraResults) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</form></div><div id=\"results-container\" class=\"min-h-screen w-full px-4\"><div id=\"grid-container\" class=\"pt-10 pr-10 grid grid-cols-[1fr_3fr] bg-white w-full\"><aside id=\"sidecolmn\" class=\"mx-10 w-64 bg-white\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</form></div><div id=\"results-container\" class=\"min-h-screen w-full px-4\"><div id=\"grid-container\" class=\"pt-10 pr-10 grid grid-cols-[1fr_3fr] w-full\"><aside id=\"sidecolmn\" class=\"mx-10 w-64\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
