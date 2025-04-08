@@ -25,32 +25,45 @@ templ ResultsAndPagination(results awskendra.KendraResults) {
     </div>
 }
 
-
 templ ResultCard(result awskendra.KendraResult) {
-	<details class="group bg-white rounded-lg shadow-md overflow-hidden">
-		<summary class="list-none cursor-pointer p-4 hover:bg-gray-50 transition duration-150 ease-in-out">
-			<div class="flex items-start space-x-4 group-hover:-translate-y-1 group-hover:scale-[1.02] ease-in-out transition-transform duration-150">
+	// Add hover effect to the details tag for the whole card shadow
+	<details class="group bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-150 ease-in-out overflow-hidden">
+		// Summary hover with slightly stronger background and smooth transition
+		<summary class="list-none cursor-pointer p-4 block hover:bg-gray-100 transition duration-150 ease-in-out">
+			// Content within summary uses flex
+			<div class="flex items-start space-x-4">
 				if result.Image != "" {
-					<img src={ result.Image } alt="Preview" class="w-24 h-24 object-cover rounded-md flex-shrink-0"/>
+					<img src={ result.Image } alt="Preview" class="w-24 h-24 object-cover rounded-md flex-shrink-0 border border-gray-100"/>
 				} else {
-					<div class="w-24 h-24 bg-gray-200 rounded-md flex items-center justify-center text-gray-400 text-sm flex-shrink-0">No Preview</div>
+					// Improved placeholder style
+					<div class="w-24 h-24 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 text-xs flex-shrink-0 border border-gray-200">
+						(No Preview)
+					</div>
 				}
-				<div class="flex-grow">
-					<a href={ templ.URL(result.Link) } target="_blank" rel="noopener noreferrer" class="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline">
+				<div class="flex-grow min-w-0"> // Added min-w-0 to prevent overflow issues
+					<a href={ templ.URL(result.Link) } target="_blank" rel="noopener noreferrer" class="text-lg font-semibold text-blue-700 hover:text-blue-900 hover:underline">
 						{ result.Title }
 					</a>
-					<div class="mt-1 space-y-1">
+					// Excerpts styling refined
+					<div class="mt-1 space-y-1.5"> // Slightly more space between excerpts
 						for _, excerpt := range result.Excerpts {
-							<p class="text-sm text-gray-700 leading-relaxed">
+							// Use block for better spacing control if needed, text-sm for readability
+							<p class="text-sm text-gray-700 leading-normal"> // Normal leading might be better than relaxed for short lines
 								{ excerpt.Text }
-								<a class="ml-1 text-blue-500 hover:text-blue-700 text-xs align-super" target="_blank" rel="noopener noreferrer" href={ templ.URL(result.Link + "#page=" + strconv.Itoa(excerpt.PageNum))}>
+								<a
+									class="ml-1 text-blue-600 hover:text-blue-800 text-xs align-super whitespace-nowrap"
+									target="_blank"
+									rel="noopener noreferrer"
+									href={ templ.URL(result.Link + "#page=" + strconv.Itoa(excerpt.PageNum)) }
+								>
 									[{ strconv.Itoa(excerpt.PageNum) }]
 								</a>
 							</p>
 						}
 					</div>
 				</div>
-				<div class="self-center text-gray-400 group-open:rotate-90 transition-transform duration-300">
+				// Chevron indicator - no change needed
+				<div class="self-center text-gray-400 group-open:rotate-90 transition-transform duration-300 flex-shrink-0 ml-2">
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
 						<path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
 					</svg>
@@ -58,52 +71,51 @@ templ ResultCard(result awskendra.KendraResult) {
 			</div>
 		</summary>
 
-		// --- Collapsible Content ---
-		<div class="px-4 pb-4 pt-2 border-t border-gray-200 bg-gray-50">
-			<div class="space-y-3 text-sm">
+		// --- Collapsible Content --- Refined Styling ---
+		<div class="px-6 py-4 border-t border-gray-200 bg-gray-50/75"> // More padding, slightly off-white bg
+			// Use grid for metadata alignment
+			<dl class="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-2.5 text-sm"> // Define label/value columns & gaps
+
+				// Render Authors row if available
 				if len(result.Authors) > 0 {
-					<div class="flex">
-						<dt class="w-24 font-medium text-gray-600 flex-shrink-0">Author(s):</dt>
-						<dd class="text-gray-800">{ strings.Join(result.Authors, ", ") }</dd>
-					</div>
+					<dt class="font-medium text-gray-500">Author(s):</dt>
+					<dd class="text-gray-800">{ strings.Join(result.Authors, ", ") }</dd>
 				}
 
+				// Render Regions row if available
 				if len(result.Regions) > 0 {
-					<div class="flex">
-						<dt class="w-24 font-medium text-gray-600 flex-shrink-0">Region(s):</dt>
-						<dd class="text-gray-800">{ strings.Join(result.Regions, ", ") }</dd>
-					</div>
+					<dt class="font-medium text-gray-500">Region(s):</dt>
+					<dd class="text-gray-800">{ strings.Join(result.Regions, ", ") }</dd>
 				}
 
+				// Render Keywords row if available
 				if len(result.Keywords) > 0 {
-					<div class="flex">
-						<dt class="w-24 font-medium text-gray-600 flex-shrink-0">Keywords:</dt>
-						<dd class="text-gray-800">{ strings.Join(result.Keywords, ", ") }</dd>
-					</div>
+					<dt class="font-medium text-gray-500">Keywords:</dt>
+					<dd class="text-gray-800">{ strings.Join(result.Keywords, ", ") }</dd>
 				}
 
+				// Render PublishDate row if available
 				if result.PublishDate != "" {
-					<div class="flex">
-						<dt class="w-24 font-medium text-gray-600 flex-shrink-0">Published:</dt>
-						<dd class="text-gray-800">{ result.PublishDate }</dd>
-					</div>
+					<dt class="font-medium text-gray-500">Published:</dt>
+					<dd class="text-gray-800">{ result.PublishDate }</dd>
 				}
 
+				// Render Categories row if available (using slice now)
 				if len(result.Categories) > 0 {
-					<div class="flex">
-						<dt class="w-24 font-medium text-gray-600 flex-shrink-0">Category:</dt>
-						<dd class="text-gray-800">{ strings.Join(result.Categories, ", ") }</dd>
-					</div>
+					<dt class="font-medium text-gray-500">Category:</dt> // Singular label even if multiple values
+					<dd class="text-gray-800">{ strings.Join(result.Categories, ", ") }</dd>
 				}
 
+				// Render Abstract row if available - Spanning both columns for layout
 				if result.Abstract != "" {
-					<div class="pt-2"> // Add some top padding for abstract
-						<dt class="font-medium text-gray-600 mb-1">Abstract:</dt>
-						<dd class="text-gray-800 text-xs leading-relaxed">{ result.Abstract }</dd>
+					// Use col-span-2 for abstract label and value to flow naturally
+					<div class="col-span-2 pt-2">
+						<dt class="font-medium text-gray-500 mb-1">Abstract:</dt>
+						<dd class="text-gray-800 leading-relaxed">{ result.Abstract }</dd> // Kept text-xs if desired, else use text-sm
 					</div>
 				}
 
-			</div>
+			</dl>
 		</div>
 	</details>
 }
