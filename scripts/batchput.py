@@ -41,19 +41,23 @@ def get_unindexed_documents(conn) -> List[Dict[str, Any]]:
                 d.title,
                 d.s3_file,
                 d.source,
+                -- Many-to-many region
                 (
-                    SELECT name FROM regions WHERE id = d.region_id
-                ) AS region,
+                    SELECT array_agg(r.name)
+                    FROM doc_regions dr
+                    JOIN regions r ON dr.region_id = r.id
+                    WHERE dr.doc_id = d.id
+                ) AS regions,
                 (
                     SELECT array_agg(a.name)
-                    FROM doc_author da
+                    FROM doc_authors da
                     JOIN authors a ON da.author_id = a.id
                     WHERE da.doc_id = d.id
                 ) AS authors,
                 (
                     SELECT array_agg(k.keyword)
-                    FROM doc_keyword dk
-                    JOIN keyword k ON dk.keyword_id = k.id
+                    FROM doc_keywords dk
+                    JOIN keywords k ON dk.keyword_id = k.id
                     WHERE dk.doc_id = d.id
                 ) AS keywords
             FROM documents d
@@ -86,8 +90,8 @@ def create_kendra_document(doc: Dict[str, Any]) -> Dict[str, Any]:
         {'Key': '_source_uri', 'Value': {'StringValue': convert_s3_uri_to_url(s3_uri)}}
     ]
 
-    if doc.get('region'):
-        attributes.append({'Key': 'Region', 'Value': {'StringListValue': [doc['region']]}})
+    if doc.get('regions'):
+        attributes.append({'Key': 'Region', 'Value': {'StringListValue': doc['regions']}})
     
     if doc.get('keywords'):
         attributes.append({'Key': 'Subject_Keywords', 'Value': {'StringListValue': doc['keywords']}})
