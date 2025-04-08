@@ -108,7 +108,8 @@ CREATE TABLE public.documents (
     s3_file_preview character varying(1024),
     pdf_link character varying(1024),
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    deleted_at timestamp without time zone
+    deleted_at timestamp without time zone,
+    has_duplicate boolean DEFAULT false NOT NULL
 );
 
 

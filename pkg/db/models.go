@@ -58,6 +58,7 @@ type Document struct {
 	PdfLink         sql.NullString
 	CreatedAt       sql.NullTime
 	DeletedAt       sql.NullTime
+	HasDuplicate    bool
 }
 
 type FlywaySchemaHistory struct {
