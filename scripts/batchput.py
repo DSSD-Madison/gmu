@@ -36,10 +36,29 @@ def get_db_connection():
 def get_unindexed_documents(conn) -> List[Dict[str, Any]]:
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute("""
-            SELECT id, file_name, title, publish_date, source, s3_file
-            FROM documents
-            WHERE indexed_by_kendra = false
-            AND deleted_at IS NULL
+            SELECT 
+                d.id,
+                d.title,
+                d.s3_file,
+                d.source,
+                (
+                    SELECT name FROM regions WHERE id = d.region_id
+                ) AS region,
+                (
+                    SELECT array_agg(a.name)
+                    FROM doc_author da
+                    JOIN authors a ON da.author_id = a.id
+                    WHERE da.doc_id = d.id
+                ) AS authors,
+                (
+                    SELECT array_agg(k.keyword)
+                    FROM doc_keyword dk
+                    JOIN keyword k ON dk.keyword_id = k.id
+                    WHERE dk.doc_id = d.id
+                ) AS keywords
+            FROM documents d
+            WHERE d.indexed_by_kendra = false
+              AND d.deleted_at IS NULL
         """)
         return cur.fetchall()
 
@@ -56,7 +75,6 @@ def truncate(value: str, max_length: int = 2048) -> str:
 def create_kendra_document(doc: Dict[str, Any]) -> Dict[str, Any]:
     s3_uri = doc['s3_file']
 
-    # Skip temp/system files
     if s3_uri.endswith('.temp') or os.path.basename(s3_uri).startswith('.'):
         raise ValueError(f"Skipping temp/system file: {s3_uri}")
 
@@ -64,16 +82,21 @@ def create_kendra_document(doc: Dict[str, Any]) -> Dict[str, Any]:
 
     attributes = [
         {'Key': '_file_type', 'Value': {'StringValue': 'PDF'}},
-        {'Key': 'Region', 'Value': {'StringListValue': ['Nepal']}},
-        {'Key': 'Subject_Keywords', 'Value': {'StringListValue': [
-            'safety', 'security', 'security forces',
-            'community police engagement', 'collaboration', 'research', 'justice'
-        ]}},
-        {'Key': 'source', 'Value': {'StringListValue': [truncate(doc['source'])] if doc['source'] else []}},
-        {'Key': '_authors', 'Value': {'StringListValue': ['Search for Common Ground (SFCG)']}},
         {'Key': 'Title', 'Value': {'StringValue': truncate(doc['title'])}},
         {'Key': '_source_uri', 'Value': {'StringValue': convert_s3_uri_to_url(s3_uri)}}
     ]
+
+    if doc.get('region'):
+        attributes.append({'Key': 'Region', 'Value': {'StringListValue': [doc['region']]}})
+    
+    if doc.get('keywords'):
+        attributes.append({'Key': 'Subject_Keywords', 'Value': {'StringListValue': doc['keywords']}})
+    
+    if doc.get('authors'):
+        attributes.append({'Key': '_authors', 'Value': {'StringListValue': doc['authors']}})
+    
+    if doc.get('source'):
+        attributes.append({'Key': 'source', 'Value': {'StringListValue': [truncate(doc['source'])]}})
 
     return {
         'Id': s3_uri,
@@ -141,6 +164,7 @@ def main():
                 if not kendra_docs:
                     logger.info("No valid documents to index in this batch. Skipping batch_put_document.")
                     continue
+
                 response = kendra.batch_put_document(
                     IndexId=index_id,
                     Documents=kendra_docs,
