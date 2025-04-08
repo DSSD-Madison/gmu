@@ -109,25 +109,7 @@ def main():
         raise ValueError("INDEX_ID environment variable is not set")
 
     # Initialize AWS clients
-    sts_client = boto3.client('sts', region_name='us-east-1')
-    
-    # Assume the IAM role
-    response = sts_client.assume_role(
-        RoleArn=role_arn,
-        RoleSessionName=role_session_name
-    )
-
-    # Extract temporary credentials
-    credentials = response['Credentials']
-
-    # Initialize Kendra client with temporary credentials
-    kendra = boto3.client(
-        'kendra',
-        region_name='us-east-1',
-        aws_access_key_id=credentials['AccessKeyId'],
-        aws_secret_access_key=credentials['SecretAccessKey'],
-        aws_session_token=credentials['SessionToken']
-    )
+    kendra = boto3.client('kendra', region_name='us-east-1')
 
     # Connect to database
     conn = get_db_connection()
