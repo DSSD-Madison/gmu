@@ -11,6 +11,9 @@ on:
 jobs:
   index-documents:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     
     steps:
       - name: Checkout repository
@@ -29,15 +32,14 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
 
       - name: Create .env file
         run: |
           cat << EOF > scripts/.env
-          ROLE_ARN=${{ secrets.ROLE_ARN }}
-          INDEX_ID=${{ secrets.INDEX_ID }}
+          ROLE_ARN=${{ secrets.AWS_ROLE_ARN }}
+          INDEX_ID=${{ secrets.AWS_INDEX_ID }}
           DB_HOST=${{ secrets.DB_HOST }}
           DB_USER=${{ secrets.DB_USER }}
           DB_NAME=${{ secrets.DB_NAME }}
@@ -47,8 +49,4 @@ jobs:
       - name: Run indexing script
         run: |
           cd scripts
-          python batchput.py
-        env:
-          ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          SECRET_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1 
+          python batchput.py 
