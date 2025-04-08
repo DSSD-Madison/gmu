@@ -54,14 +54,4 @@ jobs:
           ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
         run: python scripts/batchput.py
 
-      - name: Check indexing status
-        run: |
-          echo "Checking Kendra indexing status..."
 
-          echo "Data sources (raw):"
-          aws kendra list-data-sources --index-id ${{ secrets.AWS_INDEX_ID }} --output json
-
-          echo "Indexing status:"
-          aws kendra describe-index --index-id ${{ secrets.AWS_INDEX_ID }} --query "Status" --output text
-
-          echo "Note: Full indexing may take several hours. Check the Kendra console for detailed status."
