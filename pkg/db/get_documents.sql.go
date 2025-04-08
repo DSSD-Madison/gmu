@@ -7,25 +7,77 @@ package db
 
 import (
 	"context"
+	"database/sql"
 
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
 
 const getDocumentsByURIs = `-- name: GetDocumentsByURIs :many
-SELECT id, file_name, title, abstract, publish_date, source, indexed_by_kendra, s3_file, s3_file_preview, pdf_link, created_at, deleted_at
-FROM documents
-WHERE s3_file = ANY($1::text[])
+SELECT
+    d.id, d.file_name, d.title, d.abstract, d.publish_date, d.source, d.indexed_by_kendra, d.s3_file, d.s3_file_preview, d.pdf_link, d.created_at, d.deleted_at,  -- Select all columns from the documents table
+    -- Aggregate author names into a text array
+    COALESCE(ARRAY_AGG(DISTINCT a.name) FILTER (WHERE a.id IS NOT NULL), '{}'::text[]) AS author_names,
+    -- Aggregate region names into a text array
+    COALESCE(ARRAY_AGG(DISTINCT r.name) FILTER (WHERE r.id IS NOT NULL), '{}'::text[]) AS region_names,
+    -- Aggregate keyword names into a text array
+    COALESCE(ARRAY_AGG(DISTINCT k.keyword) FILTER (WHERE k.id IS NOT NULL), '{}'::text[]) AS keyword_names,
+    -- Aggregate category names into a text array
+    COALESCE(ARRAY_AGG(DISTINCT c.name) FILTER (WHERE c.id IS NOT NULL), '{}'::text[]) AS category_names
+FROM
+    documents d
+        LEFT JOIN
+    doc_authors da ON d.id = da.doc_id
+        LEFT JOIN
+    authors a ON da.author_id = a.id
+        LEFT JOIN
+    doc_regions dr ON d.id = dr.doc_id
+        LEFT JOIN
+    regions r ON dr.region_id = r.id
+        LEFT JOIN
+    doc_keywords dk ON d.id = dk.doc_id
+        LEFT JOIN
+    keywords k ON dk.keyword_id = k.id
+        LEFT JOIN
+    doc_categories dc ON d.id = dc.doc_id
+        LEFT JOIN
+    categories c ON dc.category_id = c.id
+WHERE
+    d.s3_file = ANY($1::text[]) -- Filter documents by the provided list of s3_file paths
+GROUP BY
+    d.id -- Group by document ID to aggregate related names for each document
+ORDER BY
+    d.id
 `
 
-func (q *Queries) GetDocumentsByURIs(ctx context.Context, dollar_1 []string) ([]Document, error) {
+type GetDocumentsByURIsRow struct {
+	ID              uuid.UUID
+	FileName        string
+	Title           string
+	Abstract        sql.NullString
+	PublishDate     sql.NullTime
+	Source          sql.NullString
+	IndexedByKendra sql.NullBool
+	S3File          string
+	S3FilePreview   sql.NullString
+	PdfLink         sql.NullString
+	CreatedAt       sql.NullTime
+	DeletedAt       sql.NullTime
+	AuthorNames     interface{}
+	RegionNames     interface{}
+	KeywordNames    interface{}
+	CategoryNames   interface{}
+}
+
+func (q *Queries) GetDocumentsByURIs(ctx context.Context, dollar_1 []string) ([]GetDocumentsByURIsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getDocumentsByURIs, pq.Array(dollar_1))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Document
+	var items []GetDocumentsByURIsRow
 	for rows.Next() {
-		var i Document
+		var i GetDocumentsByURIsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.FileName,
@@ -39,6 +91,10 @@ func (q *Queries) GetDocumentsByURIs(ctx context.Context, dollar_1 []string) ([]
 			&i.PdfLink,
 			&i.CreatedAt,
 			&i.DeletedAt,
+			&i.AuthorNames,
+			&i.RegionNames,
+			&i.KeywordNames,
+			&i.CategoryNames,
 		); err != nil {
 			return nil, err
 		}

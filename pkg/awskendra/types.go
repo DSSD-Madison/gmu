@@ -6,10 +6,16 @@ type Excerpt struct {
 }
 
 type KendraResult struct {
-	Title    string
-	Excerpts []Excerpt
-	Link     string
-	Image    string
+	Title       string
+	Excerpts    []Excerpt
+	Link        string
+	Image       string
+	Authors     []string
+	Regions     []string
+	Keywords    []string
+	PublishDate string
+	Categories  []string
+	Abstract    string
 }
 
 type PageStatus struct {
@@ -27,7 +33,7 @@ type KendraResults struct {
 	Count        int
 	PageStatus   PageStatus
 	Filters      []FilterCategory
-	UrlData 	 UrlData
+	UrlData      UrlData
 }
 
 type KendraSuggestions struct {
