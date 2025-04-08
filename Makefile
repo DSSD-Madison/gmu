@@ -1,14 +1,14 @@
+SQLC_VERSION = v1.24.0
 TAILWIND_VERSION = v4.0.6
 TAILWIND_BASE_URL = https://github.com/tailwindlabs/tailwindcss/releases/download/$(TAILWIND_VERSION)/
 
-# call install-arm64, -x64, or -linux, based on your OS
-install-all-arm64: install-air install-templ install-sqlc
+install-all-arm64: install-air install-templ install-sqlc-arm64
 	$(MAKE) install-tailwind FILE=tailwindcss-macos-arm64
 
-install-all-x64: install-air install-templ install-sqlc
+install-all-x64: install-air install-templ install-sqlc-x64
 	$(MAKE) install-tailwind FILE=tailwindcss-macos-x64
 
-install-all-linux: install-air install-templ install-sqlc
+install-all-linux: install-air install-templ install-sqlc-linux
 	$(MAKE) install-tailwind FILE=tailwindcss-linux-x64
 
 install-tailwind:
@@ -26,6 +26,23 @@ install-templ:
 	@echo "Installing Templ..."
 	go install github.com/a-h/templ/cmd/templ@v0.3.833
 
-install-sqlc:
-	@echo "Installing sqlc..."
-	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+install-sqlc-arm64:
+	@echo "Installing sqlc ($(SQLC_VERSION)) for macOS ARM64..."
+	curl -sL https://github.com/sqlc-dev/sqlc/releases/download/$(SQLC_VERSION)/sqlc_$(subst v,,$(SQLC_VERSION))_darwin_arm64.tar.gz | tar -xz
+	chmod +x sqlc
+	mkdir -p tools
+	mv sqlc tools/sqlc
+
+install-sqlc-x64:
+	@echo "Installing sqlc ($(SQLC_VERSION)) for macOS x64..."
+	curl -sL https://github.com/sqlc-dev/sqlc/releases/download/$(SQLC_VERSION)/sqlc_$(subst v,,$(SQLC_VERSION))_darwin_amd64.tar.gz | tar -xz
+	chmod +x sqlc
+	mkdir -p tools
+	mv sqlc tools/sqlc
+
+install-sqlc-linux:
+	@echo "Installing sqlc ($(SQLC_VERSION)) for Linux x64..."
+	curl -sL https://github.com/sqlc-dev/sqlc/releases/download/$(SQLC_VERSION)/sqlc_$(subst v,,$(SQLC_VERSION))_linux_amd64.tar.gz | tar -xz
+	chmod +x sqlc
+	mkdir -p tools
+	mv sqlc tools/sqlc

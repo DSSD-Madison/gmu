@@ -59,7 +59,7 @@ jobs:
               > schema.sql
             
             echo "Installing SQLC and generating code..."
-            go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+            make install-all-linux
             echo "$HOME/go/bin" >> $GITHUB_PATH
             sqlc generate
             
@@ -67,7 +67,6 @@ jobs:
             go test -v ./handlers/...
             
             echo "Building application..."
-            make install-all-linux
             ./tools/tailwindcss -i ./web/assets/css/input.css -o ./web/assets/css/output.css --minify
             go build -o gmu -buildvcs=false ./cmd/app/main.go
             

@@ -18,7 +18,7 @@ jobs:
           
       - name: Generate SQLC code (using existing schema.sql)
         run: |
-          go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+          make install-all-linux
           export PATH=$HOME/go/bin:/usr/local/go/bin:$PATH
           sqlc generate
       
@@ -28,7 +28,6 @@ jobs:
 
       - name: Build and Test
         run: |
-          make install-all-linux
           go build -o gmu -buildvcs=false ./cmd/app/main.go
           ./tools/tailwindcss -i ./web/assets/css/input.css -o ./web/assets/css/output.css --minify
 
