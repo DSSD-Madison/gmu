@@ -138,6 +138,9 @@ def main():
                     logger.warning(f"Skipping document {doc['s3_file']}: {skip_reason}")
 
             try:
+                if not kendra_docs:
+                    logger.info("No valid documents to index in this batch. Skipping batch_put_document.")
+                    continue
                 response = kendra.batch_put_document(
                     IndexId=index_id,
                     Documents=kendra_docs,
