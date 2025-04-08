@@ -126,14 +126,16 @@ def main():
 
             for doc in batch:
                 try:
+                    if doc['title'].strip().lower() == 'untitled':
+                        logger.warning(f"Skipping document {doc['s3_file']} due to title='Untitled'")
+                        continue
+
                     k_doc = create_kendra_document(doc)
                     kendra_docs.append(k_doc)
                     valid_docs.append(doc)
+
                 except Exception as skip_reason:
                     logger.warning(f"Skipping document {doc['s3_file']}: {skip_reason}")
-
-            if not kendra_docs:
-                continue
 
             try:
                 response = kendra.batch_put_document(
