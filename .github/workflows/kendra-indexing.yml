@@ -1,12 +1,11 @@
-name: Kendra Document Indexing
+name: Kendra Indexing
 
 on:
   schedule:
-    # Run at 8 AM UTC (adjust time as needed)
-    - cron: '0 8 * * *'
+    - cron: '0 0 * * *'  # Run daily at midnight UTC
   push:
     branches:
-      - batch-put # Change this to your specific branch name
+      - batch-put
 
 jobs:
   index-documents:
@@ -22,7 +21,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.9'
 
       - name: Install dependencies
         run: |
@@ -35,16 +34,15 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
 
-      - name: Create .env file
+      - name: Verify environment variables
         run: |
-          cat << EOF > scripts/.env
-          ROLE_ARN=${{ secrets.AWS_ROLE_ARN }}
-          INDEX_ID=${{ secrets.AWS_INDEX_ID }}
-          DB_HOST=${{ secrets.DB_HOST }}
-          DB_USER=${{ secrets.DB_USER }}
-          DB_NAME=${{ secrets.DB_NAME }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          EOF
+          echo "Checking if required environment variables are set..."
+          if [ -n "${{ secrets.DB_HOST }}" ]; then echo "DB_HOST is set"; else echo "DB_HOST is not set"; fi
+          if [ -n "${{ secrets.DB_USER }}" ]; then echo "DB_USER is set"; else echo "DB_USER is not set"; fi
+          if [ -n "${{ secrets.DB_NAME }}" ]; then echo "DB_NAME is set"; else echo "DB_NAME is not set"; fi
+          if [ -n "${{ secrets.DB_PASSWORD }}" ]; then echo "DB_PASSWORD is set"; else echo "DB_PASSWORD is not set"; fi
+          if [ -n "${{ secrets.INDEX_ID }}" ]; then echo "INDEX_ID is set"; else echo "INDEX_ID is not set"; fi
+          if [ -n "${{ secrets.AWS_ROLE_ARN }}" ]; then echo "AWS_ROLE_ARN is set"; else echo "AWS_ROLE_ARN is not set"; fi
 
       - name: Run indexing script
         env:
@@ -52,7 +50,7 @@ jobs:
           DB_USER: ${{ secrets.DB_USER }}
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          INDEX_ID: ${{ secrets.AWS_INDEX_ID }}
+          INDEX_ID: ${{ secrets.INDEX_ID }}
           ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
         run: python scripts/batchput.py
 
