@@ -52,7 +52,7 @@ jobs:
           DB_USER: ${{ secrets.DB_USER }}
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          INDEX_ID: ${{ secrets.INDEX_ID }}
+          INDEX_ID: ${{ secrets.AWS_INDEX_ID }}
           ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
         run: python scripts/batchput.py
 
