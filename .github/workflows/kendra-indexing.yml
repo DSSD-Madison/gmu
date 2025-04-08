@@ -3,9 +3,7 @@ name: Kendra Indexing
 on:
   schedule:
     - cron: '0 0 * * *'  # Run daily at midnight UTC
-  push:
-    branches:
-      - batch-put
+  workflow_dispatch:  # Allow manual triggering
 
 jobs:
   index-documents:
@@ -41,7 +39,7 @@ jobs:
           if [ -n "${{ secrets.DB_USER }}" ]; then echo "DB_USER is set"; else echo "DB_USER is not set"; fi
           if [ -n "${{ secrets.DB_NAME }}" ]; then echo "DB_NAME is set"; else echo "DB_NAME is not set"; fi
           if [ -n "${{ secrets.DB_PASSWORD }}" ]; then echo "DB_PASSWORD is set"; else echo "DB_PASSWORD is not set"; fi
-          if [ -n "${{ secrets.INDEX_ID }}" ]; then echo "INDEX_ID is set"; else echo "INDEX_ID is not set"; fi
+          if [ -n "${{ secrets.AWS_INDEX_ID }}" ]; then echo "AWS_INDEX_ID is set"; else echo "AWS_INDEX_ID is not set"; fi
           if [ -n "${{ secrets.AWS_ROLE_ARN }}" ]; then echo "AWS_ROLE_ARN is set"; else echo "AWS_ROLE_ARN is not set"; fi
 
       - name: Run indexing script
@@ -50,7 +48,7 @@ jobs:
           DB_USER: ${{ secrets.DB_USER }}
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          INDEX_ID: ${{ secrets.INDEX_ID }}
+          INDEX_ID: ${{ secrets.AWS_INDEX_ID }}
           ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
         run: python scripts/batchput.py
 
@@ -58,9 +56,9 @@ jobs:
         run: |
           echo "Checking Kendra indexing status..."
           # Get the list of documents being indexed
-          aws kendra list-data-sources --index-id ${{ secrets.INDEX_ID }} --query "Status=SYNCING" --output json
+          aws kendra list-data-sources --index-id ${{ secrets.AWS_INDEX_ID }} --query "Status=SYNCING" --output json
           
           # Get sync status
-          aws kendra describe-index --index-id ${{ secrets.INDEX_ID }} --output json
+          aws kendra describe-index --index-id ${{ secrets.AWS_INDEX_ID }} --output json
           
           echo "Note: Full indexing may take several hours. Check the Kendra console for detailed status." 
