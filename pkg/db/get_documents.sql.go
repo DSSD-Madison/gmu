@@ -15,13 +15,13 @@ import (
 
 const getDocumentsByURIs = `-- name: GetDocumentsByURIs :many
 SELECT
-    d.id, d.file_name, d.title, d.abstract, d.publish_date, d.source, d.indexed_by_kendra, d.s3_file, d.s3_file_preview, d.pdf_link, d.created_at, d.deleted_at,  -- Select all columns from the documents table
+    d.id, d.file_name, d.title, d.abstract, d.publish_date, d.source, d.indexed_by_kendra, d.s3_file, d.s3_file_preview, d.pdf_link, d.created_at, d.deleted_at, d.has_duplicate,  -- Select all columns from the documents table
     -- Aggregate author names into a text array
     COALESCE(ARRAY_AGG(DISTINCT a.name) FILTER (WHERE a.id IS NOT NULL), '{}'::text[]) AS author_names,
     -- Aggregate region names into a text array
     COALESCE(ARRAY_AGG(DISTINCT r.name) FILTER (WHERE r.id IS NOT NULL), '{}'::text[]) AS region_names,
     -- Aggregate keyword names into a text array
-    COALESCE(ARRAY_AGG(DISTINCT k.keyword) FILTER (WHERE k.id IS NOT NULL), '{}'::text[]) AS keyword_names,
+    COALESCE(ARRAY_AGG(DISTINCT k.name) FILTER (WHERE k.id IS NOT NULL), '{}'::text[]) AS keyword_names,
     -- Aggregate category names into a text array
     COALESCE(ARRAY_AGG(DISTINCT c.name) FILTER (WHERE c.id IS NOT NULL), '{}'::text[]) AS category_names
 FROM
@@ -63,6 +63,7 @@ type GetDocumentsByURIsRow struct {
 	PdfLink         sql.NullString
 	CreatedAt       sql.NullTime
 	DeletedAt       sql.NullTime
+	HasDuplicate    bool
 	AuthorNames     interface{}
 	RegionNames     interface{}
 	KeywordNames    interface{}
@@ -91,6 +92,7 @@ func (q *Queries) GetDocumentsByURIs(ctx context.Context, dollar_1 []string) ([]
 			&i.PdfLink,
 			&i.CreatedAt,
 			&i.DeletedAt,
+			&i.HasDuplicate,
 			&i.AuthorNames,
 			&i.RegionNames,
 			&i.KeywordNames,

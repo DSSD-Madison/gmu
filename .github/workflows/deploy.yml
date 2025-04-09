@@ -1,46 +1,14 @@
-name: CI/CD Pipeline
+name: Deploy
 
 on:
   push:
     branches:
       - main
-  pull_request:
 
 jobs:
-  build-test:
-    name: Test Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Install dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y golang
-          
-      - name: Generate SQLC code
-        run: |
-          go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-          export PATH=$HOME/go/bin:/usr/local/go/bin:$PATH
-          rm -rf ./pkg/db/*.go
-          sqlc generate
-      
-      - name: Run Backend Unit Tests
-        run: |
-          go test -v ./pkg/db/handlers/...
-
-      - name: Build and Test
-        run: |
-          make install-all-linux
-          go build -o gmu -buildvcs=false ./cmd/app/main.go
-          ./tools/tailwindcss -i ./web/assets/css/input.css -o ./web/assets/css/output.css --minify
-
   deploy:
     name: Deploy to EC2
     runs-on: ubuntu-latest
-    needs: build-test
-    if: github.event_name == 'push'
 
     steps:
       - name: Checkout code
@@ -52,15 +20,51 @@ jobs:
           host: ${{ secrets.AWS_EC2_HOST }}
           username: ${{ secrets.AWS_EC2_USERNAME }}
           key: ${{ secrets.AWS_EC2_SSH_KEY }}
+          envs: DB_HOST,DB_USER,DB_NAME,DB_PASSWORD
           script: |
-            export PATH=$HOME/go/bin:/usr/local/go/bin:$PATH
             cd /var/www/go-htmx-app
             git stash
             git pull origin main
-            go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-            echo "$HOME/go/bin" >> $GITHUB_PATH
-            go test -v ./handlers/...
+          
+            if ! command -v flyway &> /dev/null; then
+              wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/11.6.0/flyway-commandline-11.6.0-linux-x64.tar.gz | tar xvz
+              sudo mv flyway-11.6.0 /opt/flyway
+              sudo ln -s /opt/flyway/flyway /usr/local/bin/flyway
+            fi
+            
+            echo "Running database migrations..."
+            export DB_HOST=${{ secrets.DB_HOST }}
+            export DB_USER=${{ secrets.DB_USER }}
+            export DB_NAME=${{ secrets.DB_NAME }}
+            export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            flyway migrate -configFiles=flyway.conf
+            
+            if [ $? -ne 0 ]; then
+              echo "Error: Database migrations failed"
+              exit 1
+            fi
+            
+            echo "Generating schema.sql file..."
+            PGPASSWORD=$DB_PASSWORD pg_dump \
+              --host=$DB_HOST \
+              --username=$DB_USER \
+              --dbname=$DB_NAME \
+              --schema-only \
+              --no-owner \
+              --no-privileges \
+              > schema.sql
+            
+            echo "Installing SQLC and generating code..."
             make install-all-linux
+            echo "$HOME/go/bin" >> $GITHUB_PATH
+            sqlc generate
+            
+            echo "Running tests..."
+            go test -v ./handlers/...
+            
+            echo "Building application..."
             ./tools/tailwindcss -i ./web/assets/css/input.css -o ./web/assets/css/output.css --minify
             go build -o gmu -buildvcs=false ./cmd/app/main.go
+            
+            echo "Restarting application..."
             sudo systemctl restart goapp

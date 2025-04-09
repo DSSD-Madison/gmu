@@ -6,7 +6,7 @@ SELECT
     -- Aggregate region names into a text array
     COALESCE(ARRAY_AGG(DISTINCT r.name) FILTER (WHERE r.id IS NOT NULL), '{}'::text[]) AS region_names,
     -- Aggregate keyword names into a text array
-    COALESCE(ARRAY_AGG(DISTINCT k.keyword) FILTER (WHERE k.id IS NOT NULL), '{}'::text[]) AS keyword_names,
+    COALESCE(ARRAY_AGG(DISTINCT k.name) FILTER (WHERE k.id IS NOT NULL), '{}'::text[]) AS keyword_names,
     -- Aggregate category names into a text array
     COALESCE(ARRAY_AGG(DISTINCT c.name) FILTER (WHERE c.id IS NOT NULL), '{}'::text[]) AS category_names
 FROM
