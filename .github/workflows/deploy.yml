@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - fix-flyway-issues
 
 jobs:
   deploy:
@@ -33,26 +34,8 @@ jobs:
             fi
             
             echo "Running database migrations..."
-            export DB_HOST=${{ secrets.DB_HOST }}
-            export DB_USER=${{ secrets.DB_USER }}
-            export DB_NAME=${{ secrets.DB_NAME }}
-            export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            flyway migrate -configFiles=flyway.conf
-            
-            if [ $? -ne 0 ]; then
-              echo "Error: Database migrations failed"
-              exit 1
-            fi
-            
-            echo "Generating schema.sql file..."
-            PGPASSWORD=$DB_PASSWORD pg_dump \
-              --host=$DB_HOST \
-              --username=$DB_USER \
-              --dbname=$DB_NAME \
-              --schema-only \
-              --no-owner \
-              --no-privileges \
-              > schema.sql
+            chmod +x scripts/migrate_and_generate.sh
+            ./scripts/migrate_and_generate.sh prod
             
             echo "Installing SQLC and generating code..."
             make install-all-linux
