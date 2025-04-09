@@ -25,6 +25,10 @@ templ ResultsAndPagination(results awskendra.KendraResults) {
     </div>
 }
 
+func nonemptyExpand(result awskendra.KendraResult) bool {
+	return len(result.Authors) > 0 || len(result.Regions) > 0 || len(result.Keywords) > 0 || result.PublishDate != "" || len(result.Categories) > 0 || result.Abstract != ""
+}
+
 templ ResultCard(result awskendra.KendraResult) {
 	<details class="group dark:bg-gray-800 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-150 ease-in-out overflow-hidden">
 		<summary class="list-none cursor-pointer p-4 block dark:hover:bg-gray-700 hover:bg-gray-100 transition duration-150 ease-in-out">
@@ -63,10 +67,10 @@ templ ResultCard(result awskendra.KendraResult) {
 				</div>
 			</div>
 		</summary>
-
 		<div class="px-6 py-4 border-t border-gray-200 dark:border-gray-600 dark:bg-gray-800 bg-gray-50/75">
 			<dl class="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-2.5 text-sm">
 
+			if nonemptyExpand(result) {
 				if len(result.Authors) > 0 {
 					<dt class="font-medium text-gray-500 dark:text-gray-200">Author(s):</dt>
 					<dd class="text-gray-800 dark:text-gray-400">{ strings.Join(result.Authors, ", ") }</dd>
@@ -98,7 +102,9 @@ templ ResultCard(result awskendra.KendraResult) {
 						<dd class="text-gray-800 dark:text-gray-400 leading-relaxed">{ result.Abstract }</dd> // Kept text-xs if desired, else use text-sm
 					</div>
 				}
-
+			} else {
+				<dt class="font-medium text-gray-500 dark:text-gray-200 mb-1">No Metadata</dt>
+			}
 			</dl>
 		</div>
 	</details>
