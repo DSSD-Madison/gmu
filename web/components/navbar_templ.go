@@ -78,10 +78,6 @@ func NavItems() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = NavButton("Upload", templ.URL("/upload")).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -111,7 +107,7 @@ func NavButton(content string, url templ.SafeURL) templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<a class=\"dark:bg-gray-900 dark:text-gray-300 rounded-md px-3 py-2 text-sm font-medium dark:hover:bg-gray-700 dark:hover:text-white\" href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<a class=\"dark:bg-gray-900 dark:text-gray-300 rounded-md px-3 py-2 text-sm font-medium bg-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 dark:hover:text-white\" href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -127,7 +123,7 @@ func NavButton(content string, url templ.SafeURL) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(content)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/navbar.templ`, Line: 26, Col: 155}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/navbar.templ`, Line: 26, Col: 185}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
