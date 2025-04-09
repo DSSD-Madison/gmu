@@ -8,9 +8,9 @@ import (
 
 templ Home() {
 	@Base("") {
-		<div class="flex flex-col items-center justify-start min-h-screen pt-80">
-			<h2 class="text-xl font-semibold text-gray-700 py-3 dark:text-white">Better Evidence Project</h2>
-			<form hx-get="/search" hx-swap="innerHTML" hx-target="#root" hx-push-url="true" class="flex flex-row w-full">
+		<div class="flex flex-col items-center justify-start min-h-screen pt-20">
+			<h2 class="text-xl lg:text-2xl xl:text-3xl font-semibold text-gray-700 py-3 dark:text-white">Better Evidence Project</h2>
+			<form hx-get="/search" hx-swap="innerHTML" hx-target="#root" hx-push-url="true" class="flex flex-row w-full h-full">
 				@SearchbarContainer(awskendra.KendraResults{}, false)
 			</form>
 		</div>

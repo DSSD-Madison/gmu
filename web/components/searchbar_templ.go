@@ -14,7 +14,7 @@ import (
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 )
 
-var searchbar_classes = `relative mx-auto lg:w-lg max-lg:w-xs not-has-[p]:focus-within:[&_input]:rounded-3xl not-has-[p]:focus-within:[&_input]:border-blue-400 has-[p]:focus-within:[&_input]:rounded-t-3xl has-[p]:focus-within:[&_input]:border-blue-400 not-has-[p]:not-focus-within:[&_input]:rounded-3xl has-[p]:not-focus-within:[&_input]:rounded-3xl hover:[&_input]:rounded-t-3xl`
+var searchbar_classes = `relative mx-auto lg:w-1/2 w-sm not-has-[p]:focus-within:[&_input]:rounded-3xl not-has-[p]:focus-within:[&_input]:border-blue-400 has-[p]:focus-within:[&_input]:rounded-t-3xl has-[p]:focus-within:[&_input]:border-blue-400 not-has-[p]:not-focus-within:[&_input]:rounded-3xl has-[p]:not-focus-within:[&_input]:rounded-3xl hover:[&_input]:rounded-t-3xl`
 
 func SearchbarContainer(results awskendra.KendraResults, oob bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {

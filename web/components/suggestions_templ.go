@@ -76,7 +76,7 @@ func Suggestions(suggestions awskendra.KendraSuggestions) templ.Component {
 	})
 }
 
-var suggestions_style = `absolute hidden opacity-0 peer-focus:block hover:block w-full max-w-2xl *:w-full *:px-6 *:py-3 *:border-r-2 *:border-l-2 *:last:border-b-2 *:last:rounded-b-3xl *:hover:cursor-pointer peer-focus:opacity-100 peer-focus:*:hover:bg-gray-200 dark:peer-focus:*:hover:bg-gray-700 *:last:shadow-lg`
+var suggestions_style = `absolute hidden opacity-0 peer-focus:block hover:block w-full *:w-full *:px-6 *:py-3 *:border-r-2 *:border-l-2 *:last:border-b-2 *:last:rounded-b-3xl *:hover:cursor-pointer peer-focus:opacity-100 peer-focus:*:hover:bg-gray-200 dark:peer-focus:*:hover:bg-gray-700 *:last:shadow-lg`
 
 func suggestions_container(oob bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
