@@ -23,25 +23,27 @@ templ sidecolumn(results awskendra.KendraResults) {
 							<path d="M12.95 10.707l.707-.707L8 4.343 6.586 5.757 10.828 10l-4.242 4.243L8 15.657l4.95-4.95z"/>
 						</svg>
 					</summary>
-					<div class="bg-white dark:bg-gray-800 p-2 flex flex-col divide-y dark:divide-gray-600 divide-gray-200">
+					<div class="bg-white dark:bg-gray-800 flex flex-col divide-y dark:divide-gray-600 divide-gray-200">
 						for _, option := range filter.Options {
-							<label class="flex items-center p-1 cursor-pointer dark:hover:bg-gray-600 hover:bg-blue-50 text-sm">
-								if option.Selected {
-									<input
-											type="checkbox"
-											class="mr-2 accent-blue-600 dark:accent-blue-500 dark:text-gray-200"
-											name={ filter.Category }
-											value={ option.Label }
-											checked/>
-								} else {
-									<input type="checkbox"
-											class="mr-2 accent-blue-600 dark:accent-blue-500 dark:text-gray-200"
-											name={ filter.Category }
-											value={ option.Label }/>
-								}
-								<span class="flex-grow dark:text-gray-200">{ option.Label }</span>
-								<span class="text-xs text-gray-600 dark:text-gray-200">({ strconv.Itoa(int(option.Count)) })</span>
-							</label>
+							<div class="cursor-pointer dark:hover:bg-gray-600 hover:bg-blue-50 text-sm">
+								<label class="items-center p-2 flex">
+									if option.Selected {
+										<input
+												type="checkbox"
+												class="peer/check mr-2 accent-blue-600 dark:accent-blue-500 dark:text-gray-200"
+												name={ filter.Category }
+												value={ option.Label }
+												checked/>
+									} else {
+										<input type="checkbox"
+												class="peer/check mr-2 accent-blue-600 dark:accent-blue-500 dark:text-gray-200"
+												name={ filter.Category }
+												value={ option.Label }/>
+									}
+									<span class="peer-checked/check:text-sky-500 flex-grow dark:text-gray-200">{ option.Label }</span>
+									<span class="text-xs text-gray-600 dark:text-gray-200">({ strconv.Itoa(int(option.Count)) })</span>
+								</label>
+							</div>
 						}
 					</div>
 				</details>
