@@ -19,7 +19,6 @@ jobs:
       - name: Generate SQLC code (using existing schema.sql)
         run: |
           make install-all-linux
-          export PATH=$HOME/go/bin:/usr/local/go/bin:$PATH
           sqlc generate
       
       - name: Run Backend Unit Tests

@@ -22,7 +22,6 @@ jobs:
           key: ${{ secrets.AWS_EC2_SSH_KEY }}
           envs: DB_HOST,DB_USER,DB_NAME,DB_PASSWORD
           script: |
-            export PATH=$HOME/go/bin:/usr/local/go/bin:$PATH
             cd /var/www/go-htmx-app
             git stash
             git pull origin main

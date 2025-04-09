@@ -30,32 +30,16 @@ install-sqlc-arm64:
 	@echo "Installing sqlc ($(SQLC_VERSION)) for macOS ARM64..."
 	curl -sL https://github.com/sqlc-dev/sqlc/releases/download/$(SQLC_VERSION)/sqlc_$(subst v,,$(SQLC_VERSION))_darwin_arm64.tar.gz | tar -xz
 	chmod +x sqlc
-	mkdir -p tools
-	mv sqlc tools/sqlc
-	$(MAKE) add-tools-to-path
+	sudo mv sqlc /usr/local/bin/sqlc
 
 install-sqlc-x64:
 	@echo "Installing sqlc ($(SQLC_VERSION)) for macOS x64..."
 	curl -sL https://github.com/sqlc-dev/sqlc/releases/download/$(SQLC_VERSION)/sqlc_$(subst v,,$(SQLC_VERSION))_darwin_amd64.tar.gz | tar -xz
 	chmod +x sqlc
-	mkdir -p tools
-	mv sqlc tools/sqlc
-	$(MAKE) add-tools-to-path
+	sudo mv sqlc /usr/local/bin/sqlc
 
 install-sqlc-linux:
 	@echo "Installing sqlc ($(SQLC_VERSION)) for Linux x64..."
 	curl -sL https://github.com/sqlc-dev/sqlc/releases/download/$(SQLC_VERSION)/sqlc_$(subst v,,$(SQLC_VERSION))_linux_amd64.tar.gz | tar -xz
 	chmod +x sqlc
-	mkdir -p tools
-	mv sqlc tools/sqlc
-	$(MAKE) add-tools-to-path
-
-add-tools-to-path:
-	@echo "Ensuring tools/ directory is in PATH..."
-	@if ! echo $$PATH | grep -q "$(pwd)/tools"; then \
-		echo "export PATH=\$$PATH:$(pwd)/tools" >> ~/.bashrc 2>/dev/null || true; \
-		echo "export PATH=\$$PATH:$(pwd)/tools" >> ~/.zshrc 2>/dev/null || true; \
-	fi
-	@export PATH=$$PATH:$(pwd)/tools
-
-
+	sudo mv sqlc /usr/local/bin/sqlc
