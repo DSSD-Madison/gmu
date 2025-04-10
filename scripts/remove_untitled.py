@@ -83,8 +83,7 @@ def main():
             try:
                 kendra.batch_delete_document(
                     IndexId=index_id,
-                    DocumentIdList=batch,
-                    RoleArn=role_arn
+                    DocumentIdList=batch
                 )
                 logger.info(f"Deleted batch of {len(batch)} documents from Kendra")
             except Exception as e:
