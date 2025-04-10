@@ -32,35 +32,15 @@ jobs:
               sudo ln -s /opt/flyway/flyway /usr/local/bin/flyway
             fi
             
-            echo "Running database migrations..."
-            export DB_HOST=${{ secrets.DB_HOST }}
-            export DB_USER=${{ secrets.DB_USER }}
-            export DB_NAME=${{ secrets.DB_NAME }}
-            export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            flyway migrate -configFiles=flyway.conf
-            
-            if [ $? -ne 0 ]; then
-              echo "Error: Database migrations failed"
-              exit 1
-            fi
-            
-            echo "Generating schema.sql file..."
-            PGPASSWORD=$DB_PASSWORD pg_dump \
-              --host=$DB_HOST \
-              --username=$DB_USER \
-              --dbname=$DB_NAME \
-              --schema-only \
-              --no-owner \
-              --no-privileges \
-              > schema.sql
-            
-            echo "Installing SQLC and generating code..."
+            echo "Installing SQLC and running database migrations"
             make install-all-linux
             echo "$HOME/go/bin" >> $GITHUB_PATH
+            chmod +x scripts/migrate_and_generate.sh
+            ./scripts/migrate_and_generate.sh prod
             sqlc generate
-            
+
             echo "Running tests..."
-            go test -v ./handlers/...
+            go test -v ./pkg/db/handlers/...
             
             echo "Building application..."
             ./tools/tailwindcss -i ./web/assets/css/input.css -o ./web/assets/css/output.css --minify
