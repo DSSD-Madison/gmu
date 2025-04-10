@@ -187,7 +187,9 @@ def main():
                 else:
                     for doc in valid_docs:
                         update_document_indexed_status(conn, doc['id'])
+                        logger.info(f"Indexed document: {doc['s3_file']}")
                     logger.info(f"Successfully indexed batch of {len(valid_docs)} documents")
+
 
             except kendra.exceptions.ValidationException as ve:
                 logger.error(f"ValidationException: {ve}")

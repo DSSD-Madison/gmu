@@ -80,6 +80,10 @@ def main():
         batch_size = 10
         for i in range(0, len(s3_file_ids), batch_size):
             batch = s3_file_ids[i:i + batch_size]
+
+            for doc_id in batch:
+                logger.info(f"Attempting to delete document ID: {doc_id}")
+
             try:
                 kendra.batch_delete_document(
                     IndexId=index_id,
@@ -90,9 +94,9 @@ def main():
                 logger.error(f"Error deleting batch: {e}")
                 raise
 
-            # Mark documents as unindexed in the DB whether they existed in Kendra or not
             mark_as_unindexed(conn, batch)
             logger.info(f"Marked batch of {len(batch)} documents as unindexed in DB")
+
 
     finally:
         conn.close()
