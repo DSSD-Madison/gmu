@@ -18,7 +18,7 @@ type KendraClient struct {
 func NewKendraClient(config Config) (*KendraClient, error) {
 	opts := kendra.Options{
 		Credentials: config.Credentials,
-		Region: config.Region,
+		Region:      config.Region,
 	}
 
 	client := kendra.New(opts)
@@ -145,7 +145,7 @@ func (c KendraClient) MakeQuery(query string, filters map[string][]string, pageN
 	}
 	results := queryOutputToResults(*out)
 
-	totalPages := (results.Count + 9) / 10
+	totalPages := 10
 
 	results.PageStatus = PageStatus{
 		CurrentPage: pageNum,
@@ -153,6 +153,7 @@ func (c KendraClient) MakeQuery(query string, filters map[string][]string, pageN
 		NextPage:    pageNum + 1,
 		HasPrev:     pageNum > 1,
 		HasNext:     pageNum < totalPages,
+		TotalPages:  totalPages,
 	}
 
 	results.Query = query

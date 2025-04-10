@@ -24,6 +24,7 @@ type PageStatus struct {
 	HasNext     bool
 	PrevPage    int
 	NextPage    int
+	TotalPages  int
 }
 
 type KendraResults struct {
