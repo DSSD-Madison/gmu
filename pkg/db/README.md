@@ -15,10 +15,10 @@ sqlc generate
 ## Database Migrations
 This project uses Flyway for database migrations. Migrations are stored in `pkg/db/migrations` and rollback scripts in `pkg/db/rollbacks`.
 
-To run migrations on your local database:
+To run migrations on your database:
 ```bash
 brew install flyway
-./scripts/migrate_and_generate.sh local
+./scripts/migrate_and_generate.sh
 ```
 
 ### Creating New Migrations
@@ -28,7 +28,7 @@ When you need to make database changes:
 2. Create a corresponding rollback file in `pkg/db/rollbacks`
 3. Test the migration locally:
    ```bash
-   ./scripts/migrate_and_generate.sh local
+   ./scripts/migrate_and_generate.sh
    ```
 
 ### Rolling Back Migrations
