@@ -47,8 +47,8 @@ jobs:
             fi
 
             echo "Installing SQLC and running database migrations"
-            export PATH=$PATH:/usr/local/go/bin
             make install-all-linux
+            export PATH=$PATH:/usr/local/go/bin
             chmod +x scripts/migrate_and_generate.sh
             ./scripts/migrate_and_generate.sh
 
