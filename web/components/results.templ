@@ -8,7 +8,7 @@ import (
 )
 
 templ ResultsPage(results awskendra.KendraResults) {
-	<div id="grid-container" class="pt-10 pr-10 grid grid-cols-[1fr_3fr] grid-rows-[auto_1fr_auto] w-full gap-4">
+	<div id="grid-container" class="py-4 md:grid md:grid-cols-[1fr_4fr] md:w-full md:gap-4 flex flex-col justify-center">
 		@sidecolumn(results)
 		<div id="results-and-pagination">
 			@ResultsAndPagination(results)
@@ -32,15 +32,15 @@ func nonemptyExpand(result awskendra.KendraResult) bool {
 templ ResultCard(result awskendra.KendraResult) {
 	<details class="group dark:bg-gray-800 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-150 ease-in-out overflow-hidden">
 		<summary class="list-none cursor-pointer p-4 block dark:hover:bg-gray-700 hover:bg-gray-100 transition duration-150 ease-in-out">
-			<div class="flex items-start space-x-4">
+			<div class="flex flex-col md:flex-row items-start">
 				if result.Image != "" {
-					<img src={ result.Image } alt="Preview" class="w-24 h-24 object-cover rounded-md flex-shrink-0 border border-gray-100"/>
+					<img src={ result.Image } alt="Preview" class="md:w-24 md:h-24 w-auto md:self-start self-center h-auto object-cover rounded-md flex-shrink-0 border border-gray-100"/>
 				} else {
-					<div class="w-24 h-24 dark:bg-gray-700 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 text-xs flex-shrink-0 border border-gray-200">
+					<div class="md:w-24 md:h-24 w-auto h-auto dark:bg-gray-700 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 text-xs flex-shrink-0 border border-gray-200">
 						(No Preview)
 					</div>
 				}
-				<div class="flex-grow min-w-0">
+				<div class="md:pl-4 flex-grow min-w-0">
 					<a href={ templ.URL(result.Link) } target="_blank" rel="noopener noreferrer" class="text-lg font-semibold dark:text-blue-500 text-blue-700 dark:hover:text-blue-400 hover:text-blue-900 hover:underline">
 						{ result.Title }
 					</a>
@@ -60,7 +60,7 @@ templ ResultCard(result awskendra.KendraResult) {
 						}
 					</div>
 				</div>
-				<div class="self-center text-gray-400 group-open:rotate-90 transition-transform duration-300 flex-shrink-0 ml-2">
+				<div class="self-center text-gray-400 rotate-90 md:rotate-none group-open:rotate-270 md:group-open:rotate-90 transition-transform duration-300 flex-shrink-0 ml-2">
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
 						<path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
 					</svg>

@@ -6,7 +6,7 @@ import (
 )
 
 templ sidecolumn(results awskendra.KendraResults) {
-	<aside id="sidecolumn" class="mx-6 w-72 px-4">
+	<aside id="sidecolumn" class="pb-4">
 		<form
 				hx-get="/search"
 				hx-push-url="true"
@@ -16,38 +16,7 @@ templ sidecolumn(results awskendra.KendraResults) {
 				hx-swap="innerHTML"
 		>
 			for _, filter := range results.Filters {
-				<details class="mb-4 shadow rounded-lg overflow-hidden group/filter">
-					<summary class="text-base select-none p-3 bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-800 dark:text-white hover:bg-gray-200 flex justify-between items-center cursor-pointer">
-						<p class="font-medium">{ filter.Name }</p>
-						<svg class="w-4 h-4 transition-transform group-open/filter:rotate-90 dark:fill-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-							<path d="M12.95 10.707l.707-.707L8 4.343 6.586 5.757 10.828 10l-4.242 4.243L8 15.657l4.95-4.95z"/>
-						</svg>
-					</summary>
-					<div class="bg-white dark:bg-gray-800 flex flex-col divide-y dark:divide-gray-600 divide-gray-200">
-						for _, option := range filter.Options {
-							<div class="cursor-pointer dark:hover:bg-gray-600 hover:bg-blue-50 text-sm">
-								<label class="items-center p-2 flex">
-									if option.Selected {
-										<input
-												type="checkbox"
-												class="peer/check mr-2 accent-blue-600 dark:accent-blue-500 dark:text-gray-200"
-												name={ filter.Category }
-												value={ option.Label }
-												checked/>
-									} else {
-										<input type="checkbox"
-												class="peer/check mr-2 accent-blue-600 dark:accent-blue-500 dark:text-gray-200"
-												name={ filter.Category }
-												value={ option.Label }/>
-									}
-									<span class="peer-checked/check:text-sky-500 flex-grow dark:text-gray-200">{ option.Label }</span>
-									<span class="text-xs text-gray-600 dark:text-gray-200">({ strconv.Itoa(int(option.Count)) })</span>
-								</label>
-							</div>
-						}
-					</div>
-				</details>
-
+				@filterCard(filter)
 			}
 			<button
 					id="apply-filters-btn"
@@ -58,4 +27,42 @@ templ sidecolumn(results awskendra.KendraResults) {
 			</button>
 		</form>
 	</aside>
+}
+
+templ filterCard(filter awskendra.FilterCategory) {
+	<details class="mb-4 shadow rounded-lg overflow-hidden group/filter">
+		<summary class="text-base select-none p-3 bg-gray-100 dark:hover:bg-gray-700 dark:bg-gray-800 dark:text-white hover:bg-gray-200 flex justify-between items-center cursor-pointer">
+			<p class="font-medium">{ filter.Name }</p>
+			<svg class="w-4 h-4 transition-transform group-open/filter:rotate-90 dark:fill-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+				<path d="M12.95 10.707l.707-.707L8 4.343 6.586 5.757 10.828 10l-4.242 4.243L8 15.657l4.95-4.95z"/>
+			</svg>
+		</summary>
+		<div class="bg-white dark:bg-gray-800 flex flex-col divide-y dark:divide-gray-600 divide-gray-200">
+			for _, option := range filter.Options {
+				@filterOption(filter, option)
+			}
+		</div>
+	</details>
+	}
+
+templ filterOption(filter awskendra.FilterCategory, option awskendra.FilterOption) {
+	<div class="cursor-pointer dark:hover:bg-gray-600 hover:bg-blue-50 text-sm">
+		<label class="items-center p-2 flex">
+			if option.Selected {
+				<input
+						type="checkbox"
+						class="peer/check mr-2 accent-blue-600 dark:accent-blue-500 dark:text-gray-200"
+						name={ filter.Category }
+						value={ option.Label }
+						checked/>
+			} else {
+				<input type="checkbox"
+						class="peer/check mr-2 accent-blue-600 dark:accent-blue-500 dark:text-gray-200"
+						name={ filter.Category }
+						value={ option.Label }/>
+			}
+			<span class="peer-checked/check:text-sky-500 flex-grow dark:text-gray-200">{ option.Label }</span>
+			<span class="text-xs text-gray-600 dark:text-gray-200">({ strconv.Itoa(int(option.Count)) })</span>
+		</label>
+	</div>
 }
