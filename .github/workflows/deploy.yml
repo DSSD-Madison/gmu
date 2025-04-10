@@ -40,7 +40,11 @@ jobs:
 
             echo "Installing dependencies"
             make install-all-linux
+            # for go
             echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
+            # for templ
+            export PATH=$PATH:$HOME/go/bin
+
 
             echo "Installing Flyway"
             if ! command -v flyway &> /dev/null; then
