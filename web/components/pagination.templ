@@ -1,0 +1,105 @@
+package components
+
+import (
+	"encoding/json"
+	"strconv"
+
+	"github.com/DSSD-Madison/gmu/pkg/awskendra"
+)
+
+func paginationJSON(page int) string {
+	bytes, _ := json.Marshal(map[string]string{"page": strconv.Itoa(page)})
+	return string(bytes)
+}
+
+templ Pagination(status awskendra.PageStatus) {
+	{{ maxPages := 5 }}
+	<div class="flex justify-center items-center space-x-2 mt-4 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow">
+		@prevButton(status)
+
+		@paginationPages(status, maxPages)
+
+		@nextButton(status)
+	</div>
+}
+
+templ paginationPages(status awskendra.PageStatus, maxPages int) {
+	{{ vm := getPaginationVM(status, maxPages) }}
+	if vm.lower_overflow {
+		@pageNumberButton(1)
+		@dots()
+	}
+	if vm.buttonCount < maxPages {
+		for i := range vm.buttonCount {
+			if i == status.CurrentPage {
+				@currentPageButton(i)
+			} else {
+				@pageNumberButton(i)
+			}
+		}
+	} else {
+		for i := vm.lowerPage; i <= vm.upperPage; i++ {
+			if i == status.CurrentPage {
+				@currentPageButton(i)
+			} else {
+				@pageNumberButton(i)
+			}
+		}
+	}
+	if vm.upper_overflow {
+		@dots()
+		@pageNumberButton(status.TotalPages)
+	}
+}
+
+templ dots() {
+	<span class="px-4 py-2 bg-gray-200 dark:bg-gray-800 dark:text-white text-white rounded">...</span>
+}
+
+templ currentPageButton(currentPage int) {
+	<span
+		class="px-4 py-2 bg-blue-500 dark:bg-blue-500 dark:text-white text-white rounded"
+	>
+		{ strconv.Itoa(currentPage) }
+	</span>
+}
+
+templ pageNumberButton(pageNum int) {
+	<button
+		hx-get="/search"
+		hx-push-url="true"
+		hx-target="#results-and-pagination"
+		hx-include="#searchbar, #sidecolumn"
+		hx-vals={paginationJSON(pageNum)}
+		hx-swap="innerHTML"
+		class="px-4 py-2 bg-gray-300 dark:bg-gray-700 dark:text-gray-200 rounded cursor-pointer hover:bg-gray-400 dark:hover:bg-gray-600"
+	>
+		{ strconv.Itoa(pageNum) }
+	</button>
+}
+
+templ paginationButton(content string, json string) {
+		<button
+			hx-get="/search"
+			hx-push-url="true"
+			hx-target="#results-and-pagination"
+			hx-include="#searchbar, #sidecolumn"
+			hx-vals={json}
+			hx-swap="innerHTML"
+			class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer"
+		>
+			{content}
+		</button>
+}
+
+templ prevButton(status awskendra.PageStatus) {
+	if (status.HasPrev) {
+		@paginationButton("Prev", paginationJSON(status.PrevPage))
+	}
+}
+
+templ nextButton(status awskendra.PageStatus) {
+	if (status.HasNext) {
+		@paginationButton("Next", paginationJSON(status.NextPage))
+	}
+}

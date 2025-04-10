@@ -1,0 +1,119 @@
+package components
+
+import (
+	"strconv"
+	"strings"
+
+	"github.com/DSSD-Madison/gmu/pkg/awskendra"
+)
+
+templ ResultsPage(results awskendra.KendraResults) {
+	<div id="grid-container" class="pt-10 pr-10 grid grid-cols-[1fr_3fr] grid-rows-[auto_1fr_auto] w-full gap-4">
+		@sidecolumn(results)
+		<div id="results-and-pagination">
+			@ResultsAndPagination(results)
+		</div>
+	</div>
+	@Searchbar(results.UrlData, true)
+	@suggestions_container(true)
+}
+
+templ ResultsAndPagination(results awskendra.KendraResults) {
+	@ResultsContainer(results)
+    <div class="col-span-2">
+		@Pagination(results.PageStatus)
+    </div>
+}
+
+func nonemptyExpand(result awskendra.KendraResult) bool {
+	return len(result.Authors) > 0 || len(result.Regions) > 0 || len(result.Keywords) > 0 || result.PublishDate != "" || len(result.Categories) > 0 || result.Abstract != ""
+}
+
+templ ResultCard(result awskendra.KendraResult) {
+	<details class="group dark:bg-gray-800 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-150 ease-in-out overflow-hidden">
+		<summary class="list-none cursor-pointer p-4 block dark:hover:bg-gray-700 hover:bg-gray-100 transition duration-150 ease-in-out">
+			<div class="flex items-start space-x-4">
+				if result.Image != "" {
+					<img src={ result.Image } alt="Preview" class="w-24 h-24 object-cover rounded-md flex-shrink-0 border border-gray-100"/>
+				} else {
+					<div class="w-24 h-24 dark:bg-gray-700 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 text-xs flex-shrink-0 border border-gray-200">
+						(No Preview)
+					</div>
+				}
+				<div class="flex-grow min-w-0">
+					<a href={ templ.URL(result.Link) } target="_blank" rel="noopener noreferrer" class="text-lg font-semibold dark:text-blue-500 text-blue-700 dark:hover:text-blue-400 hover:text-blue-900 hover:underline">
+						{ result.Title }
+					</a>
+					<div class="mt-1 space-y-1.5">
+						for _, excerpt := range result.Excerpts {
+							<p class="text-sm text-gray-700 dark:text-gray-400 leading-normal">
+								{ excerpt.Text }
+								<a
+									class="ml-1 text-blue-600 dark:text-blue-500 dark:hover:text-blue-400 hover:text-blue-800 text-xs align-super whitespace-nowrap"
+									target="_blank"
+									rel="noopener noreferrer"
+									href={ templ.URL(result.Link + "#page=" + strconv.Itoa(excerpt.PageNum)) }
+								>
+									[{ strconv.Itoa(excerpt.PageNum) }]
+								</a>
+							</p>
+						}
+					</div>
+				</div>
+				<div class="self-center text-gray-400 group-open:rotate-90 transition-transform duration-300 flex-shrink-0 ml-2">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+						<path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+					</svg>
+				</div>
+			</div>
+		</summary>
+		<div class="px-6 py-4 border-t border-gray-200 dark:border-gray-600 dark:bg-gray-800 bg-gray-50/75">
+			<dl class="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-2.5 text-sm">
+
+			if nonemptyExpand(result) {
+				if len(result.Authors) > 0 {
+					<dt class="font-medium text-gray-500 dark:text-gray-200">Author(s):</dt>
+					<dd class="text-gray-800 dark:text-gray-400">{ strings.Join(result.Authors, ", ") }</dd>
+				}
+
+				if len(result.Regions) > 0 {
+					<dt class="font-medium text-gray-500 dark:text-gray-200">Region(s):</dt>
+					<dd class="text-gray-800 dark:text-gray-400">{ strings.Join(result.Regions, ", ") }</dd>
+				}
+
+				if len(result.Keywords) > 0 {
+					<dt class="font-medium text-gray-500 dark:text-gray-200">Keywords:</dt>
+					<dd class="text-gray-800 dark:text-gray-400">{ strings.Join(result.Keywords, ", ") }</dd>
+				}
+
+				if result.PublishDate != "" {
+					<dt class="font-medium text-gray-500 dark:text-gray-200">Published:</dt>
+					<dd class="text-gray-800 dark:text-gray-400">{ result.PublishDate }</dd>
+				}
+
+				if len(result.Categories) > 0 {
+					<dt class="font-medium text-gray-500 dark:text-gray-200">Category:</dt> // Singular label even if multiple values
+					<dd class="text-gray-800 dark:text-gray-400">{ strings.Join(result.Categories, ", ") }</dd>
+				}
+
+				if result.Abstract != "" {
+					<div class="col-span-2 pt-2">
+						<dt class="font-medium text-gray-500 dark:text-gray-200 mb-1">Abstract:</dt>
+						<dd class="text-gray-800 dark:text-gray-400 leading-relaxed">{ result.Abstract }</dd> // Kept text-xs if desired, else use text-sm
+					</div>
+				}
+			} else {
+				<dt class="font-medium text-gray-500 dark:text-gray-200 mb-1">No Metadata</dt>
+			}
+			</dl>
+		</div>
+	</details>
+}
+
+templ ResultsContainer(results awskendra.KendraResults) {
+	<div id="results-content-container" class="space-y-6">
+		for _, result := range results.Results {
+			@ResultCard(result)
+		}
+	</div>
+}
