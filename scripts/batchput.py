@@ -54,7 +54,7 @@ def get_unindexed_documents(conn) -> List[Dict[str, Any]]:
                     WHERE da.doc_id = d.id
                 ) AS authors,
                 (
-                    SELECT array_agg(k.keyword)
+                    SELECT array_agg(k.name)
                     FROM doc_keywords dk
                     JOIN keywords k ON dk.keyword_id = k.id
                     WHERE dk.doc_id = d.id
