@@ -52,5 +52,5 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           INDEX_ID: ${{ secrets.AWS_INDEX_ID }}
           ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-        run: python scripts/batchput.py
+        run: python scripts/remove_untitled.py
 
