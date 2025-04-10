@@ -145,7 +145,7 @@ func (c KendraClient) MakeQuery(query string, filters map[string][]string, pageN
 	}
 	results := queryOutputToResults(*out)
 
-	totalPages := (results.Count + 9) / 10
+	totalPages := 10
 
 	results.PageStatus = PageStatus{
 		CurrentPage: pageNum,
