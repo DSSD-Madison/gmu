@@ -27,28 +27,31 @@ jobs:
             git stash
             git pull origin main
 
-            # Install Go if not present
+            echo "Installing dependencies"
+            make install-all-linux
+
+            echo "Installing Go"
             if ! command -v go &> /dev/null; then
               echo "Installing Go..."
               curl -LO https://golang.org/dl/go1.22.2.linux-amd64.tar.gz
               sudo rm -rf /usr/local/go
               sudo tar -C /usr/local -xzf go1.22.2.linux-amd64.tar.gz
               export PATH=$PATH:/usr/local/go/bin
-              echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
             else
               echo "Go is already installed: $(go version)"
             fi
+            echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
 
-            # Install Flyway if not present
+            echo "Installing Flyway"
             if ! command -v flyway &> /dev/null; then
               wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/11.6.0/flyway-commandline-11.6.0-linux-x64.tar.gz | tar xvz
               sudo mv flyway-11.6.0 /opt/flyway
               sudo ln -s /opt/flyway/flyway /usr/local/bin/flyway
+            else
+              echo "Flyway is already installed"
             fi
 
-            echo "Installing SQLC and running database migrations"
-            make install-all-linux
-            export PATH=$PATH:/usr/local/go/bin
+            echo "Running database migrations"
             chmod +x scripts/migrate_and_generate.sh
             ./scripts/migrate_and_generate.sh
 
