@@ -29,7 +29,7 @@ func skeleton() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"mx-auto w-full rounded-md p-4\"><div class=\"flex animate-pulse space-x-4\"><div class=\"size-10 rounded-full bg-gray-300\"></div><div class=\"flex-1 space-y-6 py-1\"><div class=\"h-2 rounded bg-gray-300\"></div><div class=\"space-y-3\"><div class=\"grid grid-cols-3 gap-4\"><div class=\"col-span-2 h-2 rounded bg-gray-300\"></div><div class=\"col-span-1 h-2 rounded bg-gray-300\"></div></div><div class=\"h-2 rounded bg-gray-300\"></div></div></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"mx-auto w-full rounded-md p-4\"><div class=\"flex animate-pulse space-x-4\"><div class=\"size-10 rounded-full bg-gray-300 dark:bg-gray-600\"></div><div class=\"flex-1 space-y-6 py-1\"><div class=\"h-2 rounded bg-gray-300 dark:bg-gray-600\"></div><div class=\"space-y-3\"><div class=\"grid grid-cols-3 gap-4\"><div class=\"col-span-2 h-2 rounded bg-gray-300 dark:bg-gray-600\"></div><div class=\"col-span-1 h-2 rounded bg-gray-300 dark:bg-gray-600\"></div></div><div class=\"h-2 rounded bg-gray-300 dark:bg-gray-600\"></div></div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

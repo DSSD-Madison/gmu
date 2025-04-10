@@ -29,7 +29,7 @@ func indicator() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<img id=\"indicator\" src=\"svg/bars.svg\" class=\"absolute top-1/4 self-center inline htmx-indicator right-8\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<img id=\"indicator\" src=\"svg/bars.svg\" class=\"absolute top-1/4 self-center inline htmx-indicator right-8 dark:invert\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

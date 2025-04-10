@@ -47,7 +47,7 @@ func Home() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col items-center justify-start min-h-screen pt-80\"><h2 class=\"text-xl font-semibold text-gray-700 py-3\">Better Evidence Project</h2><form hx-get=\"/search\" hx-swap=\"innerHTML\" hx-target=\"#root\" hx-push-url=\"true\" class=\"flex flex-row w-3/8\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col items-center justify-start min-h-screen pt-80\"><h2 class=\"text-xl font-semibold text-gray-700 py-3 dark:text-white\">Better Evidence Project</h2><form hx-get=\"/search\" hx-swap=\"innerHTML\" hx-target=\"#root\" hx-push-url=\"true\" class=\"flex flex-row w-3/8\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -117,7 +117,7 @@ func Search(results awskendra.KendraResults) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</form></div><div id=\"results-container\" class=\"min-h-screen w-full px-4\"><div id=\"grid-container\" class=\"pt-10 pr-10 grid grid-cols-[1fr_3fr] bg-white w-full\"><aside id=\"sidecolmn\" class=\"mx-10 w-64 bg-white\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</form></div><div id=\"results-container\" class=\"min-h-screen w-full px-4\"><div id=\"grid-container\" class=\"pt-10 pr-10 grid grid-cols-[1fr_3fr] w-full\"><aside id=\"sidecolmn\" class=\"mx-10 w-64\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
