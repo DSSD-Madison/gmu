@@ -1,4 +1,4 @@
-name: Kendra Indexing
+name: Remove Untitled Documents
 
 on:
   schedule:
