@@ -27,9 +27,6 @@ jobs:
             git stash
             git pull origin main
 
-            echo "Installing dependencies"
-            make install-all-linux
-
             echo "Installing Go"
             if ! command -v go &> /dev/null; then
               echo "Installing Go..."
@@ -40,6 +37,9 @@ jobs:
             else
               echo "Go is already installed: $(go version)"
             fi
+
+            echo "Installing dependencies"
+            make install-all-linux
             echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
 
             echo "Installing Flyway"
