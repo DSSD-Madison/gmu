@@ -38,11 +38,21 @@ def get_untitled_document_ids(conn) -> List[str]:
             SELECT s3_file
             FROM documents
             WHERE LOWER(title) = 'untitled'
-              AND deleted_at IS NULL
-              AND indexed_by_kendra = true
         """)
         rows = cur.fetchall()
         return [row['s3_file'] for row in rows if row['s3_file']]
+
+def mark_as_unindexed(conn, s3_files: List[str]):
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE documents
+            SET indexed_by_kendra = FALSE
+            WHERE s3_file = ANY(%s)
+            """,
+            (s3_files,)
+        )
+    conn.commit()
 
 def main():
     if not role_arn:
@@ -76,10 +86,14 @@ def main():
                     DocumentIdList=batch,
                     RoleArn=role_arn
                 )
-                logger.info(f"Deleted batch of {len(batch)} documents")
+                logger.info(f"Deleted batch of {len(batch)} documents from Kendra")
             except Exception as e:
                 logger.error(f"Error deleting batch: {e}")
                 raise
+
+            # Mark documents as unindexed in the DB whether they existed in Kendra or not
+            mark_as_unindexed(conn, batch)
+            logger.info(f"Marked batch of {len(batch)} documents as unindexed in DB")
 
     finally:
         conn.close()
