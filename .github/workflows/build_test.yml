@@ -27,6 +27,8 @@ jobs:
 
       - name: Build and Test
         run: |
-          go build -o gmu -buildvcs=false ./cmd/app/main.go
           ./tools/tailwindcss -i ./web/assets/css/input.css -o ./web/assets/css/output.css --minify
+          templ generate
+          go build -o gmu -buildvcs=false ./cmd/app/main.go
+          
 
