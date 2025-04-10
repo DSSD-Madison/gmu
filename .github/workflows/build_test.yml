@@ -20,13 +20,19 @@ jobs:
         run: |
           make install-all-linux
           sqlc generate
-      
+  
+      - name: Add Go bin to PATH
+        run: echo "$HOME/go/bin" >> $GITHUB_PATH
+    
       - name: Run Backend Unit Tests
         run: |
           go test -v ./pkg/db/handlers/...
-
+    
       - name: Build and Test
         run: |
-          go build -o gmu -buildvcs=false ./cmd/app/main.go
           ./tools/tailwindcss -i ./web/assets/css/input.css -o ./web/assets/css/output.css --minify
+          templ generate
+          go build -o gmu -buildvcs=false ./cmd/app/main.go
+  
+          
 
