@@ -21,23 +21,23 @@ jobs:
           sudo apt update
           sudo apt install -y golang postgresql-client
           
-          - name: Generate SQLC code (using existing schema.sql)
-          run: |
-            make install-all-linux
-            sqlc generate
+      - name: Generate SQLC code (using existing schema.sql)
+        run: |
+          make install-all-linux
+          sqlc generate
   
-          - name: Add Go bin to PATH
-            run: echo "$HOME/go/bin" >> $GITHUB_PATH
+      - name: Add Go bin to PATH
+        run: echo "$HOME/go/bin" >> $GITHUB_PATH
     
-          - name: Run Backend Unit Tests
-            run: |
-              go test -v ./pkg/db/handlers/...
+      - name: Run Backend Unit Tests
+        run: |
+          go test -v ./pkg/db/handlers/...
     
-          - name: Build and Test
-            run: |
-              ./tools/tailwindcss -i ./web/assets/css/input.css -o ./web/assets/css/output.css --minify
-              templ generate
-              go build -o gmu -buildvcs=false ./cmd/app/main.go
+      - name: Build and Test
+        run: |
+          ./tools/tailwindcss -i ./web/assets/css/input.css -o ./web/assets/css/output.css --minify
+          templ generate
+          go build -o gmu -buildvcs=false ./cmd/app/main.go
   
           
 
