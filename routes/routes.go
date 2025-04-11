@@ -2,6 +2,8 @@ package routes
 
 import (
 	"github.com/labstack/echo/v4"
+
+	"github.com/DSSD-Madison/gmu/middleware"
 )
 
 // InitRoutes registers all the application routes
@@ -15,14 +17,18 @@ func InitRoutes(e *echo.Echo, h Handler) {
 
 	// --- PDF Upload and Metadata Routes ---
 	// Page to display the upload form
-	e.GET("/upload", h.PDFUploadPage)
+	e.GET("/upload", h.PDFUploadPage, middleware.RequireAuth)
 
 	// Action endpoint to handle the actual file upload POST request
-	e.POST("/upload", h.HandlePDFUpload) // <<< CORRECTED HANDLER
+	e.POST("/upload", h.HandlePDFUpload, middleware.RequireAuth) // <<< CORRECTED HANDLER
 
 	// Page to display the metadata edit form, identified by fileId
-	e.GET("/edit-metadata/:fileId", h.PDFMetadataEditPage) // <<< ADDED ROUTE
+	e.GET("/edit-metadata/:fileId", h.PDFMetadataEditPage, middleware.RequireAuth) // <<< ADDED ROUTE
 
 	// Action endpoint to handle the saving of edited metadata
-	e.POST("/save-metadata", h.HandleMetadataSave) // <<< ADDED ROUTE
+	e.POST("/save-metadata", h.HandleMetadataSave, middleware.RequireAuth) // <<< ADDED ROUTE
+
+	// Login Route
+	e.GET("/login", h.LoginPage)
+	e.POST("/login", h.Login)
 }
