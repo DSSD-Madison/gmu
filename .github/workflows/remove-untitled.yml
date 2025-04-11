@@ -3,9 +3,9 @@ name: Remove Untitled Documents
 on:
   schedule:
     - cron: '0 0 * * *'  # Run daily at midnight UTC
-  push:
-    branches:
-      - batch-put
+#   push:
+#     branches:
+#       - batch-put
 
 jobs:
   index-documents:

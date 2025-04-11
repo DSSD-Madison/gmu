@@ -3,12 +3,12 @@ name: Kendra Indexing
 on:
   schedule:
     - cron: '0 0 * * *'  # Run daily at midnight UTC
-  push:
-    branches:
-      - batch-put
+  # push:
+  #   branches:
+  #     - batch-put
 
 jobs:
-  index-documents:
+  index-and-generate-previews:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -23,7 +23,12 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install dependencies
+      - name: Install system dependencies (LibreOffice)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libreoffice
+
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r scripts/requirements.txt
@@ -52,6 +57,18 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           INDEX_ID: ${{ secrets.AWS_INDEX_ID }}
           ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-        run: python scripts/batchput.py
+        run: |
+          echo "=== Running batchput.py (Kendra Indexing) ==="
+          python scripts/batchput.py
 
-
+      - name: Run preview generation script
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+        run: |
+          echo "=== Running first_page.py (Preview Generation) ==="
+          python scripts/first_page.py
+      
