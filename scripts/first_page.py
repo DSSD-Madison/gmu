@@ -62,6 +62,39 @@ def extract_bucket_key(s3_uri):
     key = parsed.path.lstrip('/')
     return bucket, key
 
+def delete_old_docx_webps(conn):
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute("""
+            SELECT id, s3_file_preview
+            FROM documents
+            WHERE s3_file_preview IS NOT NULL
+              AND s3_file ILIKE '%.docx'
+        """)
+        docs = cur.fetchall()
+
+        print(f"Found {len(docs)} .webp previews to delete (from DOCX files)")
+
+        for doc in docs:
+            preview_uri = doc['s3_file_preview']
+            doc_id = doc['id']
+            try:
+                bucket, key = extract_bucket_key(preview_uri)
+                print(f"Deleting {preview_uri} from S3...")
+                s3_resource.Object(bucket, key).delete()
+
+                # Clear DB field
+                with conn.cursor() as inner_cur:
+                    inner_cur.execute("""
+                        UPDATE documents
+                        SET s3_file_preview = NULL
+                        WHERE id = %s
+                    """, (doc_id,))
+                conn.commit()
+                print(f"✅ Deleted and cleared preview for doc ID: {doc_id}")
+
+            except Exception as e:
+                print(f"::error::Failed to delete {preview_uri}: {e}")
+
 def process_document(doc, conn):
     s3_uri = doc['s3_file']
     doc_id = doc['id']
@@ -95,10 +128,13 @@ def process_document(doc, conn):
         output_buffer = BytesIO()
         image.save(output_buffer, format="webp")
 
-        webp_key = key.rsplit('.', 1)[0] + '.webp'
+        webp_key = key.rsplit('.', 1)[0].strip() + '.webp'
         webp_uri = f"s3://{bucket}/{webp_key}"
 
-        s3_resource.Object(bucket, webp_key).put(Body=output_buffer.getvalue())
+        s3_resource.Object(bucket, webp_key).put(
+            Body=output_buffer.getvalue(),
+            ACL='public-read'  # 👈 ensures it's viewable in browser
+        )
 
         with conn.cursor() as cur:
             cur.execute("""
@@ -112,16 +148,16 @@ def process_document(doc, conn):
     except Exception as e:
         print(f"::error::Failed to process {file_name}: {e}")
 
-
 def main():
     conn = get_db_connection()
     try:
+        delete_old_docx_webps(conn)
+
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("""
                 SELECT id, s3_file
                 FROM documents
                 WHERE s3_file_preview IS NULL
-                  AND deleted_at IS NULL
             """)
             docs = cur.fetchall()
             print(f"Found {len(docs)} unprocessed documents")
