@@ -1,0 +1,104 @@
+// components/tag_input.templ
+
+package components
+
+import (
+	"strings"
+)
+
+// --- Define the script component (no changes) ---
+script addTagScript(idPrefix, fieldName, value string) {
+	addTag(idPrefix, fieldName, value);
+}
+
+templ TagInputJS(idPrefix, label, fieldName, searchURL string, initialValues []string) {
+	<div class="mb-4 tag-input-container">
+		<label for={ idPrefix + "-search-input" } class="block text-gray-700 dark:text-gray-200 text-sm font-bold mb-2">{ label }</label>
+		<div class="relative">
+			<div id={ idPrefix + "-tags-display" } class="flex flex-wrap gap-1 mb-1 p-1 border border-gray-200 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 min-h-[30px]">
+				if len(initialValues) == 0 {
+					<span class="tag-placeholder text-xs text-gray-400 italic p-1">No { strings.ToLower(label) } added yet.</span>
+				} else {
+					for _, value := range initialValues {
+						if value != "" {
+							@TagItemJS(idPrefix, fieldName, value)
+						}
+					}
+				}
+			</div>
+			<div id={ idPrefix + "-hidden-inputs" } class="hidden">
+				for _, value := range initialValues {
+					if value != "" {
+						<input type="hidden" name={ fieldName } value={ value } data-tag-value={ value }/>
+					}
+				}
+			</div>
+			<input
+				type="text"
+				id={ idPrefix + "-search-input" }
+				form="none"
+				name="name"
+				autocomplete="off"
+				placeholder={ "Search for " + strings.ToLower(label) + "..." }
+				class="shadow appearance-none border border-gray-300 dark:border-gray-600 rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+				hx-get={ searchURL }
+				hx-trigger="input changed delay:300ms, focus"
+				hx-target={ "#" + idPrefix + "-suggestions" }
+				hx-swap="innerHTML"
+				hx-indicator={ "#" + idPrefix + "-loading-indicator" }
+			/>
+			<span class="htmx-indicator absolute right-3 top-[calc(50%-0.5rem+1rem)]" id={ idPrefix + "-loading-indicator" } >
+				<svg class="animate-spin h-4 w-4 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+				</svg>
+			</span>
+
+			<div id={ idPrefix + "-suggestions" } class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded shadow-lg max-h-60 overflow-y-auto">
+			</div>
+		</div>
+	</div>
+}
+
+templ TagItemJS(idPrefix, fieldName, value string) {
+	<span
+		data-tag-value={ value }
+		data-id-prefix={ idPrefix }
+		data-field-name={ fieldName }
+		class="tag-item bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 text-xs font-medium me-2 px-2.5 py-0.5 rounded inline-flex items-center"
+	>
+		{ value }
+		<button
+			type="button"
+			class="ml-1 text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 focus:outline-none"
+			onclick="removeTag(this)"
+			aria-label={ "Remove " + value }
+		>
+			×
+		</button>
+	</span>
+}
+
+templ SuggestionItemJS(idPrefix, fieldName, value string) {
+	<div
+		class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm text-gray-700 dark:text-gray-200"
+		onclick={ addTagScript(idPrefix, fieldName, value) }
+	>
+		{ value }
+	</div>
+}
+
+templ NoSuggestionResultJS() {
+	<div class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 italic">No matches found.</div>
+}
+
+// --- SuggestionList component (no changes needed here) ---
+templ SuggestionList(idPrefix, fieldName string, suggestions []string) {
+	if len(suggestions) == 0 {
+		@NoSuggestionResultJS()
+	} else {
+		for _, suggestion := range suggestions {
+			@SuggestionItemJS(idPrefix, fieldName, suggestion)
+		}
+	}
+}

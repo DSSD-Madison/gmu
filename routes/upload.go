@@ -19,21 +19,6 @@ import (
 	"github.com/DSSD-Madison/gmu/web/components"
 )
 
-// Keep placeholder struct definition
-type PDFMetadataPlaceholders struct {
-	Title        string
-	Abstract     string
-	Category     string
-	PublishDate  string
-	Source       string
-	RegionNames  string // Comma-separated
-	KeywordNames string // Comma-separated
-	AuthorNames  string // Comma-separated
-}
-
-// Assume Handler struct exists
-// type Handler struct { /* dependencies */ }
-
 func (h *Handler) PDFUploadPage(c echo.Context) error {
 	return web.Render(c, http.StatusOK, components.PDFUpload())
 }
@@ -62,14 +47,7 @@ func (h *Handler) HandlePDFUpload(c echo.Context) error {
 	finalRedirectURL := redirectURL.String() // Get the final URL string
 
 	c.Response().Header().Set("HX-Redirect", finalRedirectURL)
-
-	// Return a 200 OK status with no content.
-	// HTMX will see the HX-Redirect header and navigate the browser.
-	// It will ignore the hx-target/hx-swap for this response.
 	return c.NoContent(http.StatusOK)
-
-	// DO NOT use c.Redirect() here, as HTMX needs to handle the navigation
-	// based on the HX-Redirect header.
 }
 
 // PDFMetadataEditPage displays the form using fileId from the path parameter
@@ -103,9 +81,9 @@ func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
 		strings.Join(res.Categories, ","),
 		res.PublishDate,
 		res.Source,
-		strings.Join(res.Regions, ","),
-		strings.Join(res.Keywords, ","),
-		strings.Join(res.Authors, ","),
+		res.Regions,
+		res.Keywords,
+		res.Authors,
 	))
 }
 
@@ -114,6 +92,20 @@ func parseDocument(row db.FindDocumentByIDRow) awskendra.KendraResult {
 
 	res.Title = row.Title
 
+	parts := strings.Split(row.S3File, "/")
+	if len(parts) >= 2 {
+		res.Link = parts[3]
+	}
+
+	if row.PublishDate.Valid {
+		res.PublishDate = row.PublishDate.Time.Format("2006-01-02")
+	}
+	if row.Abstract.Valid {
+		res.Abstract = row.Abstract.String
+	}
+	if row.Source.Valid {
+		res.Source = row.Source.String
+	}
 	var tempScanner pq.StringArray
 	err := tempScanner.Scan(row.AuthorNames.(string))
 	if err == nil {

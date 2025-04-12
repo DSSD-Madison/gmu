@@ -14,15 +14,14 @@ func InitRoutes(e *echo.Echo, h Handler) {
 	e.POST("/search/suggestions", h.SearchSuggestions)
 
 	// --- PDF Upload and Metadata Routes ---
-	// Page to display the upload form
 	e.GET("/upload", h.PDFUploadPage)
+	e.POST("/upload", h.HandlePDFUpload)
+	e.GET("/edit-metadata/:fileId", h.PDFMetadataEditPage)
+	e.POST("/save-metadata", h.HandleMetadataSave)
 
-	// Action endpoint to handle the actual file upload POST request
-	e.POST("/upload", h.HandlePDFUpload) // <<< CORRECTED HANDLER
+	// --- Database Search Routes ---
+	e.GET("/authors", h.DatabaseSearchAuthors)
+	e.GET("/keywords", h.DatabaseSearchKeywords)
+	e.GET("/regions", h.DatabaseSearchRegions)
 
-	// Page to display the metadata edit form, identified by fileId
-	e.GET("/edit-metadata/:fileId", h.PDFMetadataEditPage) // <<< ADDED ROUTE
-
-	// Action endpoint to handle the saving of edited metadata
-	e.POST("/save-metadata", h.HandleMetadataSave) // <<< ADDED ROUTE
 }

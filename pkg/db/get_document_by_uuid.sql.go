@@ -14,10 +14,10 @@ import (
 
 const findDocumentByID = `-- name: FindDocumentByID :one
 SELECT
-    d.id, d.file_name, d.title, d.abstract, d.publish_date, d.source, d.indexed_by_kendra, d.s3_file, d.s3_file_preview, d.pdf_link, d.created_at, d.deleted_at,
+    d.id, d.file_name, d.title, d.abstract, d.publish_date, d.source, d.indexed_by_kendra, d.s3_file, d.s3_file_preview, d.pdf_link, d.created_at, d.deleted_at, d.has_duplicate,
     COALESCE(ARRAY_AGG(DISTINCT a.name) FILTER (WHERE a.id IS NOT NULL), '{}'::text[]) AS author_names,
     COALESCE(ARRAY_AGG(DISTINCT r.name) FILTER (WHERE r.id IS NOT NULL), '{}'::text[]) AS region_names,
-    COALESCE(ARRAY_AGG(DISTINCT k.keyword) FILTER (WHERE k.id IS NOT NULL), '{}'::text[]) AS keyword_names,
+    COALESCE(ARRAY_AGG(DISTINCT k.name) FILTER (WHERE k.id IS NOT NULL), '{}'::text[]) AS keyword_names,
     COALESCE(ARRAY_AGG(DISTINCT c.name) FILTER (WHERE c.id IS NOT NULL), '{}'::text[]) AS category_names
 FROM
     documents d
@@ -48,6 +48,7 @@ type FindDocumentByIDRow struct {
 	PdfLink         sql.NullString
 	CreatedAt       sql.NullTime
 	DeletedAt       sql.NullTime
+	HasDuplicate    bool
 	AuthorNames     interface{}
 	RegionNames     interface{}
 	KeywordNames    interface{}
@@ -70,6 +71,7 @@ func (q *Queries) FindDocumentByID(ctx context.Context, id uuid.UUID) (FindDocum
 		&i.PdfLink,
 		&i.CreatedAt,
 		&i.DeletedAt,
+		&i.HasDuplicate,
 		&i.AuthorNames,
 		&i.RegionNames,
 		&i.KeywordNames,

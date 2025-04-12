@@ -1,74 +1,165 @@
+// components/pdf_metadata_edit_form.templ
+
 package components
 
-
-// No required fields ('*') and no Cancel button.
-templ PDFMetadataEditForm(fileId, originalFilename, title, abstract, category, publishDate, source, regionNames, keywordNames, authorNames string) {
-	// This renders as a full page using your Base component
+templ PDFMetadataEditForm(fileId, originalFilename, title, abstract, category, publishDate, source string, regionNames, keywordNames, authorNames []string) {
 	@Base("Edit PDF Metadata") {
-		<div class="container mx-auto mt-10 mb-10 p-6 max-w-2xl bg-white rounded shadow-md">
-			<h1 class="text-2xl font-bold mb-4">Edit Metadata</h1>
-			<p class="mb-6 text-gray-600">
-				Editing metadata for: <span class="font-medium">{ originalFilename }</span>
-				<span class="text-xs text-gray-400 block break-all">File ID: { fileId }</span>
-			</p>
+    		<div class="container mx-auto mt-10 mb-10 p-6 max-w-2xl bg-white dark:bg-gray-800 rounded shadow-md">
+    			<h1 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Edit Metadata</h1>
+    			<p class="mb-6 text-gray-600 dark:text-gray-300">
+    				Editing metadata for: <span class="font-medium text-gray-800 dark:text-white">{ originalFilename }</span>
+    				<span class="text-xs text-gray-400 dark:text-gray-500 block break-all">File ID: { fileId }</span>
+    			</p>
 
-			<!-- Form POSTs to /save-metadata -->
-			<form action="/save-metadata" method="post">
-				<input type="hidden" name="fileId" value={ fileId }/>
+    			<form action="/save-metadata" method="post">
+    				<input type="hidden" name="fileId" value={ fileId }/>
 
-				<div class="mb-4">
-					<label for="title" class="block text-gray-700 text-sm font-bold mb-2">Title</label>
-					<input type="text" id="title" name="title" value={ title } class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"/>
-				</div>
+    				// --- Standard Form Fields (unchanged) ---
+    				<div class="mb-4">
+    					<label for="title" class="block text-gray-700 dark:text-gray-200 text-sm font-bold mb-2">Title</label>
+    					<input type="text" id="title" name="title" value={ title } class="shadow appearance-none border border-gray-300 dark:border-gray-600 rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 leading-tight focus:outline-none focus:shadow-outline"/>
+    				</div>
+    				<div class="mb-4">
+    					<label for="abstract" class="block text-gray-700 dark:text-gray-200 text-sm font-bold mb-2">Abstract</label>
+    					<textarea id="abstract" name="abstract" rows="4" class="shadow appearance-none border border-gray-300 dark:border-gray-600 rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 leading-tight focus:outline-none focus:shadow-outline">{ abstract }</textarea>
+    				</div>
+    				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+    					<div>
+    						<label for="category" class="block text-gray-700 dark:text-gray-200 text-sm font-bold mb-2">Category</label>
+    						<input type="text" id="category" name="category" value={ category } class="shadow appearance-none border border-gray-300 dark:border-gray-600 rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 leading-tight focus:outline-none focus:shadow-outline"/>
+    						<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">e.g., article, research paper</p>
+    					</div>
+    					<div>
+    						<label for="publish_date" class="block text-gray-700 dark:text-gray-200 text-sm font-bold mb-2">Publish Date</label>
+    						<input type="date" id="publish_date" name="publish_date" value={ publishDate } class="shadow appearance-none border border-gray-300 dark:border-gray-600 rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 leading-tight focus:outline-none focus:shadow-outline"/>
+    					</div>
+    				</div>
+    				<div class="mb-4">
+    					<label for="source" class="block text-gray-700 dark:text-gray-200 text-sm font-bold mb-2">Source</label>
+    					<input type="text" id="source" name="source" value={ source } class="shadow appearance-none border border-gray-300 dark:border-gray-600 rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 leading-tight focus:outline-none focus:shadow-outline"/>
+    					<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Internal reference (e.g., bucket name)</p>
+    				</div>
 
-				<div class="mb-4">
-					<label for="abstract" class="block text-gray-700 text-sm font-bold mb-2">Abstract</label>
-					<textarea id="abstract" name="abstract" rows="4" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">{ abstract }</textarea>
-				</div>
+    				<hr class="my-6 border-gray-300 dark:border-gray-600"/>
 
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-					<div>
-						<label for="category" class="block text-gray-700 text-sm font-bold mb-2">Category</label>
-						<input type="text" id="category" name="category" value={ category } class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"/>
-						<p class="text-xs text-gray-500 mt-1">e.g., article, research paper</p>
-					</div>
-					<div>
-						<label for="publish_date" class="block text-gray-700 text-sm font-bold mb-2">Publish Date</label>
-						<input type="date" id="publish_date" name="publish_date" value={ publishDate } class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"/>
-					</div>
-				</div>
+    				@TagInputJS("regions", "Region Names", "region_names", "/regions", regionNames)
+    				@TagInputJS("keywords", "Keyword Names", "keyword_names", "/keywords", keywordNames)
+    				@TagInputJS("authors", "Author Names", "author_names", "/authors", authorNames)
 
-				<div class="mb-4">
-					<label for="source" class="block text-gray-700 text-sm font-bold mb-2">Source</label>
-					<input type="text" id="source" name="source" value={ source } class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"/>
-					<p class="text-xs text-gray-500 mt-1">Internal reference (e.g., bucket name)</p>
-				</div>
+    				<div class="flex items-center justify-start mt-8">
+    					<button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+    						Save Metadata
+    					</button>
+    				</div>
+    			</form>
+    		</div>
+		<script>
+            // --- Core Tagging Logic ---
+            function addTag(idPrefix, fieldName, value) {
+                const tagValue = value.trim();
+                if (!tagValue) return;
 
-				<hr class="my-6"/>
+                const container = document.getElementById(`${idPrefix}-tags-display`)?.closest('.tag-input-container');
+                if (!container) {
+                    console.error(`Tag input container not found for prefix: ${idPrefix}`);
+                    return;
+                }
 
-				<p class="text-sm text-gray-600 mb-2">Enter multiple values separated by commas for the fields below.</p>
+                const tagsDisplay = container.querySelector(`#${idPrefix}-tags-display`);
+                const hiddenInputsContainer = container.querySelector(`#${idPrefix}-hidden-inputs`);
+                const searchInput = container.querySelector(`#${idPrefix}-search-input`);
+                const suggestionsContainer = container.querySelector(`#${idPrefix}-suggestions`);
 
-				<div class="mb-4">
-					<label for="region_names" class="block text-gray-700 text-sm font-bold mb-2">Region Names</label>
-					<input type="text" id="region_names" name="region_names" value={ regionNames } class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"/>
-				</div>
+                const existingInput = hiddenInputsContainer.querySelector(`input[name="${fieldName}"][value="${CSS.escape(tagValue)}"]`);
+                if (existingInput) {
+                    if (searchInput) searchInput.value = '';
+                    if (suggestionsContainer) suggestionsContainer.innerHTML = '';
+                    searchInput?.focus();
+                    return;
+                }
 
-				<div class="mb-4">
-					<label for="keyword_names" class="block text-gray-700 text-sm font-bold mb-2">Keyword Names</label>
-					<input type="text" id="keyword_names" name="keyword_names" value={ keywordNames } class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"/>
-				</div>
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = fieldName;
+                hiddenInput.value = tagValue;
+                hiddenInput.setAttribute('data-tag-value', tagValue);
+                hiddenInputsContainer.appendChild(hiddenInput);
 
-				<div class="mb-6">
-					<label for="author_names" class="block text-gray-700 text-sm font-bold mb-2">Author Names</label>
-					<input type="text" id="author_names" name="author_names" value={ authorNames } class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"/>
-				</div>
+                const tagSpan = document.createElement('span');
+                tagSpan.setAttribute('data-tag-value', tagValue);
+                tagSpan.setAttribute('data-id-prefix', idPrefix);
+                tagSpan.setAttribute('data-field-name', fieldName);
+                tagSpan.className = 'tag-item bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300 inline-flex items-center';
+                tagSpan.textContent = tagValue + ' ';
 
-				<div class="flex items-center justify-start mt-8">
-					<button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-						Save Metadata
-					</button>
-				</div>
-			</form>
-		</div>
+                const removeButton = document.createElement('button');
+                removeButton.type = 'button';
+                removeButton.className = 'ml-1 text-blue-600 hover:text-blue-800 focus:outline-none';
+                removeButton.innerHTML = '×';
+                removeButton.setAttribute('aria-label', `Remove ${tagValue}`);
+                removeButton.onclick = function() { removeTag(this); };
+                tagSpan.appendChild(removeButton);
+
+                const placeholder = tagsDisplay.querySelector('.tag-placeholder');
+                if (placeholder) {
+                    placeholder.remove();
+                }
+                tagsDisplay.appendChild(tagSpan);
+
+                if (searchInput) searchInput.value = '';
+                if (suggestionsContainer) suggestionsContainer.innerHTML = '';
+                searchInput?.focus();
+            }
+
+            function removeTag(buttonElement) {
+                const tagSpan = buttonElement.closest('.tag-item');
+                if (!tagSpan) return;
+
+                const tagValue = tagSpan.getAttribute('data-tag-value');
+                const idPrefix = tagSpan.getAttribute('data-id-prefix');
+                const fieldName = tagSpan.getAttribute('data-field-name');
+
+                const container = tagSpan.closest('.tag-input-container');
+                 if (!container || !tagValue || !idPrefix || !fieldName) {
+                    console.error("Could not remove tag, missing required elements or attributes.");
+                    return;
+                 }
+                const hiddenInputsContainer = container.querySelector(`#${idPrefix}-hidden-inputs`);
+                const tagsDisplay = container.querySelector(`#${idPrefix}-tags-display`);
+
+                const hiddenInput = hiddenInputsContainer?.querySelector(`input[name="${fieldName}"][data-tag-value="${CSS.escape(tagValue)}"]`);
+                if (hiddenInput) {
+                    hiddenInput.remove();
+                } else {
+                    console.warn("Could not find hidden input for tag to remove:", tagValue);
+                }
+
+                tagSpan.remove();
+
+                if (tagsDisplay && !tagsDisplay.querySelector('.tag-item')) {
+                    const placeholder = document.createElement('span');
+                    placeholder.className = 'tag-placeholder text-xs text-gray-400 italic p-1';
+                    let labelText = 'items';
+                    const labelElement = container.querySelector(`label[for='${idPrefix}-search-input']`);
+                     if (labelElement) {
+                        labelText = labelElement.textContent.replace(/\s+Names$/i, '').toLowerCase();
+                    }
+                    placeholder.textContent = `No ${labelText} added yet.`;
+                    tagsDisplay.appendChild(placeholder);
+                }
+            }
+
+             // --- Global Event Listener (unchanged) ---
+            document.addEventListener('click', function(event) {
+                const allTagContainers = document.querySelectorAll('.tag-input-container');
+                allTagContainers.forEach(container => {
+                    const suggestionsDivId = container.querySelector('input[type=text]').id.replace('-search-input', '-suggestions');
+                    const suggestionsDiv = container.querySelector(`#${suggestionsDivId}`);
+                    if (suggestionsDiv && !container.contains(event.target)) {
+                       suggestionsDiv.innerHTML = '';
+                    }
+                });
+            });
+ 		</script>
 	}
 }
