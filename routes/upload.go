@@ -20,7 +20,8 @@ import (
 )
 
 func (h *Handler) PDFUploadPage(c echo.Context) error {
-	return web.Render(c, http.StatusOK, components.PDFUpload())
+	csrf := c.Get("csrf").(string)
+	return web.Render(c, http.StatusOK, components.PDFUpload(csrf))
 }
 
 func (h *Handler) HandlePDFUpload(c echo.Context) error {
@@ -73,6 +74,7 @@ func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
 
 	// --- 3. Render the Edit Form ---
 	// Pass fileId as the primary identifier to the form component
+	csrf := c.Get("csrf").(string)
 	return web.Render(c, http.StatusOK, components.PDFMetadataEditForm(
 		fileId, // <-- Pass fileId here
 		res.Link,
@@ -84,6 +86,7 @@ func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
 		res.Regions,
 		res.Keywords,
 		res.Authors,
+		csrf,
 	))
 }
 

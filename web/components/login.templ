@@ -1,0 +1,28 @@
+package components
+
+templ LoginForm(csrf string) {
+	<div class="max-w-md p-6 mx-auto mt-20 bg-white shadow-md dark:bg-gray-800 rounded-xl">
+		<h2 class="mb-6 text-2xl font-semibold text-center dark:text-white">Login</h2>
+		<form method="post" hx-post="/login" hx-target="body" class="space-y-4">
+			<input type="hidden" name="_csrf" value={ csrf } />
+
+			<div>
+				<input type="text" name="username" placeholder="Username" class="..." />
+			</div>
+			<div>
+				<input type="password" name="password" placeholder="Password" class="..." />
+			</div>
+			<div>
+				<button type="submit" class="...">Log In</button>
+			</div>
+		</form>
+	</div>
+}
+
+templ LoginFormWithError(err string, csrf string) {
+	<div class="max-w-md p-6 mx-auto mt-20 bg-white shadow-md dark:bg-gray-800 rounded-xl">
+		<h2 class="mb-4 text-2xl font-semibold text-center dark:text-white">Login</h2>
+		<p class="mb-4 text-sm text-center text-red-600">{ err }</p>
+		@LoginForm(csrf)
+	</div>
+}
