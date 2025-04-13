@@ -78,11 +78,11 @@ func main() {
 	}))
 
 	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
-		TokenLookup: "form:_csrf",
-		CookieName:  "csrf",
-		ContextKey:  "csrf",
-		CookieSameSite: http.SameSiteStrictMode, // <-- change this
-		CookieSecure:   false,                   // <-- allow over HTTP in dev
+		TokenLookup:    "form:_csrf",
+		CookieName:     "csrf",
+		ContextKey:     "csrf",
+		CookieSameSite: http.SameSiteStrictMode,
+		CookieSecure:   appConfig.Mode == "prod", // Only set secure cookies in prod
 		Skipper: func(c echo.Context) bool {
 			switch c.Path() {
 			case "/", "/search", "/search/suggestions", "/login", "/logout":
@@ -92,8 +92,6 @@ func main() {
 			}
 		},
 	}))
-	
-	
 
 	dbConfig, err := db_util.LoadConfig()
 	if err != nil {
