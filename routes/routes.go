@@ -31,4 +31,12 @@ func InitRoutes(e *echo.Echo, h Handler) {
 	// Login Route
 	e.GET("/login", h.LoginPage)
 	e.POST("/login", h.Login)
+
+	// Logout Route
+	e.GET("/logout", h.Logout) // for dev testing, remove when nav bar added
+	e.POST("/logout", h.Logout) 
+
+	// Admin Routes
+	e.GET("/admin/users", h.ManageUsersPage, middleware.RequireAuth)
+	e.POST("/admin/users", h.CreateNewUser, middleware.RequireAuth)
 }

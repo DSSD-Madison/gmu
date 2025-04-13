@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/DSSD-Madison/gmu/middleware"
 	"github.com/DSSD-Madison/gmu/web"
@@ -13,40 +14,37 @@ import (
 func (h *Handler) Login(c echo.Context) error {
 	username := c.FormValue("username")
 	password := c.FormValue("password")
+	csrf := c.Get("csrf").(string)
 
-	c.Logger().Infof("Login attempt with username='%s', password='%s'", username, password)
-
-	if username == "admin" && password == "password" {
-		session, _ := middleware.Store.Get(c.Request(), "session")
-		session.Values["authenticated"] = true
-
-		err := session.Save(c.Request(), c.Response())
-		if err != nil {
-			c.Logger().Errorf("Failed to save session: %v", err)
-			return err
-		}
-		c.Logger().Info("Session saved successfully")
-
-		redirect := c.QueryParam("redirect")
-		if redirect == "" {
-			redirect = "/"
-		}
-
-		if c.Request().Header.Get("HX-Request") == "true" {
-			c.Response().Header().Set("HX-Redirect", redirect)
-			c.Logger().Info("HX-Redirect sent")
-			return c.NoContent(http.StatusOK)
-		}
-
-		c.Logger().Infof("Redirecting to: %s", redirect)
-		return c.Redirect(http.StatusSeeOther, redirect)
+	// Lookup user
+	user, err := h.db.GetUserByUsername(c.Request().Context(), username)
+	if err != nil {
+		return web.Render(c, http.StatusUnauthorized, components.LoginFormWithError("Invalid credentials", csrf))
 	}
 
-	c.Logger().Info("Invalid login")
-	return web.Render(c, http.StatusUnauthorized, components.LoginFormWithError("Invalid credentials"))
+	// Compare password hash
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
+	if err != nil {
+		return web.Render(c, http.StatusUnauthorized, components.LoginFormWithError("Invalid credentials", csrf))
+	}
+
+	// Create session
+	session, _ := middleware.Store.Get(c.Request(), "session")
+	session.Values["authenticated"] = true
+	session.Values["username"] = user.Username
+	session.Values["is_master"] = user.IsMaster
+	session.Save(c.Request(), c.Response())
+
+	redirect := c.QueryParam("redirect")
+	if redirect == "" {
+		redirect = "/"
+	}
+	return c.Redirect(http.StatusSeeOther, "/upload")
 }
 
+
 func (h *Handler) LoginPage(c echo.Context) error {
-	return web.Render(c, http.StatusOK, components.LoginForm())
+	csrf := c.Get("csrf").(string)
+	return web.Render(c, http.StatusOK, components.LoginForm(csrf))
 }
 

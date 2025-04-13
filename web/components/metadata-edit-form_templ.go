@@ -9,7 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 // No required fields ('*') and no Cancel button.
-func PDFMetadataEditForm(fileId, originalFilename, title, abstract, category, publishDate, source, regionNames, keywordNames, authorNames string) templ.Component {
+func PDFMetadataEditForm(fileId, originalFilename, title, abstract, category, publishDate, source, regionNames, keywordNames, authorNames string, csrf string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -42,7 +42,7 @@ func PDFMetadataEditForm(fileId, originalFilename, title, abstract, category, pu
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"container mx-auto mt-10 mb-10 p-6 max-w-2xl bg-white rounded shadow-md\"><h1 class=\"text-2xl font-bold mb-4\">Edit Metadata</h1><p class=\"mb-6 text-gray-600\">Editing metadata for: <span class=\"font-medium\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"container max-w-2xl p-6 mx-auto mt-10 mb-10 bg-white rounded shadow-md\"><h1 class=\"mb-4 text-2xl font-bold\">Edit Metadata</h1><p class=\"mb-6 text-gray-600\">Editing metadata for: <span class=\"font-medium\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -55,7 +55,7 @@ func PDFMetadataEditForm(fileId, originalFilename, title, abstract, category, pu
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</span> <span class=\"text-xs text-gray-400 block break-all\">File ID: ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</span> <span class=\"block text-xs text-gray-400 break-all\">File ID: ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -81,111 +81,124 @@ func PDFMetadataEditForm(fileId, originalFilename, title, abstract, category, pu
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\"><div class=\"mb-4\"><label for=\"title\" class=\"block text-gray-700 text-sm font-bold mb-2\">Title</label> <input type=\"text\" id=\"title\" name=\"title\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\"> <input type=\"hidden\" name=\"_csrf\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 string
-			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(title)
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(csrf)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 21, Col: 61}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 18, Col: 50}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" class=\"shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline\"></div><div class=\"mb-4\"><label for=\"abstract\" class=\"block text-gray-700 text-sm font-bold mb-2\">Abstract</label> <textarea id=\"abstract\" name=\"abstract\" rows=\"4\" class=\"shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"><div class=\"mb-4\"><label for=\"title\" class=\"block mb-2 text-sm font-bold text-gray-700\">Title</label> <input type=\"text\" id=\"title\" name=\"title\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var7 string
-			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(abstract)
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 26, Col: 195}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 22, Col: 61}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</textarea></div><div class=\"grid grid-cols-1 md:grid-cols-2 gap-4 mb-4\"><div><label for=\"category\" class=\"block text-gray-700 text-sm font-bold mb-2\">Category</label> <input type=\"text\" id=\"category\" name=\"category\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" class=\"w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline\"></div><div class=\"mb-4\"><label for=\"abstract\" class=\"block mb-2 text-sm font-bold text-gray-700\">Abstract</label> <textarea id=\"abstract\" name=\"abstract\" rows=\"4\" class=\"w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var8 string
-			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(category)
+			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(abstract)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 32, Col: 71}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 27, Col: 195}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" class=\"shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline\"><p class=\"text-xs text-gray-500 mt-1\">e.g., article, research paper</p></div><div><label for=\"publish_date\" class=\"block text-gray-700 text-sm font-bold mb-2\">Publish Date</label> <input type=\"date\" id=\"publish_date\" name=\"publish_date\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</textarea></div><div class=\"grid grid-cols-1 gap-4 mb-4 md:grid-cols-2\"><div><label for=\"category\" class=\"block mb-2 text-sm font-bold text-gray-700\">Category</label> <input type=\"text\" id=\"category\" name=\"category\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var9 string
-			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(publishDate)
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(category)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 37, Col: 82}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 33, Col: 71}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" class=\"shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline\"></div></div><div class=\"mb-4\"><label for=\"source\" class=\"block text-gray-700 text-sm font-bold mb-2\">Source</label> <input type=\"text\" id=\"source\" name=\"source\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" class=\"w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline\"><p class=\"mt-1 text-xs text-gray-500\">e.g., article, research paper</p></div><div><label for=\"publish_date\" class=\"block mb-2 text-sm font-bold text-gray-700\">Publish Date</label> <input type=\"date\" id=\"publish_date\" name=\"publish_date\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var10 string
-			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(source)
+			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(publishDate)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 43, Col: 64}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 38, Col: 82}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" class=\"shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline\"><p class=\"text-xs text-gray-500 mt-1\">Internal reference (e.g., bucket name)</p></div><hr class=\"my-6\"><p class=\"text-sm text-gray-600 mb-2\">Enter multiple values separated by commas for the fields below.</p><div class=\"mb-4\"><label for=\"region_names\" class=\"block text-gray-700 text-sm font-bold mb-2\">Region Names</label> <input type=\"text\" id=\"region_names\" name=\"region_names\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" class=\"w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline\"></div></div><div class=\"mb-4\"><label for=\"source\" class=\"block mb-2 text-sm font-bold text-gray-700\">Source</label> <input type=\"text\" id=\"source\" name=\"source\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var11 string
-			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(regionNames)
+			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(source)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 53, Col: 81}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 44, Col: 64}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" class=\"shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline\"></div><div class=\"mb-4\"><label for=\"keyword_names\" class=\"block text-gray-700 text-sm font-bold mb-2\">Keyword Names</label> <input type=\"text\" id=\"keyword_names\" name=\"keyword_names\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" class=\"w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline\"><p class=\"mt-1 text-xs text-gray-500\">Internal reference (e.g., bucket name)</p></div><hr class=\"my-6\"><p class=\"mb-2 text-sm text-gray-600\">Enter multiple values separated by commas for the fields below.</p><div class=\"mb-4\"><label for=\"region_names\" class=\"block mb-2 text-sm font-bold text-gray-700\">Region Names</label> <input type=\"text\" id=\"region_names\" name=\"region_names\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var12 string
-			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(keywordNames)
+			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(regionNames)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 58, Col: 84}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 54, Col: 81}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" class=\"shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline\"></div><div class=\"mb-6\"><label for=\"author_names\" class=\"block text-gray-700 text-sm font-bold mb-2\">Author Names</label> <input type=\"text\" id=\"author_names\" name=\"author_names\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" class=\"w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline\"></div><div class=\"mb-4\"><label for=\"keyword_names\" class=\"block mb-2 text-sm font-bold text-gray-700\">Keyword Names</label> <input type=\"text\" id=\"keyword_names\" name=\"keyword_names\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var13 string
-			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(authorNames)
+			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(keywordNames)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 63, Col: 81}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 59, Col: 84}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" class=\"shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline\"></div><div class=\"flex items-center justify-start mt-8\"><button type=\"submit\" class=\"bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline\">Save Metadata</button></div></form></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" class=\"w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline\"></div><div class=\"mb-6\"><label for=\"author_names\" class=\"block mb-2 text-sm font-bold text-gray-700\">Author Names</label> <input type=\"text\" id=\"author_names\" name=\"author_names\" value=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var14 string
+			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(authorNames)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 64, Col: 81}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" class=\"w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline\"></div><div class=\"flex items-center justify-start mt-8\"><button type=\"submit\" class=\"px-4 py-2 font-bold text-white bg-blue-500 rounded hover:bg-blue-700 focus:outline-none focus:shadow-outline\">Save Metadata</button></div></form></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

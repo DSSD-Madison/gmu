@@ -2,69 +2,70 @@ package components
 
 
 // No required fields ('*') and no Cancel button.
-templ PDFMetadataEditForm(fileId, originalFilename, title, abstract, category, publishDate, source, regionNames, keywordNames, authorNames string) {
+templ PDFMetadataEditForm(fileId, originalFilename, title, abstract, category, publishDate, source, regionNames, keywordNames, authorNames string, csrf string) {
 	// This renders as a full page using your Base component
 	@Base("Edit PDF Metadata") {
-		<div class="container mx-auto mt-10 mb-10 p-6 max-w-2xl bg-white rounded shadow-md">
-			<h1 class="text-2xl font-bold mb-4">Edit Metadata</h1>
+		<div class="container max-w-2xl p-6 mx-auto mt-10 mb-10 bg-white rounded shadow-md">
+			<h1 class="mb-4 text-2xl font-bold">Edit Metadata</h1>
 			<p class="mb-6 text-gray-600">
 				Editing metadata for: <span class="font-medium">{ originalFilename }</span>
-				<span class="text-xs text-gray-400 block break-all">File ID: { fileId }</span>
+				<span class="block text-xs text-gray-400 break-all">File ID: { fileId }</span>
 			</p>
 
 			<!-- Form POSTs to /save-metadata -->
 			<form action="/save-metadata" method="post">
 				<input type="hidden" name="fileId" value={ fileId }/>
+				<input type="hidden" name="_csrf" value={ csrf } />
 
 				<div class="mb-4">
-					<label for="title" class="block text-gray-700 text-sm font-bold mb-2">Title</label>
-					<input type="text" id="title" name="title" value={ title } class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"/>
+					<label for="title" class="block mb-2 text-sm font-bold text-gray-700">Title</label>
+					<input type="text" id="title" name="title" value={ title } class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"/>
 				</div>
 
 				<div class="mb-4">
-					<label for="abstract" class="block text-gray-700 text-sm font-bold mb-2">Abstract</label>
-					<textarea id="abstract" name="abstract" rows="4" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">{ abstract }</textarea>
+					<label for="abstract" class="block mb-2 text-sm font-bold text-gray-700">Abstract</label>
+					<textarea id="abstract" name="abstract" rows="4" class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline">{ abstract }</textarea>
 				</div>
 
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+				<div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
 					<div>
-						<label for="category" class="block text-gray-700 text-sm font-bold mb-2">Category</label>
-						<input type="text" id="category" name="category" value={ category } class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"/>
-						<p class="text-xs text-gray-500 mt-1">e.g., article, research paper</p>
+						<label for="category" class="block mb-2 text-sm font-bold text-gray-700">Category</label>
+						<input type="text" id="category" name="category" value={ category } class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"/>
+						<p class="mt-1 text-xs text-gray-500">e.g., article, research paper</p>
 					</div>
 					<div>
-						<label for="publish_date" class="block text-gray-700 text-sm font-bold mb-2">Publish Date</label>
-						<input type="date" id="publish_date" name="publish_date" value={ publishDate } class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"/>
+						<label for="publish_date" class="block mb-2 text-sm font-bold text-gray-700">Publish Date</label>
+						<input type="date" id="publish_date" name="publish_date" value={ publishDate } class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"/>
 					</div>
 				</div>
 
 				<div class="mb-4">
-					<label for="source" class="block text-gray-700 text-sm font-bold mb-2">Source</label>
-					<input type="text" id="source" name="source" value={ source } class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"/>
-					<p class="text-xs text-gray-500 mt-1">Internal reference (e.g., bucket name)</p>
+					<label for="source" class="block mb-2 text-sm font-bold text-gray-700">Source</label>
+					<input type="text" id="source" name="source" value={ source } class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"/>
+					<p class="mt-1 text-xs text-gray-500">Internal reference (e.g., bucket name)</p>
 				</div>
 
 				<hr class="my-6"/>
 
-				<p class="text-sm text-gray-600 mb-2">Enter multiple values separated by commas for the fields below.</p>
+				<p class="mb-2 text-sm text-gray-600">Enter multiple values separated by commas for the fields below.</p>
 
 				<div class="mb-4">
-					<label for="region_names" class="block text-gray-700 text-sm font-bold mb-2">Region Names</label>
-					<input type="text" id="region_names" name="region_names" value={ regionNames } class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"/>
+					<label for="region_names" class="block mb-2 text-sm font-bold text-gray-700">Region Names</label>
+					<input type="text" id="region_names" name="region_names" value={ regionNames } class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"/>
 				</div>
 
 				<div class="mb-4">
-					<label for="keyword_names" class="block text-gray-700 text-sm font-bold mb-2">Keyword Names</label>
-					<input type="text" id="keyword_names" name="keyword_names" value={ keywordNames } class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"/>
+					<label for="keyword_names" class="block mb-2 text-sm font-bold text-gray-700">Keyword Names</label>
+					<input type="text" id="keyword_names" name="keyword_names" value={ keywordNames } class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"/>
 				</div>
 
 				<div class="mb-6">
-					<label for="author_names" class="block text-gray-700 text-sm font-bold mb-2">Author Names</label>
-					<input type="text" id="author_names" name="author_names" value={ authorNames } class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"/>
+					<label for="author_names" class="block mb-2 text-sm font-bold text-gray-700">Author Names</label>
+					<input type="text" id="author_names" name="author_names" value={ authorNames } class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"/>
 				</div>
 
 				<div class="flex items-center justify-start mt-8">
-					<button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+					<button type="submit" class="px-4 py-2 font-bold text-white bg-blue-500 rounded hover:bg-blue-700 focus:outline-none focus:shadow-outline">
 						Save Metadata
 					</button>
 				</div>

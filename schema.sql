@@ -29,6 +29,15 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: allowed_users; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.allowed_users (
+    username text NOT NULL
+);
+
+
+--
 -- Name: authors; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -149,6 +158,54 @@ CREATE TABLE public.regions (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     name character varying(255) NOT NULL
 );
+
+
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.users (
+    id integer NOT NULL,
+    username text NOT NULL,
+    password_hash text NOT NULL,
+    is_master boolean DEFAULT false NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.users_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
+
+
+--
+-- Name: users id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- Name: allowed_users allowed_users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.allowed_users
+    ADD CONSTRAINT allowed_users_pkey PRIMARY KEY (username);
 
 
 --
@@ -317,6 +374,22 @@ ALTER TABLE ONLY public.regions
 
 ALTER TABLE ONLY public.regions
     ADD CONSTRAINT regions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users users_username_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.users
+    ADD CONSTRAINT users_username_key UNIQUE (username);
 
 
 --

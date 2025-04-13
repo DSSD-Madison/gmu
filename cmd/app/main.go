@@ -76,6 +76,12 @@ func main() {
 		},
 	}))
 
+	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
+		TokenLookup: "form:_csrf",
+		CookieName:  "csrf",
+		ContextKey:  "csrf",
+	}))
+
 	dbConfig, err := db_util.LoadConfig()
 	if err != nil {
 		logHandler.Error("Unable to load db config", "err", err)
