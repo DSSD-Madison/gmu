@@ -10,29 +10,27 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const findDocumentByID = `-- name: FindDocumentByID :one
 SELECT
     d.id, d.file_name, d.title, d.abstract, d.publish_date, d.source, d.indexed_by_kendra, d.s3_file, d.s3_file_preview, d.pdf_link, d.created_at, d.deleted_at, d.has_duplicate,
-    COALESCE(ARRAY_AGG(DISTINCT a.name) FILTER (WHERE a.id IS NOT NULL), '{}'::text[]) AS author_names,
-    COALESCE(ARRAY_AGG(DISTINCT r.name) FILTER (WHERE r.id IS NOT NULL), '{}'::text[]) AS region_names,
-    COALESCE(ARRAY_AGG(DISTINCT k.name) FILTER (WHERE k.id IS NOT NULL), '{}'::text[]) AS keyword_names,
-    COALESCE(ARRAY_AGG(DISTINCT c.name) FILTER (WHERE c.id IS NOT NULL), '{}'::text[]) AS category_names
-FROM
-    documents d
-        LEFT JOIN doc_authors da ON d.id = da.doc_id
-        LEFT JOIN authors a ON da.author_id = a.id
-        LEFT JOIN doc_regions dr ON d.id = dr.doc_id
-        LEFT JOIN regions r ON dr.region_id = r.id
-        LEFT JOIN doc_keywords dk ON d.id = dk.doc_id
-        LEFT JOIN keywords k ON dk.keyword_id = k.id
-        LEFT JOIN doc_categories dc ON d.id = dc.doc_id
-        LEFT JOIN categories c ON dc.category_id = c.id
-WHERE
-    d.id = $1
-GROUP BY
-    d.id
+    ARRAY_REMOVE(ARRAY_AGG(DISTINCT a.name), NULL)::text[] AS author_names,
+    ARRAY_REMOVE(ARRAY_AGG(DISTINCT r.name), NULL)::text[] AS region_names,
+    ARRAY_REMOVE(ARRAY_AGG(DISTINCT k.name), NULL)::text[] AS keyword_names,
+    ARRAY_REMOVE(ARRAY_AGG(DISTINCT c.name), NULL)::text[] AS category_names
+FROM documents d
+LEFT JOIN doc_authors da ON d.id = da.doc_id
+LEFT JOIN authors a ON da.author_id = a.id
+LEFT JOIN doc_regions dr ON d.id = dr.doc_id
+LEFT JOIN regions r ON dr.region_id = r.id
+LEFT JOIN doc_keywords dk ON d.id = dk.doc_id
+LEFT JOIN keywords k ON dk.keyword_id = k.id
+LEFT JOIN doc_categories dc ON d.id = dc.doc_id
+LEFT JOIN categories c ON dc.category_id = c.id
+WHERE d.id = $1
+GROUP BY d.id
 `
 
 type FindDocumentByIDRow struct {
@@ -49,10 +47,10 @@ type FindDocumentByIDRow struct {
 	CreatedAt       sql.NullTime
 	DeletedAt       sql.NullTime
 	HasDuplicate    bool
-	AuthorNames     interface{}
-	RegionNames     interface{}
-	KeywordNames    interface{}
-	CategoryNames   interface{}
+	AuthorNames     []string
+	RegionNames     []string
+	KeywordNames    []string
+	CategoryNames   []string
 }
 
 func (q *Queries) FindDocumentByID(ctx context.Context, id uuid.UUID) (FindDocumentByIDRow, error) {
@@ -72,10 +70,10 @@ func (q *Queries) FindDocumentByID(ctx context.Context, id uuid.UUID) (FindDocum
 		&i.CreatedAt,
 		&i.DeletedAt,
 		&i.HasDuplicate,
-		&i.AuthorNames,
-		&i.RegionNames,
-		&i.KeywordNames,
-		&i.CategoryNames,
+		pq.Array(&i.AuthorNames),
+		pq.Array(&i.RegionNames),
+		pq.Array(&i.KeywordNames),
+		pq.Array(&i.CategoryNames),
 	)
 	return i, err
 }

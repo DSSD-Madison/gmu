@@ -3,7 +3,7 @@ package routes
 import (
 	"github.com/labstack/echo/v4"
 
-	"github.com/DSSD-Madison/gmu/middleware"
+	"github.com/DSSD-Madison/gmu/pkg/middleware"
 )
 
 // InitRoutes registers all the application routes
@@ -41,7 +41,7 @@ func InitRoutes(e *echo.Echo, h Handler) {
 	e.POST("/admin/users", h.CreateNewUser, middleware.RequireAuth)
 
 	// --- Database Search Routes ---
-	e.GET("/authors", h.DatabaseSearchAuthors)
-	e.GET("/keywords", h.DatabaseSearchKeywords)
-	e.GET("/regions", h.DatabaseSearchRegions)
+	e.GET("/authors", h.DatabaseSearchAuthors, middleware.RequireAuth)
+	e.GET("/keywords", h.DatabaseSearchKeywords, middleware.RequireAuth)
+	e.GET("/regions", h.DatabaseSearchRegions, middleware.RequireAuth)
 }

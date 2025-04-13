@@ -80,7 +80,21 @@ func main() {
 		TokenLookup: "form:_csrf",
 		CookieName:  "csrf",
 		ContextKey:  "csrf",
+		Skipper: func(c echo.Context) bool {
+			// Skip CSRF for routes that do NOT use RequireAuth middleware
+			switch c.Path() {
+			case "/",                      // Home
+				 "/search",               // Search form
+				 "/search/suggestions",   // Suggestions POST
+				 "/login",                // GET login page or POST login
+				 "/logout":               // Logout buttons for dev
+				return true
+			default:
+				return false
+			}
+		},
 	}))
+	
 
 	dbConfig, err := db_util.LoadConfig()
 	if err != nil {

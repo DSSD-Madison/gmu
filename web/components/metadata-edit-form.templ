@@ -1,9 +1,25 @@
 package components
 
+import (
+	"github.com/DSSD-Madison/gmu/pkg/db"
+)
+
 templ PDFMetadataEditForm(
-	fileId, originalFilename, title, abstract, category, publishDate, source string,
-	regionNames, keywordNames, authorNames []string,
+	fileId string,
+	originalFilename string,
+	title string,
+	abstract string,
+	category string,
+	publishDate string,
+	source string,
+	selectedRegions []Pair,
+	selectedKeywords []Pair,
+	selectedAuthors []Pair,
 	csrf string,
+	allRegions []db.Region,
+	allKeywords []db.Keyword,
+	allAuthors []db.Author,
+	allCategories []db.Category,
 ) {
 	@Base("Edit PDF Metadata") {
 		<div class="container max-w-2xl p-6 mx-auto mt-10 mb-10 bg-white rounded shadow-md dark:bg-gray-800">
@@ -52,9 +68,10 @@ templ PDFMetadataEditForm(
 
 				<hr class="my-6 border-gray-300 dark:border-gray-600"/>
 
-				@TagInputJS("regions", "Region Names", "region_names", "/regions", regionNames)
-				@TagInputJS("keywords", "Keyword Names", "keyword_names", "/keywords", keywordNames)
-				@TagInputJS("authors", "Author Names", "author_names", "/authors", authorNames)
+				@TagInputJS("regions", "Region Names", "region_names", "/regions", selectedRegions)
+				@TagInputJS("keywords", "Keyword Names", "keyword_names", "/keywords", selectedKeywords)
+				@TagInputJS("authors", "Author Names", "author_names", "/authors", selectedAuthors)
+
 
 				<div class="flex items-center justify-start mt-8">
 					<button type="submit"
@@ -66,61 +83,61 @@ templ PDFMetadataEditForm(
 		</div>
 		<script>
                      // --- Core Tagging Logic ---
-                     function addTag(idPrefix, fieldName, value) {
-                         const tagValue = value.trim();
-                         if (!tagValue) return;
+                     function addTag(idPrefix, fieldName, uuid, displayName) {
+						const tagValue = uuid.trim();
+						const tagLabel = displayName.trim();
+						if (!tagValue || !tagLabel) return;
 
-                         const container = document.getElementById(`${idPrefix}-tags-display`)?.closest('.tag-input-container');
-                         if (!container) {
-                             console.error(`Tag input container not found for prefix: ${idPrefix}`);
-                             return;
-                         }
+						const container = document.getElementById(`${idPrefix}-tags-display`)?.closest('.tag-input-container');
+						if (!container) return;
 
-                         const tagsDisplay = container.querySelector(`#${idPrefix}-tags-display`);
-                         const hiddenInputsContainer = container.querySelector(`#${idPrefix}-hidden-inputs`);
-                         const searchInput = container.querySelector(`#${idPrefix}-search-input`);
-                         const suggestionsContainer = container.querySelector(`#${idPrefix}-suggestions`);
+						const tagsDisplay = container.querySelector(`#${idPrefix}-tags-display`);
+						const hiddenInputsContainer = container.querySelector(`#${idPrefix}-hidden-inputs`);
+						const searchInput = container.querySelector(`#${idPrefix}-search-input`);
+						const suggestionsContainer = container.querySelector(`#${idPrefix}-suggestions`);
 
-                         const existingInput = hiddenInputsContainer.querySelector(`input[name="${fieldName}"][value="${CSS.escape(tagValue)}"]`);
-                         if (existingInput) {
-                             if (searchInput) searchInput.value = '';
-                             if (suggestionsContainer) suggestionsContainer.innerHTML = '';
-                             searchInput?.focus();
-                             return;
-                         }
+						// Avoid duplicate UUIDs
+						const existingInput = hiddenInputsContainer.querySelector(`input[name="${fieldName}"][value="${CSS.escape(tagValue)}"]`);
+						if (existingInput) {
+							searchInput.value = '';
+							suggestionsContainer.innerHTML = '';
+							searchInput.focus();
+							return;
+						}
 
-                         const hiddenInput = document.createElement('input');
-                         hiddenInput.type = 'hidden';
-                         hiddenInput.name = fieldName;
-                         hiddenInput.value = tagValue;
-                         hiddenInput.setAttribute('data-tag-value', tagValue);
-                         hiddenInputsContainer.appendChild(hiddenInput);
+						// ✅ hidden input with UUID
+						const hiddenInput = document.createElement('input');
+						hiddenInput.type = 'hidden';
+						hiddenInput.name = fieldName;
+						hiddenInput.value = tagValue;
+						hiddenInput.setAttribute('data-tag-value', tagValue);
+						hiddenInputsContainer.appendChild(hiddenInput);
 
-                         const tagSpan = document.createElement('span');
-                         tagSpan.setAttribute('data-tag-value', tagValue);
-                         tagSpan.setAttribute('data-id-prefix', idPrefix);
-                         tagSpan.setAttribute('data-field-name', fieldName);
-                         tagSpan.className = 'tag-item bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300 inline-flex items-center';
-                         tagSpan.textContent = tagValue + ' ';
+						// ✅ visual tag with NAME
+						const tagSpan = document.createElement('span');
+						tagSpan.setAttribute('data-tag-value', tagValue);
+						tagSpan.setAttribute('data-id-prefix', idPrefix);
+						tagSpan.setAttribute('data-field-name', fieldName);
+						tagSpan.className = 'tag-item bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300 inline-flex items-center';
+						tagSpan.textContent = tagLabel + ' ';
 
-                         const removeButton = document.createElement('button');
-                         removeButton.type = 'button';
-                         removeButton.className = 'ml-1 text-blue-600 hover:text-blue-800 focus:outline-none';
-                         removeButton.innerHTML = '×';
-                         removeButton.setAttribute('aria-label', `Remove ${tagValue}`);
-                         removeButton.onclick = function() { removeTag(this); };
-                         tagSpan.appendChild(removeButton);
+						const removeButton = document.createElement('button');
+						removeButton.type = 'button';
+						removeButton.className = 'ml-1 text-blue-600 hover:text-blue-800 focus:outline-none';
+						removeButton.innerHTML = '×';
+						removeButton.setAttribute('aria-label', `Remove ${tagLabel}`);
+						removeButton.onclick = function () { removeTag(this); };
+						tagSpan.appendChild(removeButton);
 
-                         const placeholder = tagsDisplay.querySelector('.tag-placeholder');
-                         if (placeholder) {
-                             placeholder.remove();
-                         }
-                         tagsDisplay.appendChild(tagSpan);
+						const placeholder = tagsDisplay.querySelector('.tag-placeholder');
+						if (placeholder) placeholder.remove();
+						tagsDisplay.appendChild(tagSpan);
 
-                         if (searchInput) searchInput.value = '';
-                         if (suggestionsContainer) suggestionsContainer.innerHTML = '';
-                         searchInput?.focus();
-                     }
+						searchInput.value = '';
+						suggestionsContainer.innerHTML = '';
+						searchInput.focus();
+					}
+
 
                      function removeTag(buttonElement) {
                          const tagSpan = buttonElement.closest('.tag-item');

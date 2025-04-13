@@ -2,22 +2,21 @@ package routes
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"path"
-	"strings" // For placeholder helper
+	"strings"
+	"time"
 
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 	"github.com/DSSD-Madison/gmu/pkg/db"
-	"github.com/lib/pq"
-
-	// Import UUID generator again
-	"github.com/google/uuid" // Run: go get github.com/google/uuid
-	"github.com/labstack/echo/v4"
-
 	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
+	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
+	// "github.com/lib/pq"
 )
 
 func (h *Handler) PDFUploadPage(c echo.Context) error {
@@ -35,18 +34,13 @@ func (h *Handler) HandlePDFUpload(c echo.Context) error {
 	}
 
 	originalFilename := fileHeader.Filename
-	fileId := uuid.New()
+	fileID := uuid.New()
 
-	log.Printf("Generated fileId: %s for original file: %s", fileId.String(), originalFilename)
-
-	// TODO: Replace with actual S3 logic
 	s3Path := fmt.Sprintf("s3://your-bucket-name/documents/%s", originalFilename)
+	title := strings.TrimSuffix(originalFilename, path.Ext(originalFilename))
 
-	title := path.Base(s3Path)
-
-	// Insert with placeholder title
 	err = h.db.InsertUploadedDocument(c.Request().Context(), db.InsertUploadedDocumentParams{
-		ID:       fileId,
+		ID:       fileID,
 		S3File:   s3Path,
 		FileName: originalFilename,
 		Title:    title,
@@ -58,50 +52,122 @@ func (h *Handler) HandlePDFUpload(c echo.Context) error {
 		return web.Render(c, http.StatusInternalServerError, components.UploadResponse(false, errorMessage))
 	}
 
-	redirectPath := fmt.Sprintf("/edit-metadata/%s", fileId.String())
+	redirectPath := fmt.Sprintf("/edit-metadata/%s", fileID.String())
 	c.Response().Header().Set("HX-Redirect", redirectPath)
 	return c.NoContent(http.StatusOK)
 }
 
-
-
-// PDFMetadataEditPage displays the form using fileId from the path parameter
 func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
-	fileId := c.Param("fileId") // <<< Read fileId from path /edit-metadata/:fileId
-
+	fileId := c.Param("fileId")
 	if fileId == "" {
-		log.Println("Error: fileId missing in path for edit page")
+		log.Println("Missing fileId")
 		return c.Redirect(http.StatusTemporaryRedirect, "/upload")
 	}
-	parsedUUID, err := uuid.Parse(fileId)
 
+	docUUID, err := uuid.Parse(fileId)
 	if err != nil {
 		return err
 	}
 
-	doc, err := h.db.FindDocumentByID(context.Background(), parsedUUID)
+	// 1. Get doc info
+	doc, err := h.db.FindDocumentByID(context.Background(), docUUID)
 	if err != nil {
 		return err
 	}
 
-	res := parseDocument(doc)
+	// 2. Get all available values
+	allAuthors, _ := h.db.ListAllAuthors(c.Request().Context())
+	allKeywords, _ := h.db.ListAllKeywords(c.Request().Context())
+	allRegions, _ := h.db.ListAllRegions(c.Request().Context())
+	allCategories, _ := h.db.ListAllCategories(c.Request().Context())
 
-	// --- 3. Render the Edit Form ---
-	// Pass fileId as the primary identifier to the form component
+
+	authorNames := []string(doc.AuthorNames)
+	
+
+	keywordNames := []string(doc.KeywordNames)
+	
+
+	regionNames := []string(doc.RegionNames)
+
+
+	categoryNames := []string(doc.CategoryNames)
+	
+
+	// 4. Convert selected values to []Pair
+	selectedAuthors := toAuthorPairs(allAuthors, authorNames)
+	selectedKeywords := toKeywordPairs(allKeywords, keywordNames)
+	selectedRegions := toRegionPairs(allRegions, regionNames)
+
 	csrf := c.Get("csrf").(string)
+
+	// 5. Render form
 	return web.Render(c, http.StatusOK, components.PDFMetadataEditForm(
-		fileId, // <-- Pass fileId here
-		res.Link,
-		res.Title,
-		res.Abstract,
-		strings.Join(res.Categories, ","),
-		res.PublishDate,
-		res.Source,
-		res.Regions,
-		res.Keywords,
-		res.Authors,
+		fileId,
+		doc.FileName,
+		doc.Title,
+		doc.Abstract.String,
+		strings.Join(categoryNames, ","),
+		doc.PublishDate.Time.Format("2006-01-02"),
+		doc.Source.String,
+		selectedRegions,
+		selectedKeywords,
+		selectedAuthors,
 		csrf,
+		allRegions,
+		allKeywords,
+		allAuthors,
+		allCategories,
 	))
+}
+
+
+func toAuthorPairs(all []db.Author, selected []string) []components.Pair {
+	var out []components.Pair
+	for _, name := range selected {
+		for _, item := range all {
+			if strings.EqualFold(item.Name, name) {
+				out = append(out, components.Pair{ID: item.ID.String(), Name: item.Name})
+			}
+		}
+	}
+	return out
+}
+
+func toKeywordPairs(all []db.Keyword, selected []string) []components.Pair {
+	var out []components.Pair
+	for _, name := range selected {
+		for _, item := range all {
+			if strings.EqualFold(item.Name, name) {
+				out = append(out, components.Pair{ID: item.ID.String(), Name: item.Name})
+			}
+		}
+	}
+	return out
+}
+
+func toRegionPairs(all []db.Region, selected []string) []components.Pair {
+	var out []components.Pair
+	for _, name := range selected {
+		for _, item := range all {
+			if strings.EqualFold(item.Name, name) {
+				out = append(out, components.Pair{ID: item.ID.String(), Name: item.Name})
+			}
+		}
+	}
+	return out
+}
+
+func toCategoryPairs(all []db.Category, selected []string) []components.Pair {
+	var out []components.Pair
+	for _, name := range selected {
+		for _, item := range all {
+			if strings.EqualFold(item.Name, name) {
+				out = append(out, components.Pair{ID: item.ID.String(), Name: item.Name})
+			}
+		}
+	}
+	return out
 }
 
 func parseDocument(row db.FindDocumentByIDRow) awskendra.KendraResult {
@@ -123,63 +189,158 @@ func parseDocument(row db.FindDocumentByIDRow) awskendra.KendraResult {
 	if row.Source.Valid {
 		res.Source = row.Source.String
 	}
-	var tempScanner pq.StringArray
-	err := tempScanner.Scan(row.AuthorNames.(string))
-	if err == nil {
-		res.Authors = tempScanner
-	}
 
-	err = tempScanner.Scan(row.CategoryNames.(string))
-	if err == nil {
-		res.Categories = tempScanner
-	}
+	// var tempScanner pq.StringArray
 
-	err = tempScanner.Scan(row.KeywordNames.(string))
-	if err == nil {
-		res.Keywords = tempScanner
-	}
-
-	err = tempScanner.Scan(row.RegionNames.(string))
-	if err == nil {
-		res.Regions = tempScanner
-	}
+	// if err := tempScanner.Scan(row.AuthorNames.(string)); err == nil {
+	// 	res.Authors = tempScanner
+	// }
+	// if err := tempScanner.Scan(row.CategoryNames.(string)); err == nil {
+	// 	res.Categories = tempScanner
+	// }
+	// if err := tempScanner.Scan(row.KeywordNames.(string)); err == nil {
+	// 	res.Keywords = tempScanner
+	// }
+	// if err := tempScanner.Scan(row.RegionNames.(string)); err == nil {
+	// 	res.Regions = tempScanner
+	// }
+	res.Authors = row.AuthorNames
+	res.Categories = row.CategoryNames
+	res.Keywords = row.KeywordNames
+	res.Regions = row.RegionNames
 
 	return res
 }
 
-// HandleMetadataSave processes the submitted metadata form (Placeholder)
-func (h *Handler) HandleMetadataSave(c echo.Context) error {
-	// --- 1. Get submitted form data ---
-	// Get the fileId from the hidden form field
-	fileId := c.FormValue("fileId") // <<< Should match hidden input name="fileId"
-	title := c.FormValue("title")
-	//abstract := c.FormValue("abstract")
-	//category := c.FormValue("category")
-	//publishDate := c.FormValue("publish_date")
-	//source := c.FormValue("source")
-	//regionNames := c.FormValue("region_names")
-	//keywordNames := c.FormValue("keyword_names")
-	authorNames := c.FormValue("author_names")
 
-	// Basic validation
-	if fileId == "" {
-		log.Println("Error: fileId missing in metadata save form submission")
-		return c.Redirect(http.StatusSeeOther, "/upload") // Redirect back
+func (h *Handler) HandleMetadataSave(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	// --- Get form values ---
+	fileId := c.FormValue("fileId")
+	title := c.FormValue("title")
+	abstract := c.FormValue("abstract")
+	publishDate := c.FormValue("publish_date")
+	source := c.FormValue("source")
+	authorStr := c.FormValue("author_names")
+	keywordStr := c.FormValue("keyword_names")
+	categoryStr := c.FormValue("category_names")
+	regionStr := c.FormValue("region_names")
+
+	// --- Parse UUID ---
+	docID, err := uuid.Parse(fileId)
+	if err != nil {
+		log.Printf("[ERROR] Invalid UUID in form: %v", err)
+		return c.Redirect(http.StatusSeeOther, "/upload")
 	}
 
-	// Log the received values associated with the fileId
-	log.Printf("Received metadata update for fileId '%s':", fileId) // <<< Log against fileId
-	log.Printf("  Title: %s", title)
-	// ... other fields ...
-	log.Printf("  Author Names: %s", authorNames)
+	// --- Parse date ---
+	var parsedDate sql.NullTime
+	if publishDate != "" {
+		t, err := time.Parse("2006-01-02", publishDate)
+		if err == nil {
+			parsedDate = sql.NullTime{Time: t, Valid: true}
+		}
+	}
 
-	// --- TODO: Implement Actual Saving Logic ---
-	// 1. Use `fileId` (UUID) to identify the record/file in your database/system.
-	// 2. Validate data.
-	// 3. Split comma-separated strings.
-	// 4. Perform database operations (UPDATE record identified by `fileId`, etc.).
-	// ------------------------------------------
+	// --- Update main document ---
+	err = h.db.UpdateDocumentMetadata(ctx, db.UpdateDocumentMetadataParams{
+		ID:          docID,
+		Title:       title,
+		Abstract:    sql.NullString{String: abstract, Valid: abstract != ""},
+		PublishDate: parsedDate,
+		Source:      sql.NullString{String: source, Valid: source != ""},
+	})
+	if err != nil {
+		log.Printf("[ERROR] Error updating document metadata: %v", err)
+		return c.Redirect(http.StatusSeeOther, "/upload")
+	}
+	documentID := uuid.NullUUID{UUID: docID, Valid: true}
+	// --- Clear previous associations ---
+	h.db.DeleteDocAuthorsByDocID(ctx, documentID)
+	h.db.DeleteDocKeywordsByDocID(ctx, documentID)
+	h.db.DeleteDocCategoriesByDocID(ctx, documentID)
+	h.db.DeleteDocRegionsByDocID(ctx, documentID)
 
-	log.Printf("Placeholder save complete for fileId '%s'. Redirecting.", fileId)
+	// --- Step 1: Parse UUIDs from comma-separated form fields ---
+	parseUUIDList := func(s string) []uuid.UUID {
+		ids := []uuid.UUID{}
+		for _, id := range strings.Split(s, ",") {
+			id = strings.TrimSpace(id)
+			if id == "" {
+				continue
+			}
+			u, err := uuid.Parse(id)
+			if err == nil {
+				ids = append(ids, u)
+			} else {
+				log.Printf("[WARN] Skipping invalid UUID: %s", id)
+			}
+		}
+		return ids
+	}
+
+	authors := parseUUIDList(authorStr)
+	keywords := parseUUIDList(keywordStr)
+	categories := parseUUIDList(categoryStr)
+	regions := parseUUIDList(regionStr)
+
+	log.Printf("[DEBUG] Parsed author IDs: %v", authors)
+	log.Printf("[DEBUG] Parsed keyword IDs: %v", keywords)
+	log.Printf("[DEBUG] Parsed category IDs: %v", categories)
+	log.Printf("[DEBUG] Parsed region IDs: %v", regions)
+
+	// --- Insert new associations ---
+	for _, authorID := range authors {
+		log.Printf("[DEBUG] Inserting doc_author: doc_id=%s author_id=%s", docID, authorID)
+		err := h.db.InsertDocAuthor(ctx, db.InsertDocAuthorParams{
+			ID:       uuid.New(),
+			DocID:    documentID,
+			AuthorID: uuid.NullUUID{UUID: authorID, Valid: true},
+		})
+		if err != nil {
+			log.Printf("[ERROR] Failed to insert into doc_authors: %v", err)
+		}
+	}
+
+	for _, keywordID := range keywords {
+		log.Printf("[DEBUG] Inserting doc_keyword: doc_id=%s keyword_id=%s", docID, keywordID)
+		err := h.db.InsertDocKeyword(ctx, db.InsertDocKeywordParams{
+			ID:        uuid.New(),
+			DocID:     documentID,
+			KeywordID: uuid.NullUUID{UUID: keywordID, Valid: true},
+		})
+		if err != nil {
+			log.Printf("[ERROR] Failed to insert into doc_keywords: %v", err)
+		}
+	}
+
+	for _, categoryID := range categories {
+		log.Printf("[DEBUG] Inserting doc_category: doc_id=%s category_id=%s", docID, categoryID)
+		err := h.db.InsertDocCategory(ctx, db.InsertDocCategoryParams{
+			ID:         uuid.New(),
+			DocID:      documentID,
+			CategoryID: uuid.NullUUID{UUID: categoryID, Valid: true},
+		})
+		if err != nil {
+			log.Printf("[ERROR] Failed to insert into doc_categories: %v", err)
+		}
+	}
+
+	for _, regionID := range regions {
+		log.Printf("[DEBUG] Inserting doc_region: doc_id=%s region_id=%s", docID, regionID)
+		err := h.db.InsertDocRegion(ctx, db.InsertDocRegionParams{
+			ID:       uuid.New(),
+			DocID:    documentID,
+			RegionID: uuid.NullUUID{UUID: regionID, Valid: true},
+		})
+		if err != nil {
+			log.Printf("[ERROR] Failed to insert into doc_regions: %v", err)
+		}
+	}
+
+	log.Printf("[INFO] Metadata updated successfully for fileId '%s'", docID.String())
 	return c.Redirect(http.StatusSeeOther, "/upload")
 }
+
+

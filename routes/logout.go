@@ -5,7 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
-	"github.com/DSSD-Madison/gmu/middleware"
+	"github.com/DSSD-Madison/gmu/pkg/middleware"
 )
 
 func (h *Handler) Logout(c echo.Context) error {

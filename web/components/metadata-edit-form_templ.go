@@ -8,10 +8,26 @@ package components
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
+import (
+	"github.com/DSSD-Madison/gmu/pkg/db"
+)
+
 func PDFMetadataEditForm(
-	fileId, originalFilename, title, abstract, category, publishDate, source string,
-	regionNames, keywordNames, authorNames []string,
+	fileId string,
+	originalFilename string,
+	title string,
+	abstract string,
+	category string,
+	publishDate string,
+	source string,
+	selectedRegions []Pair,
+	selectedKeywords []Pair,
+	selectedAuthors []Pair,
 	csrf string,
+	allRegions []db.Region,
+	allKeywords []db.Keyword,
+	allAuthors []db.Author,
+	allCategories []db.Category,
 ) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -52,7 +68,7 @@ func PDFMetadataEditForm(
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(originalFilename)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 12, Col: 100}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 28, Col: 100}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -65,7 +81,7 @@ func PDFMetadataEditForm(
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fileId)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 13, Col: 92}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 29, Col: 92}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -78,7 +94,7 @@ func PDFMetadataEditForm(
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fileId)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 17, Col: 53}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 33, Col: 53}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -91,7 +107,7 @@ func PDFMetadataEditForm(
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(csrf)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 18, Col: 50}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 34, Col: 50}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -104,7 +120,7 @@ func PDFMetadataEditForm(
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 22, Col: 61}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 38, Col: 61}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -117,7 +133,7 @@ func PDFMetadataEditForm(
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(abstract)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 29, Col: 229}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 45, Col: 229}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -130,7 +146,7 @@ func PDFMetadataEditForm(
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(category)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 35, Col: 71}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 51, Col: 71}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -143,7 +159,7 @@ func PDFMetadataEditForm(
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(publishDate)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 41, Col: 82}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 57, Col: 82}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -156,7 +172,7 @@ func PDFMetadataEditForm(
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(source)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 48, Col: 64}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 64, Col: 64}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -166,19 +182,19 @@ func PDFMetadataEditForm(
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = TagInputJS("regions", "Region Names", "region_names", "/regions", regionNames).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = TagInputJS("regions", "Region Names", "region_names", "/regions", selectedRegions).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = TagInputJS("keywords", "Keyword Names", "keyword_names", "/keywords", keywordNames).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = TagInputJS("keywords", "Keyword Names", "keyword_names", "/keywords", selectedKeywords).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = TagInputJS("authors", "Author Names", "author_names", "/authors", authorNames).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = TagInputJS("authors", "Author Names", "author_names", "/authors", selectedAuthors).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<div class=\"flex items-center justify-start mt-8\"><button type=\"submit\" class=\"px-4 py-2 font-bold text-white bg-blue-500 rounded hover:bg-blue-700 focus:outline-none focus:shadow-outline\">Save Metadata</button></div></form></div><script>\n                     // --- Core Tagging Logic ---\n                     function addTag(idPrefix, fieldName, value) {\n                         const tagValue = value.trim();\n                         if (!tagValue) return;\n\n                         const container = document.getElementById(`${idPrefix}-tags-display`)?.closest('.tag-input-container');\n                         if (!container) {\n                             console.error(`Tag input container not found for prefix: ${idPrefix}`);\n                             return;\n                         }\n\n                         const tagsDisplay = container.querySelector(`#${idPrefix}-tags-display`);\n                         const hiddenInputsContainer = container.querySelector(`#${idPrefix}-hidden-inputs`);\n                         const searchInput = container.querySelector(`#${idPrefix}-search-input`);\n                         const suggestionsContainer = container.querySelector(`#${idPrefix}-suggestions`);\n\n                         const existingInput = hiddenInputsContainer.querySelector(`input[name=\"${fieldName}\"][value=\"${CSS.escape(tagValue)}\"]`);\n                         if (existingInput) {\n                             if (searchInput) searchInput.value = '';\n                             if (suggestionsContainer) suggestionsContainer.innerHTML = '';\n                             searchInput?.focus();\n                             return;\n                         }\n\n                         const hiddenInput = document.createElement('input');\n                         hiddenInput.type = 'hidden';\n                         hiddenInput.name = fieldName;\n                         hiddenInput.value = tagValue;\n                         hiddenInput.setAttribute('data-tag-value', tagValue);\n                         hiddenInputsContainer.appendChild(hiddenInput);\n\n                         const tagSpan = document.createElement('span');\n                         tagSpan.setAttribute('data-tag-value', tagValue);\n                         tagSpan.setAttribute('data-id-prefix', idPrefix);\n                         tagSpan.setAttribute('data-field-name', fieldName);\n                         tagSpan.className = 'tag-item bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300 inline-flex items-center';\n                         tagSpan.textContent = tagValue + ' ';\n\n                         const removeButton = document.createElement('button');\n                         removeButton.type = 'button';\n                         removeButton.className = 'ml-1 text-blue-600 hover:text-blue-800 focus:outline-none';\n                         removeButton.innerHTML = '×';\n                         removeButton.setAttribute('aria-label', `Remove ${tagValue}`);\n                         removeButton.onclick = function() { removeTag(this); };\n                         tagSpan.appendChild(removeButton);\n\n                         const placeholder = tagsDisplay.querySelector('.tag-placeholder');\n                         if (placeholder) {\n                             placeholder.remove();\n                         }\n                         tagsDisplay.appendChild(tagSpan);\n\n                         if (searchInput) searchInput.value = '';\n                         if (suggestionsContainer) suggestionsContainer.innerHTML = '';\n                         searchInput?.focus();\n                     }\n\n                     function removeTag(buttonElement) {\n                         const tagSpan = buttonElement.closest('.tag-item');\n                         if (!tagSpan) return;\n\n                         const tagValue = tagSpan.getAttribute('data-tag-value');\n                         const idPrefix = tagSpan.getAttribute('data-id-prefix');\n                         const fieldName = tagSpan.getAttribute('data-field-name');\n\n                         const container = tagSpan.closest('.tag-input-container');\n                          if (!container || !tagValue || !idPrefix || !fieldName) {\n                             console.error(\"Could not remove tag, missing required elements or attributes.\");\n                             return;\n                          }\n                         const hiddenInputsContainer = container.querySelector(`#${idPrefix}-hidden-inputs`);\n                         const tagsDisplay = container.querySelector(`#${idPrefix}-tags-display`);\n\n                         const hiddenInput = hiddenInputsContainer?.querySelector(`input[name=\"${fieldName}\"][data-tag-value=\"${CSS.escape(tagValue)}\"]`);\n                         if (hiddenInput) {\n                             hiddenInput.remove();\n                         } else {\n                             console.warn(\"Could not find hidden input for tag to remove:\", tagValue);\n                         }\n\n                         tagSpan.remove();\n\n                         if (tagsDisplay && !tagsDisplay.querySelector('.tag-item')) {\n                             const placeholder = document.createElement('span');\n                             placeholder.className = 'tag-placeholder text-xs text-gray-400 italic p-1';\n                             let labelText = 'items';\n                             const labelElement = container.querySelector(`label[for='${idPrefix}-search-input']`);\n                              if (labelElement) {\n                                 labelText = labelElement.textContent.replace(/\\s+Names$/i, '').toLowerCase();\n                             }\n                             placeholder.textContent = `No ${labelText} added yet.`;\n                             tagsDisplay.appendChild(placeholder);\n                         }\n                     }\n\n                      // --- Global Event Listener (unchanged) ---\n                     document.addEventListener('click', function(event) {\n                         const allTagContainers = document.querySelectorAll('.tag-input-container');\n                         allTagContainers.forEach(container => {\n                             const suggestionsDivId = container.querySelector('input[type=text]').id.replace('-search-input', '-suggestions');\n                             const suggestionsDiv = container.querySelector(`#${suggestionsDivId}`);\n                             if (suggestionsDiv && !container.contains(event.target)) {\n                                suggestionsDiv.innerHTML = '';\n                             }\n                         });\n                     });\n          \t\t</script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<div class=\"flex items-center justify-start mt-8\"><button type=\"submit\" class=\"px-4 py-2 font-bold text-white bg-blue-500 rounded hover:bg-blue-700 focus:outline-none focus:shadow-outline\">Save Metadata</button></div></form></div><script>\n                     // --- Core Tagging Logic ---\n                     function addTag(idPrefix, fieldName, uuid, displayName) {\n\t\t\t\t\t\tconst tagValue = uuid.trim();\n\t\t\t\t\t\tconst tagLabel = displayName.trim();\n\t\t\t\t\t\tif (!tagValue || !tagLabel) return;\n\n\t\t\t\t\t\tconst container = document.getElementById(`${idPrefix}-tags-display`)?.closest('.tag-input-container');\n\t\t\t\t\t\tif (!container) return;\n\n\t\t\t\t\t\tconst tagsDisplay = container.querySelector(`#${idPrefix}-tags-display`);\n\t\t\t\t\t\tconst hiddenInputsContainer = container.querySelector(`#${idPrefix}-hidden-inputs`);\n\t\t\t\t\t\tconst searchInput = container.querySelector(`#${idPrefix}-search-input`);\n\t\t\t\t\t\tconst suggestionsContainer = container.querySelector(`#${idPrefix}-suggestions`);\n\n\t\t\t\t\t\t// Avoid duplicate UUIDs\n\t\t\t\t\t\tconst existingInput = hiddenInputsContainer.querySelector(`input[name=\"${fieldName}\"][value=\"${CSS.escape(tagValue)}\"]`);\n\t\t\t\t\t\tif (existingInput) {\n\t\t\t\t\t\t\tsearchInput.value = '';\n\t\t\t\t\t\t\tsuggestionsContainer.innerHTML = '';\n\t\t\t\t\t\t\tsearchInput.focus();\n\t\t\t\t\t\t\treturn;\n\t\t\t\t\t\t}\n\n\t\t\t\t\t\t// ✅ hidden input with UUID\n\t\t\t\t\t\tconst hiddenInput = document.createElement('input');\n\t\t\t\t\t\thiddenInput.type = 'hidden';\n\t\t\t\t\t\thiddenInput.name = fieldName;\n\t\t\t\t\t\thiddenInput.value = tagValue;\n\t\t\t\t\t\thiddenInput.setAttribute('data-tag-value', tagValue);\n\t\t\t\t\t\thiddenInputsContainer.appendChild(hiddenInput);\n\n\t\t\t\t\t\t// ✅ visual tag with NAME\n\t\t\t\t\t\tconst tagSpan = document.createElement('span');\n\t\t\t\t\t\ttagSpan.setAttribute('data-tag-value', tagValue);\n\t\t\t\t\t\ttagSpan.setAttribute('data-id-prefix', idPrefix);\n\t\t\t\t\t\ttagSpan.setAttribute('data-field-name', fieldName);\n\t\t\t\t\t\ttagSpan.className = 'tag-item bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300 inline-flex items-center';\n\t\t\t\t\t\ttagSpan.textContent = tagLabel + ' ';\n\n\t\t\t\t\t\tconst removeButton = document.createElement('button');\n\t\t\t\t\t\tremoveButton.type = 'button';\n\t\t\t\t\t\tremoveButton.className = 'ml-1 text-blue-600 hover:text-blue-800 focus:outline-none';\n\t\t\t\t\t\tremoveButton.innerHTML = '×';\n\t\t\t\t\t\tremoveButton.setAttribute('aria-label', `Remove ${tagLabel}`);\n\t\t\t\t\t\tremoveButton.onclick = function () { removeTag(this); };\n\t\t\t\t\t\ttagSpan.appendChild(removeButton);\n\n\t\t\t\t\t\tconst placeholder = tagsDisplay.querySelector('.tag-placeholder');\n\t\t\t\t\t\tif (placeholder) placeholder.remove();\n\t\t\t\t\t\ttagsDisplay.appendChild(tagSpan);\n\n\t\t\t\t\t\tsearchInput.value = '';\n\t\t\t\t\t\tsuggestionsContainer.innerHTML = '';\n\t\t\t\t\t\tsearchInput.focus();\n\t\t\t\t\t}\n\n\n                     function removeTag(buttonElement) {\n                         const tagSpan = buttonElement.closest('.tag-item');\n                         if (!tagSpan) return;\n\n                         const tagValue = tagSpan.getAttribute('data-tag-value');\n                         const idPrefix = tagSpan.getAttribute('data-id-prefix');\n                         const fieldName = tagSpan.getAttribute('data-field-name');\n\n                         const container = tagSpan.closest('.tag-input-container');\n                          if (!container || !tagValue || !idPrefix || !fieldName) {\n                             console.error(\"Could not remove tag, missing required elements or attributes.\");\n                             return;\n                          }\n                         const hiddenInputsContainer = container.querySelector(`#${idPrefix}-hidden-inputs`);\n                         const tagsDisplay = container.querySelector(`#${idPrefix}-tags-display`);\n\n                         const hiddenInput = hiddenInputsContainer?.querySelector(`input[name=\"${fieldName}\"][data-tag-value=\"${CSS.escape(tagValue)}\"]`);\n                         if (hiddenInput) {\n                             hiddenInput.remove();\n                         } else {\n                             console.warn(\"Could not find hidden input for tag to remove:\", tagValue);\n                         }\n\n                         tagSpan.remove();\n\n                         if (tagsDisplay && !tagsDisplay.querySelector('.tag-item')) {\n                             const placeholder = document.createElement('span');\n                             placeholder.className = 'tag-placeholder text-xs text-gray-400 italic p-1';\n                             let labelText = 'items';\n                             const labelElement = container.querySelector(`label[for='${idPrefix}-search-input']`);\n                              if (labelElement) {\n                                 labelText = labelElement.textContent.replace(/\\s+Names$/i, '').toLowerCase();\n                             }\n                             placeholder.textContent = `No ${labelText} added yet.`;\n                             tagsDisplay.appendChild(placeholder);\n                         }\n                     }\n\n                      // --- Global Event Listener (unchanged) ---\n                     document.addEventListener('click', function(event) {\n                         const allTagContainers = document.querySelectorAll('.tag-input-container');\n                         allTagContainers.forEach(container => {\n                             const suggestionsDivId = container.querySelector('input[type=text]').id.replace('-search-input', '-suggestions');\n                             const suggestionsDiv = container.querySelector(`#${suggestionsDivId}`);\n                             if (suggestionsDiv && !container.contains(event.target)) {\n                                suggestionsDiv.innerHTML = '';\n                             }\n                         });\n                     });\n          \t\t</script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
