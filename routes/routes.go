@@ -39,9 +39,12 @@ func InitRoutes(e *echo.Echo, h Handler) {
 	// Admin Routes
 	e.GET("/admin/users", h.ManageUsersPage, middleware.RequireAuth)
 	e.POST("/admin/users", h.CreateNewUser, middleware.RequireAuth)
+	e.POST("/admin/users/delete", h.DeleteUser, middleware.RequireAuth)
+
 
 	// --- Database Search Routes ---
 	e.GET("/authors", h.DatabaseSearchAuthors, middleware.RequireAuth)
 	e.GET("/keywords", h.DatabaseSearchKeywords, middleware.RequireAuth)
 	e.GET("/regions", h.DatabaseSearchRegions, middleware.RequireAuth)
+	e.GET("/categories", h.DatabaseSearchCategories, middleware.RequireAuth)
 }

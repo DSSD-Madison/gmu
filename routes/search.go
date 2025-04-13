@@ -2,7 +2,7 @@ package routes
 
 import (
 	"fmt"
-	"github.com/DSSD-Madison/gmu/middleware"
+	"github.com/DSSD-Madison/gmu/pkg/middleware"
 	"net/http"
 	"net/url"
 	"slices"

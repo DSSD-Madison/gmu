@@ -1,8 +1,10 @@
 package middleware
 
 import (
-	"github.com/gorilla/sessions"
 	"net/http"
+	"net/url"
+
+	"github.com/gorilla/sessions"
 
 	"github.com/labstack/echo/v4"
 )
@@ -38,12 +40,15 @@ func RequireAuth(next echo.HandlerFunc) echo.HandlerFunc {
 		auth, ok := session.Values["authenticated"].(bool)
 
 		if !ok || !auth {
-			redirectTo := c.Request().RequestURI
-			// If HTMX, use HX-Redirect
+			redirectTo := url.QueryEscape(c.Request().RequestURI)
+
+			// If HTMX request, use HX-Redirect
 			if c.Request().Header.Get("HX-Request") == "true" {
 				c.Response().Header().Set("HX-Redirect", "/login?redirect="+redirectTo)
 				return c.NoContent(http.StatusUnauthorized)
 			}
+
+			// Normal browser redirect
 			return c.Redirect(http.StatusSeeOther, "/login?redirect="+redirectTo)
 		}
 

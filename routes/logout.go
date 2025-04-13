@@ -11,6 +11,7 @@ import (
 func (h *Handler) Logout(c echo.Context) error {
 	session, _ := middleware.Store.Get(c.Request(), "session")
 	session.Values["authenticated"] = false
+	session.Values["is_master"] = false
 	session.Options.MaxAge = -1
 	session.Save(c.Request(), c.Response())
 

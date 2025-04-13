@@ -19,6 +19,8 @@ func (h *Handler) DatabaseFieldSearch(c echo.Context, fieldName string) error {
 		idPrefix = "keywords"
 	case "author_names":
 		idPrefix = "authors"
+	case "category_names":
+		idPrefix = "categories"
 	default:
 		h.logger.Error("DatabaseFieldSearch called with unsupported fieldName: %s", fieldName)
 		return c.String(http.StatusInternalServerError, "Internal server configuration error.")
@@ -77,6 +79,19 @@ func (h *Handler) DatabaseFieldSearch(c echo.Context, fieldName string) error {
 				})
 			}
 		}
+	case "category_names":
+		items, err := h.db.SearchCategoriesByNamePrefix(ctx, dbQuery)
+		if err != nil {
+			h.logger.Error("Error searching categories for '%s': %v", searchQuery, err)
+			dbErr = err
+		} else {
+			for _, item := range items {
+				suggestions = append(suggestions, components.Pair{
+					ID:   item.ID.String(),
+					Name: item.Name,
+				})
+			}
+		}	
 	}
 
 	if dbErr != nil && len(suggestions) > 0 {
@@ -98,4 +113,8 @@ func (h *Handler) DatabaseSearchKeywords(c echo.Context) error {
 
 func (h *Handler) DatabaseSearchAuthors(c echo.Context) error {
 	return h.DatabaseFieldSearch(c, "author_names")
+}
+
+func (h *Handler) DatabaseSearchCategories(c echo.Context) error {
+	return h.DatabaseFieldSearch(c, "category_names")
 }

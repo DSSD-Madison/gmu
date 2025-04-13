@@ -66,3 +66,30 @@ func (h *Handler) CreateNewUser(c echo.Context) error {
 
 	return c.Redirect(http.StatusSeeOther, "/admin/users")
 }
+
+func (h *Handler) DeleteUser(c echo.Context) error {
+	if !middleware.IsMaster(c) {
+		return c.String(http.StatusForbidden, "Access denied")
+	}
+
+	username := c.FormValue("username")
+	if username == "" {
+		return c.String(http.StatusBadRequest, "Username required")
+	}
+
+	// Prevent deleting master users just in case
+	user, err := h.db.GetUserByUsername(c.Request().Context(), username)
+	if err != nil {
+		return c.String(http.StatusNotFound, "User not found")
+	}
+	if user.IsMaster {
+		return c.String(http.StatusForbidden, "Cannot delete admin users")
+	}
+
+	err = h.db.DeleteUserByUsername(c.Request().Context(), username)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "Failed to delete user")
+	}
+
+	return c.Redirect(http.StatusSeeOther, "/admin/users")
+}

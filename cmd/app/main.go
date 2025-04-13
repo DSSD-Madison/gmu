@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"net/http"
 	"os"
 
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -80,20 +81,18 @@ func main() {
 		TokenLookup: "form:_csrf",
 		CookieName:  "csrf",
 		ContextKey:  "csrf",
+		CookieSameSite: http.SameSiteStrictMode, // <-- change this
+		CookieSecure:   false,                   // <-- allow over HTTP in dev
 		Skipper: func(c echo.Context) bool {
-			// Skip CSRF for routes that do NOT use RequireAuth middleware
 			switch c.Path() {
-			case "/",                      // Home
-				 "/search",               // Search form
-				 "/search/suggestions",   // Suggestions POST
-				 "/login",                // GET login page or POST login
-				 "/logout":               // Logout buttons for dev
+			case "/", "/search", "/search/suggestions", "/login", "/logout":
 				return true
 			default:
 				return false
 			}
 		},
 	}))
+	
 	
 
 	dbConfig, err := db_util.LoadConfig()

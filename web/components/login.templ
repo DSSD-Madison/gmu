@@ -1,10 +1,11 @@
 package components
 
-templ LoginForm(csrf string) {
+templ LoginForm(csrf string, redirect string) {
 	<div class="max-w-md p-6 mx-auto mt-20 bg-white shadow-md dark:bg-gray-800 rounded-xl">
 		<h2 class="mb-6 text-2xl font-semibold text-center dark:text-white">Login</h2>
 		<form method="post" hx-post="/login" hx-target="body" class="space-y-4">
 			<input type="hidden" name="_csrf" value={ csrf } />
+			<input type="hidden" name="redirect" value={ redirect } />
 
 			<div>
 				<input type="text" name="username" placeholder="Username" class="..." />
@@ -19,10 +20,12 @@ templ LoginForm(csrf string) {
 	</div>
 }
 
-templ LoginFormWithError(err string, csrf string) {
+
+templ LoginFormWithError(err string, csrf string, redirect string) {
 	<div class="max-w-md p-6 mx-auto mt-20 bg-white shadow-md dark:bg-gray-800 rounded-xl">
 		<h2 class="mb-4 text-2xl font-semibold text-center dark:text-white">Login</h2>
 		<p class="mb-4 text-sm text-center text-red-600">{ err }</p>
-		@LoginForm(csrf)
+		@LoginForm(csrf, redirect)
 	</div>
 }
+
