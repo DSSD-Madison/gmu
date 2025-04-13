@@ -39,6 +39,7 @@ templ ResultCard(result awskendra.KendraResult, isAuthorized bool) {
 
 			if isAuthorized {
 				<a href={ templ.URL("/edit-metadata/" + result.UUID) }
+				   target="_blank"
 				   title="Edit Result"
 				   aria-label="Edit Result"
 				   class="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500 hover:text-gray-800 dark:hover:text-gray-100 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800">
@@ -48,9 +49,7 @@ templ ResultCard(result awskendra.KendraResult, isAuthorized bool) {
 					</svg>
 				</a>
 			}
-			// --- End Conditional Edit Link ---
 
-			// Original summary content div
 			<div class="flex items-start space-x-4">
 				if result.Image != "" {
 					<img src={ result.Image } alt="Preview" class="w-24 h-24 object-cover rounded-md flex-shrink-0 border border-gray-100"/>
