@@ -3,13 +3,14 @@ package routes
 import (
 	"context"
 	"fmt"
+	"log"
+	"net/http"
+	"path"
+	"strings" // For placeholder helper
+
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 	"github.com/DSSD-Madison/gmu/pkg/db"
 	"github.com/lib/pq"
-	"log"
-	"net/http"
-	"net/url"
-	"strings" // For placeholder helper
 
 	// Import UUID generator again
 	"github.com/google/uuid" // Run: go get github.com/google/uuid
@@ -29,27 +30,40 @@ func (h *Handler) HandlePDFUpload(c echo.Context) error {
 	if err != nil {
 		log.Printf("Error getting uploaded file: %v", err)
 		errorMessage := fmt.Sprintf("Failed to get file: %v", err)
-		c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML) // Ensure correct content type for HTMX swap
+		c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
 		return web.Render(c, http.StatusBadRequest, components.UploadResponse(false, errorMessage))
 	}
 
 	originalFilename := fileHeader.Filename
-	log.Printf("Received file upload: Name=%s", originalFilename)
+	fileId := uuid.New()
 
-	// --- 2. Generate Placeholder File ID (UUID) ---
-	fileId := uuid.NewString()
-	log.Printf("Generated placeholder fileId (UUID): %s for original file: %s", fileId, originalFilename)
+	log.Printf("Generated fileId: %s for original file: %s", fileId.String(), originalFilename)
 
-	// --- 3. Construct Redirect URL ---
-	redirectPath := fmt.Sprintf("/edit-metadata/%s", fileId)
-	redirectURL := url.URL{Path: redirectPath}
-	query := redirectURL.Query()
-	redirectURL.RawQuery = query.Encode()
-	finalRedirectURL := redirectURL.String() // Get the final URL string
+	// TODO: Replace with actual S3 logic
+	s3Path := fmt.Sprintf("s3://your-bucket-name/documents/%s", originalFilename)
 
-	c.Response().Header().Set("HX-Redirect", finalRedirectURL)
+	title := path.Base(s3Path)
+
+	// Insert with placeholder title
+	err = h.db.InsertUploadedDocument(c.Request().Context(), db.InsertUploadedDocumentParams{
+		ID:       fileId,
+		S3File:   s3Path,
+		FileName: originalFilename,
+		Title:    title,
+	})
+	if err != nil {
+		log.Printf("DB insert failed: %v", err)
+		errorMessage := "Could not save file metadata to database"
+		c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
+		return web.Render(c, http.StatusInternalServerError, components.UploadResponse(false, errorMessage))
+	}
+
+	redirectPath := fmt.Sprintf("/edit-metadata/%s", fileId.String())
+	c.Response().Header().Set("HX-Redirect", redirectPath)
 	return c.NoContent(http.StatusOK)
 }
+
+
 
 // PDFMetadataEditPage displays the form using fileId from the path parameter
 func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
