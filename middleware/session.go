@@ -25,6 +25,12 @@ func IsMaster(c echo.Context) bool {
 	return ok && isMaster
 }
 
+func IsAuthorized(c echo.Context) bool {
+	session, _ := Store.Get(c.Request(), "session")
+	auth, ok := session.Values["authenticated"].(bool)
+	return ok && auth
+}
+
 // Middleware to check auth
 func RequireAuth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
