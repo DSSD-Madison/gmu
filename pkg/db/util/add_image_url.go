@@ -46,6 +46,8 @@ func AddImagesToResults(results awskendra.KendraResults, c echo.Context, queries
 			kendraResult.PublishDate = document.PublishDate.Time.Format("2006-01-02")
 		}
 
+		kendraResult.UUID = document.ID.String()
+
 		var tempScanner pq.StringArray
 		err := tempScanner.Scan(document.AuthorNames.(string))
 		if err == nil {

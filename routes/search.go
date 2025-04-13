@@ -2,6 +2,7 @@ package routes
 
 import (
 	"fmt"
+	"github.com/DSSD-Madison/gmu/middleware"
 	"net/http"
 	"net/url"
 	"slices"
@@ -74,7 +75,9 @@ func (h *Handler) Search(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	component, err := selectComponentTarget(r.target, r, results)
+
+	isAuthorized := middleware.IsAuthorized(c)
+	component, err := selectComponentTarget(r.target, r, results, isAuthorized)
 	if err != nil {
 		return err
 	}
@@ -109,16 +112,16 @@ func selectResultsFromTarget(target string, r searchRequest, h *Handler, c echo.
 	}
 }
 
-func selectComponentTarget(target string, r searchRequest, results awskendra.KendraResults) (templ.Component, error) {
+func selectComponentTarget(target string, r searchRequest, results awskendra.KendraResults, isAuthorized bool) (templ.Component, error) {
 	switch target {
 	case "root":
 		return components.Search(awskendra.KendraResults{UrlData: r.urlData}), nil
 	case "":
 		return components.SearchHome(awskendra.KendraResults{UrlData: r.urlData}), nil
 	case "results-container", "results-content-container":
-		return components.ResultsPage(results), nil
+		return components.ResultsPage(results, isAuthorized), nil
 	case "results-and-pagination":
-		return components.ResultsAndPagination(results), nil
+		return components.ResultsAndPagination(results, isAuthorized), nil
 	default:
 		return templ.NopComponent, fmt.Errorf("Failed to determine target component from target header.")
 	}
