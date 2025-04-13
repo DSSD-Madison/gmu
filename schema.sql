@@ -29,15 +29,6 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: allowed_users; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.allowed_users (
-    username text NOT NULL
-);
-
-
---
 -- Name: authors; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -198,14 +189,6 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
-
-
---
--- Name: allowed_users allowed_users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.allowed_users
-    ADD CONSTRAINT allowed_users_pkey PRIMARY KEY (username);
 
 
 --

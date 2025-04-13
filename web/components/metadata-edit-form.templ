@@ -64,5 +64,113 @@ templ PDFMetadataEditForm(
 				</div>
 			</form>
 		</div>
+		<script>
+                     // --- Core Tagging Logic ---
+                     function addTag(idPrefix, fieldName, value) {
+                         const tagValue = value.trim();
+                         if (!tagValue) return;
+
+                         const container = document.getElementById(`${idPrefix}-tags-display`)?.closest('.tag-input-container');
+                         if (!container) {
+                             console.error(`Tag input container not found for prefix: ${idPrefix}`);
+                             return;
+                         }
+
+                         const tagsDisplay = container.querySelector(`#${idPrefix}-tags-display`);
+                         const hiddenInputsContainer = container.querySelector(`#${idPrefix}-hidden-inputs`);
+                         const searchInput = container.querySelector(`#${idPrefix}-search-input`);
+                         const suggestionsContainer = container.querySelector(`#${idPrefix}-suggestions`);
+
+                         const existingInput = hiddenInputsContainer.querySelector(`input[name="${fieldName}"][value="${CSS.escape(tagValue)}"]`);
+                         if (existingInput) {
+                             if (searchInput) searchInput.value = '';
+                             if (suggestionsContainer) suggestionsContainer.innerHTML = '';
+                             searchInput?.focus();
+                             return;
+                         }
+
+                         const hiddenInput = document.createElement('input');
+                         hiddenInput.type = 'hidden';
+                         hiddenInput.name = fieldName;
+                         hiddenInput.value = tagValue;
+                         hiddenInput.setAttribute('data-tag-value', tagValue);
+                         hiddenInputsContainer.appendChild(hiddenInput);
+
+                         const tagSpan = document.createElement('span');
+                         tagSpan.setAttribute('data-tag-value', tagValue);
+                         tagSpan.setAttribute('data-id-prefix', idPrefix);
+                         tagSpan.setAttribute('data-field-name', fieldName);
+                         tagSpan.className = 'tag-item bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300 inline-flex items-center';
+                         tagSpan.textContent = tagValue + ' ';
+
+                         const removeButton = document.createElement('button');
+                         removeButton.type = 'button';
+                         removeButton.className = 'ml-1 text-blue-600 hover:text-blue-800 focus:outline-none';
+                         removeButton.innerHTML = '×';
+                         removeButton.setAttribute('aria-label', `Remove ${tagValue}`);
+                         removeButton.onclick = function() { removeTag(this); };
+                         tagSpan.appendChild(removeButton);
+
+                         const placeholder = tagsDisplay.querySelector('.tag-placeholder');
+                         if (placeholder) {
+                             placeholder.remove();
+                         }
+                         tagsDisplay.appendChild(tagSpan);
+
+                         if (searchInput) searchInput.value = '';
+                         if (suggestionsContainer) suggestionsContainer.innerHTML = '';
+                         searchInput?.focus();
+                     }
+
+                     function removeTag(buttonElement) {
+                         const tagSpan = buttonElement.closest('.tag-item');
+                         if (!tagSpan) return;
+
+                         const tagValue = tagSpan.getAttribute('data-tag-value');
+                         const idPrefix = tagSpan.getAttribute('data-id-prefix');
+                         const fieldName = tagSpan.getAttribute('data-field-name');
+
+                         const container = tagSpan.closest('.tag-input-container');
+                          if (!container || !tagValue || !idPrefix || !fieldName) {
+                             console.error("Could not remove tag, missing required elements or attributes.");
+                             return;
+                          }
+                         const hiddenInputsContainer = container.querySelector(`#${idPrefix}-hidden-inputs`);
+                         const tagsDisplay = container.querySelector(`#${idPrefix}-tags-display`);
+
+                         const hiddenInput = hiddenInputsContainer?.querySelector(`input[name="${fieldName}"][data-tag-value="${CSS.escape(tagValue)}"]`);
+                         if (hiddenInput) {
+                             hiddenInput.remove();
+                         } else {
+                             console.warn("Could not find hidden input for tag to remove:", tagValue);
+                         }
+
+                         tagSpan.remove();
+
+                         if (tagsDisplay && !tagsDisplay.querySelector('.tag-item')) {
+                             const placeholder = document.createElement('span');
+                             placeholder.className = 'tag-placeholder text-xs text-gray-400 italic p-1';
+                             let labelText = 'items';
+                             const labelElement = container.querySelector(`label[for='${idPrefix}-search-input']`);
+                              if (labelElement) {
+                                 labelText = labelElement.textContent.replace(/\s+Names$/i, '').toLowerCase();
+                             }
+                             placeholder.textContent = `No ${labelText} added yet.`;
+                             tagsDisplay.appendChild(placeholder);
+                         }
+                     }
+
+                      // --- Global Event Listener (unchanged) ---
+                     document.addEventListener('click', function(event) {
+                         const allTagContainers = document.querySelectorAll('.tag-input-container');
+                         allTagContainers.forEach(container => {
+                             const suggestionsDivId = container.querySelector('input[type=text]').id.replace('-search-input', '-suggestions');
+                             const suggestionsDiv = container.querySelector(`#${suggestionsDivId}`);
+                             if (suggestionsDiv && !container.contains(event.target)) {
+                                suggestionsDiv.innerHTML = '';
+                             }
+                         });
+                     });
+          		</script>
 	}
 }

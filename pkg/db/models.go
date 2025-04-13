@@ -11,10 +11,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type AllowedUser struct {
-	Username string
-}
-
 type Author struct {
 	ID   uuid.UUID
 	Name string

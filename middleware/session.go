@@ -12,9 +12,9 @@ var Store = sessions.NewCookieStore([]byte("very-secret-key-keep-it-safe"))
 func init() {
 	Store.Options = &sessions.Options{
 		Path:     "/",
-		MaxAge:   60,         
+		MaxAge:   10000000,
 		HttpOnly: true,
-		Secure:   false,              // ✅ VERY IMPORTANT for localhost
+		Secure:   false,                // ✅ VERY IMPORTANT for localhost
 		SameSite: http.SameSiteLaxMode, // Safe default, allows HTMX redirects
 	}
 }
@@ -44,4 +44,3 @@ func RequireAuth(next echo.HandlerFunc) echo.HandlerFunc {
 		return next(c)
 	}
 }
-
