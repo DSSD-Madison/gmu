@@ -1,24 +1,32 @@
 package components
 
 templ LoginForm(csrf string, redirect string) {
-	<div class="max-w-md p-6 mx-auto mt-20 bg-white shadow-md dark:bg-gray-800 rounded-xl">
-		<h2 class="mb-6 text-2xl font-semibold text-center dark:text-white">Login</h2>
-		<form method="post" hx-post="/login" hx-target="body" class="space-y-4">
-			<input type="hidden" name="_csrf" value={ csrf } />
-			<input type="hidden" name="redirect" value={ redirect } />
+	@Base("Login") {
+		<div class="max-w-md p-6 mx-auto mt-20 bg-white shadow-md dark:bg-gray-800 rounded-xl">
+			<h2 class="mb-6 text-2xl font-semibold text-center dark:text-white">Login</h2>
+			<form method="post" hx-post="/login" hx-target="body" class="space-y-4">
+				<input type="hidden" name="_csrf" value={ csrf } />
+				<input type="hidden" name="redirect" value={ redirect } />
 
-			<div>
-				<input type="text" name="username" placeholder="Username" class="..." />
-			</div>
-			<div>
-				<input type="password" name="password" placeholder="Password" class="..." />
-			</div>
-			<div>
-				<button type="submit" class="...">Log In</button>
-			</div>
-		</form>
-	</div>
+				<div>
+					<input type="text" name="username" placeholder="Username"
+						class="w-full px-4 py-2 border border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+				</div>
+				<div>
+					<input type="password" name="password" placeholder="Password"
+						class="w-full px-4 py-2 border border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+				</div>
+				<div>
+					<button type="submit"
+						class="w-full px-4 py-2 font-bold text-white bg-blue-600 rounded hover:bg-blue-700">
+						Log In
+					</button>
+				</div>
+			</form>
+		</div>
+	}
 }
+
 
 
 templ LoginFormWithError(err string, csrf string, redirect string) {

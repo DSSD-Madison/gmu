@@ -5,63 +5,65 @@ import (
 )
 
 templ ManageUsersForm(csrf string, err string, users []db.ListUsersRow) {
-    <div class="max-w-xl p-6 mx-auto mt-10 bg-white rounded shadow-md dark:bg-gray-800">
-        <h2 class="mb-4 text-xl font-bold dark:text-white">Add New User</h2>
+	@Base("Manage Users") {
+		<div class="max-w-xl p-6 mx-auto mt-10 bg-white rounded shadow-md dark:bg-gray-800">
+			<h2 class="mb-4 text-xl font-bold dark:text-white">Add New User</h2>
 
-        if err != "" {
-            <p class="mb-4 text-red-600">{ err }</p>
-        }
+			if err != "" {
+				<p class="mb-4 text-red-600">{ err }</p>
+			}
 
-        <form method="post" action="/admin/users" onsubmit="return validatePasswords()" class="mb-6 space-y-4">
-            <input type="hidden" name="_csrf" value={ csrf } />
+			<form method="post" action="/admin/users" onsubmit="return validatePasswords()" class="mb-6 space-y-4">
+				<input type="hidden" name="_csrf" value={ csrf } />
 
-            <input type="text" name="username" placeholder="Username" required
-                class="w-full px-4 py-2 border border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+				<input type="text" name="username" placeholder="Username" required
+					class="w-full px-4 py-2 border border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
 
-            <input type="password" id="password" name="password" placeholder="Password" required minlength="6"
-                class="w-full px-4 py-2 border border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+				<input type="password" id="password" name="password" placeholder="Password" required minlength="6"
+					class="w-full px-4 py-2 border border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
 
-            <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm Password" required minlength="6"
-                class="w-full px-4 py-2 border border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+				<input type="password" id="confirm_password" name="confirm_password" placeholder="Confirm Password" required minlength="6"
+					class="w-full px-4 py-2 border border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
 
-            <button type="submit" class="w-full px-4 py-2 font-bold text-white bg-blue-600 rounded hover:bg-blue-700">
-                Add User
-            </button>
-        </form>
+				<button type="submit" class="w-full px-4 py-2 font-bold text-white bg-blue-600 rounded hover:bg-blue-700">
+					Add User
+				</button>
+			</form>
 
-        <h3 class="mb-2 text-lg font-semibold dark:text-white">Existing Users</h3>
-        <ul class="divide-y divide-gray-200 dark:divide-gray-700">
-            for _, u := range users {
-                <li class="flex items-center justify-between py-2 dark:text-white">
-                    <div>
-                        <span>{ u.Username }</span>
-                        if u.IsMaster {
-                            <span class="ml-2 text-sm text-blue-500">[admin]</span>
-                        }
-                    </div>
-                    if !u.IsMaster {
-                        <form method="post" action="/admin/users/delete" class="ml-4">
-                            <input type="hidden" name="_csrf" value={ csrf } />
-                            <input type="hidden" name="username" value={ u.Username } />
-                            <button type="submit" class="text-sm text-red-600 hover:text-red-800">
-                                Delete
-                            </button>
-                        </form>
-                    }
-                </li>
-            }
-        </ul>
+			<h3 class="mb-2 text-lg font-semibold dark:text-white">Existing Users</h3>
+			<ul class="divide-y divide-gray-200 dark:divide-gray-700">
+				for _, u := range users {
+					<li class="flex items-center justify-between py-2 dark:text-white">
+						<div>
+							<span>{ u.Username }</span>
+							if u.IsMaster {
+								<span class="ml-2 text-sm text-blue-500">[admin]</span>
+							}
+						</div>
+						if !u.IsMaster {
+							<form method="post" action="/admin/users/delete" class="ml-4">
+								<input type="hidden" name="_csrf" value={ csrf } />
+								<input type="hidden" name="username" value={ u.Username } />
+								<button type="submit" class="text-sm text-red-600 hover:text-red-800">
+									Delete
+								</button>
+							</form>
+						}
+					</li>
+				}
+			</ul>
 
-        <script>
-            function validatePasswords() {
-                const pw = document.getElementById("password").value;
-                const confirm = document.getElementById("confirm_password").value;
-                if (pw !== confirm) {
-                    alert("Passwords do not match.");
-                    return false;
-                }
-                return true;
-            }
-        </script>
-    </div>
+			<script>
+				function validatePasswords() {
+					const pw = document.getElementById("password").value;
+					const confirm = document.getElementById("confirm_password").value;
+					if (pw !== confirm) {
+						alert("Passwords do not match.");
+						return false;
+					}
+					return true;
+				}
+			</script>
+		</div>
+	}
 }
