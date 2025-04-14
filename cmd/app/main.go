@@ -16,7 +16,7 @@ import (
 
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 	"github.com/DSSD-Madison/gmu/pkg/config"
-	"github.com/DSSD-Madison/gmu/pkg/db"
+	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
 	db_util "github.com/DSSD-Madison/gmu/pkg/db/util"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/DSSD-Madison/gmu/routes"

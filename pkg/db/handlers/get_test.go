@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/DSSD-Madison/gmu/pkg/db"
+	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
 )
 
 // Create a testable version of the handler function that accepts an interface

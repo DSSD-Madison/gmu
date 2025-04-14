@@ -10,7 +10,7 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
-	"github.com/DSSD-Madison/gmu/pkg/db"
+	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
 	"github.com/DSSD-Madison/gmu/pkg/db/handlers"
 )
 
