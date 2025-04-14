@@ -22,7 +22,7 @@ templ NavItems(isAuthenticated bool, isMaster bool) {
 			if isAuthenticated {
 				@NavButton("Upload", templ.URL("/upload"))
 				if isMaster {
-					@NavButton("Create Users", templ.URL("/admin/users"))
+					@NavButton("Manage Users", templ.URL("/admin/users"))
 				}
 				@NavButton("Logout", templ.URL("/logout"))
 			} else {

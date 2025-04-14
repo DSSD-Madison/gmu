@@ -88,7 +88,7 @@ func NavItems(isAuthenticated bool, isMaster bool) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			if isMaster {
-				templ_7745c5c3_Err = NavButton("Create Users", templ.URL("/admin/users")).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = NavButton("Manage Users", templ.URL("/admin/users")).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
