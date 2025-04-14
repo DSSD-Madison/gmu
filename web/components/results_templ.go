@@ -36,7 +36,7 @@ func ResultsPage(results awskendra.KendraResults, isAuthorized bool) templ.Compo
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"grid-container\" class=\"pt-10 pr-10 grid grid-cols-[1fr_3fr] grid-rows-[auto_1fr_auto] w-full gap-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"grid-container\" class=\"py-4 md:grid md:grid-cols-[1fr_4fr] md:w-full md:gap-4 flex flex-col justify-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -134,26 +134,7 @@ func ResultCard(result awskendra.KendraResult, isAuthorized bool) templ.Componen
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<details class=\"group dark:bg-gray-800 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-150 ease-in-out overflow-hidden\"><summary class=\"relative list-none cursor-pointer p-4 pr-12 block dark:hover:bg-gray-700 hover:bg-gray-100 transition duration-150 ease-in-out\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if isAuthorized {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<a href=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var4 templ.SafeURL = templ.URL("/edit-metadata/" + result.UUID)
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(string(templ_7745c5c3_Var4)))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" target=\"_blank\" title=\"Edit Result\" aria-label=\"Edit Result\" class=\"absolute top-2 right-2 z-10 p-1.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500 hover:text-gray-800 dark:hover:text-gray-100 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z\"></path></svg></a>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<div class=\"flex items-start space-x-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<details class=\"group dark:bg-gray-800 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-150 ease-in-out overflow-hidden\"><summary class=\"list-none cursor-pointer p-4 block dark:hover:bg-gray-700 hover:bg-gray-100 transition duration-150 ease-in-out\"><div class=\"flex items-start space-x-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -171,17 +152,17 @@ func ResultCard(result awskendra.KendraResult, isAuthorized bool) templ.Componen
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" alt=\"Preview\" class=\"w-24 h-24 object-cover rounded-md flex-shrink-0 border border-gray-100\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" alt=\"Preview\" class=\"w-24 h-24 object-cover rounded-md flex-shrink-0 border border-gray-100\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<div class=\"w-24 h-24 dark:bg-gray-700 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 text-xs flex-shrink-0 border border-gray-200\">(No Preview)</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<div class=\"w-24 h-24 dark:bg-gray-700 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 text-xs flex-shrink-0 border border-gray-200\">(No Preview)</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<div class=\"flex-grow min-w-0\"><a href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<div class=\"flex-grow min-w-0\"><a href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -258,7 +239,7 @@ func ResultCard(result awskendra.KendraResult, isAuthorized bool) templ.Componen
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div></div><div class=\"self-center text-gray-400 group-open:rotate-90 transition-transform duration-300 flex-shrink-0 ml-2\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-5 w-5\" viewBox=\"0 0 20 20\" fill=\"currentColor\"><path fill-rule=\"evenodd\" d=\"M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z\" clip-rule=\"evenodd\"></path></svg></div></div></summary><div class=\"px-6 py-4 border-t border-gray-200 dark:border-gray-600 dark:bg-gray-800 bg-gray-50/75\"><dl class=\"grid grid-cols-[max-content_1fr] gap-x-3 gap-y-2.5 text-sm\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div></div><div class=\"self-center text-gray-400 group-open:rotate-90 transition-transform duration-300 flex-shrink-0 ml-2\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-5 w-5\" viewBox=\"0 0 20 20\" fill=\"currentColor\"><path fill-rule=\"evenodd\" d=\"M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z\" clip-rule=\"evenodd\"></path></svg></div></div></summary><div class=\"px-6 py-4 border-t border-gray-200 dark:border-gray-600 dark:bg-gray-800 bg-gray-50/75\"><dl class=\"grid grid-cols-[max-content_1fr] gap-x-3 gap-y-2.5 text-sm\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
