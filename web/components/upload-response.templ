@@ -9,10 +9,10 @@ templ UploadResponse(success bool, message string) {
 }
 
 templ DuplicateUploadResponse(docID string) {
-	<div class="p-2 font-semibold text-red-600">
-		Error: A file with this name has already been uploaded.
-		<a href={ templ.URL("/edit-metadata/" + docID) } class="text-blue-600 underline hover:text-blue-800">
-			Edit its metadata here
+	<div class="p-2 font-semibold text-yellow-600">
+		Error: A file with this name has already been uploaded. You can either rename your file or
+		<a href={ templ.URL("/edit-metadata/" + docID) } class="text-yellow-600 underline hover:text-blue-800">
+			edit its metadata here
 		</a>.
 	</div>
 }
