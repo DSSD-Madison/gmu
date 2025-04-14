@@ -8,7 +8,34 @@ package db
 import (
 	"context"
 	"database/sql"
+
+	"github.com/google/uuid"
 )
+
+const findAuthorByName = `-- name: FindAuthorByName :one
+SELECT id, name FROM authors WHERE LOWER(name) = LOWER($1) LIMIT 1
+`
+
+func (q *Queries) FindAuthorByName(ctx context.Context, lower string) (Author, error) {
+	row := q.db.QueryRowContext(ctx, findAuthorByName, lower)
+	var i Author
+	err := row.Scan(&i.ID, &i.Name)
+	return i, err
+}
+
+const insertAuthor = `-- name: InsertAuthor :exec
+INSERT INTO authors (id, name) VALUES ($1, $2)
+`
+
+type InsertAuthorParams struct {
+	ID   uuid.UUID
+	Name string
+}
+
+func (q *Queries) InsertAuthor(ctx context.Context, arg InsertAuthorParams) error {
+	_, err := q.db.ExecContext(ctx, insertAuthor, arg.ID, arg.Name)
+	return err
+}
 
 const listAllAuthors = `-- name: ListAllAuthors :many
 

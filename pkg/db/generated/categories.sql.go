@@ -8,7 +8,34 @@ package db
 import (
 	"context"
 	"database/sql"
+
+	"github.com/google/uuid"
 )
+
+const findCategoryByName = `-- name: FindCategoryByName :one
+SELECT id, name FROM categories WHERE LOWER(name) = LOWER($1) LIMIT 1
+`
+
+func (q *Queries) FindCategoryByName(ctx context.Context, lower string) (Category, error) {
+	row := q.db.QueryRowContext(ctx, findCategoryByName, lower)
+	var i Category
+	err := row.Scan(&i.ID, &i.Name)
+	return i, err
+}
+
+const insertCategory = `-- name: InsertCategory :exec
+INSERT INTO categories (id, name) VALUES ($1, $2)
+`
+
+type InsertCategoryParams struct {
+	ID   uuid.UUID
+	Name string
+}
+
+func (q *Queries) InsertCategory(ctx context.Context, arg InsertCategoryParams) error {
+	_, err := q.db.ExecContext(ctx, insertCategory, arg.ID, arg.Name)
+	return err
+}
 
 const listAllCategories = `-- name: ListAllCategories :many
 SELECT id, name FROM categories ORDER BY name

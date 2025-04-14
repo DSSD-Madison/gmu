@@ -8,7 +8,34 @@ package db
 import (
 	"context"
 	"database/sql"
+
+	"github.com/google/uuid"
 )
+
+const findKeywordByName = `-- name: FindKeywordByName :one
+SELECT id, name FROM keywords WHERE LOWER(name) = LOWER($1) LIMIT 1
+`
+
+func (q *Queries) FindKeywordByName(ctx context.Context, lower string) (Keyword, error) {
+	row := q.db.QueryRowContext(ctx, findKeywordByName, lower)
+	var i Keyword
+	err := row.Scan(&i.ID, &i.Name)
+	return i, err
+}
+
+const insertKeyword = `-- name: InsertKeyword :exec
+INSERT INTO keywords (id, name) VALUES ($1, $2)
+`
+
+type InsertKeywordParams struct {
+	ID   uuid.UUID
+	Name string
+}
+
+func (q *Queries) InsertKeyword(ctx context.Context, arg InsertKeywordParams) error {
+	_, err := q.db.ExecContext(ctx, insertKeyword, arg.ID, arg.Name)
+	return err
+}
 
 const listAllKeywords = `-- name: ListAllKeywords :many
 SELECT id, name FROM keywords ORDER BY name

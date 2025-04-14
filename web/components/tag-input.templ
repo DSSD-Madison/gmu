@@ -18,7 +18,7 @@ templ TagInputJS(idPrefix, label, fieldName, searchURL string, initialValues []P
 	<div class="mb-4 tag-input-container">
 		<label for={ idPrefix + "-search-input" } class="block mb-2 text-sm font-bold text-gray-700 dark:text-gray-200">{ label }</label>
 		<div class="relative">
-			<div id={ idPrefix + "-tags-display" } class="flex flex-wrap gap-1 mb-1 border border-transparent dark:border-transparent rounded min-h-0">
+			<div id={ idPrefix + "-tags-display" } class="flex flex-wrap min-h-0 gap-1 mb-1 border border-transparent rounded dark:border-transparent">
 				if len(initialValues) == 0 {
 					<span class="text-xs italic text-gray-400 tag-placeholder">No { strings.ToLower(label) } added yet.</span>
 				} else {
@@ -39,7 +39,9 @@ templ TagInputJS(idPrefix, label, fieldName, searchURL string, initialValues []P
 				name="name"
 				autocomplete="off"
 				placeholder={ "Search for " + strings.ToLower(label) + "..." }
-				class="w-full px-3 py-2 leading-tight text-gray-700 bg-white border border-gray-300 rounded shadow appearance-none dark:border-gray-600 dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:shadow-outline"
+				class="w-full px-3 py-2 leading-tight text-gray-700 bg-white border border-gray-300 rounded shadow appearance-none tag-search-input dark:border-gray-600 dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:shadow-outline"
+				data-id-prefix={ idPrefix }
+				data-field-name={ fieldName }
 				hx-get={ searchURL }
 				hx-trigger="input changed delay:300ms, focus"
 				hx-target={ "#" + idPrefix + "-suggestions" }
@@ -78,14 +80,22 @@ templ TagItemJS(idPrefix, fieldName, valueID, valueName string) {
 	</span>
 }
 
-
 templ SuggestionItemJS(idPrefix, fieldName, id, name string) {
-	<div
-		class="px-3 py-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200"
-		onclick={ addTagScript(idPrefix, fieldName, id, name) }
-	>
-		{ name }
-	</div>
+	if id == "NON" {
+		<div
+			class="px-3 py-2 text-sm font-semibold text-green-700 cursor-pointer hover:bg-green-100 dark:hover:bg-gray-700"
+			onclick={ addTagScript(idPrefix, fieldName, "new:" + name, name) }
+		>
+			+ Create "{ name }"
+		</div>
+	} else {
+		<div
+			class="px-3 py-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200"
+			onclick={ addTagScript(idPrefix, fieldName, id, name) }
+		>
+			{ name }
+		</div>
+	}
 }
 
 templ NoSuggestionResultJS() {

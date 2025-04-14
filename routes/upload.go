@@ -227,6 +227,79 @@ func parseDocument(row db.FindDocumentByIDRow) awskendra.KendraResult {
 	return res
 }
 
+func getOrCreateAuthor(ctx context.Context, q *db.Queries, name string) (uuid.UUID, error) {
+	existing, err := q.FindAuthorByName(ctx, name)
+	if err == nil {
+		return existing.ID, nil
+	}
+	if err == sql.ErrNoRows {
+		newID := uuid.New()
+		if err := q.InsertAuthor(ctx, db.InsertAuthorParams{
+			ID:   newID,
+			Name: name,
+		}); err != nil {
+			return uuid.Nil, err
+		}
+		return newID, nil
+	}
+	return uuid.Nil, err
+}
+
+func getOrCreateKeyword(ctx context.Context, q *db.Queries, name string) (uuid.UUID, error) {
+	existing, err := q.FindKeywordByName(ctx, name)
+	if err == nil {
+		return existing.ID, nil
+	}
+	if err == sql.ErrNoRows {
+		newID := uuid.New()
+		if err := q.InsertKeyword(ctx, db.InsertKeywordParams{
+			ID:   newID,
+			Name: name,
+		}); err != nil {
+			return uuid.Nil, err
+		}
+		return newID, nil
+	}
+	return uuid.Nil, err
+}
+
+func getOrCreateRegion(ctx context.Context, q *db.Queries, name string) (uuid.UUID, error) {
+	existing, err := q.FindRegionByName(ctx, name)
+	if err == nil {
+		return existing.ID, nil
+	}
+	if err == sql.ErrNoRows {
+		newID := uuid.New()
+		if err := q.InsertRegion(ctx, db.InsertRegionParams{
+			ID:   newID,
+			Name: name,
+		}); err != nil {
+			return uuid.Nil, err
+		}
+		return newID, nil
+	}
+	return uuid.Nil, err
+}
+
+func getOrCreateCategory(ctx context.Context, q *db.Queries, name string) (uuid.UUID, error) {
+	existing, err := q.FindCategoryByName(ctx, name)
+	if err == nil {
+		return existing.ID, nil
+	}
+	if err == sql.ErrNoRows {
+		newID := uuid.New()
+		if err := q.InsertCategory(ctx, db.InsertCategoryParams{
+			ID:   newID,
+			Name: name,
+		}); err != nil {
+			return uuid.Nil, err
+		}
+		return newID, nil
+	}
+	return uuid.Nil, err
+}
+
+
 func (h *Handler) HandleMetadataSave(c echo.Context) error {
 	ctx := c.Request().Context()
 
@@ -278,27 +351,38 @@ func (h *Handler) HandleMetadataSave(c echo.Context) error {
 	h.db.DeleteDocCategoriesByDocID(ctx, documentID)
 	h.db.DeleteDocRegionsByDocID(ctx, documentID)
 
-	parseUUIDListFromSlice := func(list []string) []uuid.UUID {
-		result := []uuid.UUID{}
-		for _, id := range list {
-			id = strings.TrimSpace(id)
-			if id == "" {
+	resolveIDs := func(entries []string, resolver func(context.Context, *db.Queries, string) (uuid.UUID, error)) []uuid.UUID {
+		var ids []uuid.UUID
+		for _, raw := range entries {
+			raw = strings.TrimSpace(raw)
+			if raw == "" {
 				continue
 			}
-			u, err := uuid.Parse(id)
-			if err == nil {
-				result = append(result, u)
+			if strings.HasPrefix(raw, "new:") {
+				name := strings.TrimPrefix(raw, "new:")
+				id, err := resolver(ctx, h.db, name)
+				if err != nil {
+					log.Printf("[ERROR] resolving %q: %v", name, err)
+					continue
+				}
+				ids = append(ids, id)
 			} else {
-				log.Printf("[WARN] Skipping invalid UUID: %s", id)
+				u, err := uuid.Parse(raw)
+				if err == nil {
+					ids = append(ids, u)
+				} else {
+					log.Printf("[WARN] Skipping invalid UUID: %s", raw)
+				}
 			}
 		}
-		return result
+		return ids
 	}
-
-	authors := parseUUIDListFromSlice(authorStrs)
-	keywords := parseUUIDListFromSlice(keywordStrs)
-	categories := parseUUIDListFromSlice(categoryStrs)
-	regions := parseUUIDListFromSlice(regionStrs)
+	
+	authors := resolveIDs(authorStrs, getOrCreateAuthor)
+	keywords := resolveIDs(keywordStrs, getOrCreateKeyword)
+	categories := resolveIDs(categoryStrs, getOrCreateCategory)
+	regions := resolveIDs(regionStrs, getOrCreateRegion)
+	
 
 	log.Printf("[DEBUG] Parsed author IDs: %v", authors)
 	log.Printf("[DEBUG] Parsed keyword IDs: %v", keywords)

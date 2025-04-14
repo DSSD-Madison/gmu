@@ -12,3 +12,9 @@ ORDER BY
 
 -- name: ListAllAuthors :many
 SELECT id, name FROM authors ORDER BY name;
+
+-- name: FindAuthorByName :one
+SELECT * FROM authors WHERE LOWER(name) = LOWER($1) LIMIT 1;
+
+-- name: InsertAuthor :exec
+INSERT INTO authors (id, name) VALUES ($1, $2);

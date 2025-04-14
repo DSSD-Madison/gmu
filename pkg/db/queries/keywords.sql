@@ -12,3 +12,9 @@ ORDER BY
 
 -- name: ListAllKeywords :many
 SELECT id, name FROM keywords ORDER BY name;
+
+-- name: FindKeywordByName :one
+SELECT * FROM keywords WHERE LOWER(name) = LOWER($1) LIMIT 1;
+
+-- name: InsertKeyword :exec
+INSERT INTO keywords (id, name) VALUES ($1, $2);    

@@ -8,7 +8,34 @@ package db
 import (
 	"context"
 	"database/sql"
+
+	"github.com/google/uuid"
 )
+
+const findRegionByName = `-- name: FindRegionByName :one
+SELECT id, name FROM regions WHERE LOWER(name) = LOWER($1) LIMIT 1
+`
+
+func (q *Queries) FindRegionByName(ctx context.Context, lower string) (Region, error) {
+	row := q.db.QueryRowContext(ctx, findRegionByName, lower)
+	var i Region
+	err := row.Scan(&i.ID, &i.Name)
+	return i, err
+}
+
+const insertRegion = `-- name: InsertRegion :exec
+INSERT INTO regions (id, name) VALUES ($1, $2)
+`
+
+type InsertRegionParams struct {
+	ID   uuid.UUID
+	Name string
+}
+
+func (q *Queries) InsertRegion(ctx context.Context, arg InsertRegionParams) error {
+	_, err := q.db.ExecContext(ctx, insertRegion, arg.ID, arg.Name)
+	return err
+}
 
 const listAllRegions = `-- name: ListAllRegions :many
 SELECT id, name FROM regions ORDER BY name
