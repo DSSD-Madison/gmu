@@ -144,7 +144,6 @@ func toCategoryPairs(all []db.Category, selected []string) []components.Pair {
 	return out
 }
 
-
 func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
 	fileId := c.Param("fileId")
 	if fileId == "" {
@@ -170,7 +169,6 @@ func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
 	keywordNames := []string(doc.KeywordNames)
 	regionNames := []string(doc.RegionNames)
 	categoryNames := []string(doc.CategoryNames)
-
 
 	selectedAuthors := toAuthorPairs(allAuthors, authorNames)
 	selectedKeywords := toKeywordPairs(allKeywords, keywordNames)
@@ -199,7 +197,7 @@ func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
 		allAuthors,
 		allCategories,
 	))
-	
+
 }
 
 func parseDocument(row db.FindDocumentByIDRow) awskendra.KendraResult {
@@ -241,7 +239,7 @@ func (h *Handler) HandleMetadataSave(c echo.Context) error {
 	form, err := c.FormParams()
 	if err != nil {
 		log.Printf("[ERROR] Failed to parse form params: %v", err)
-		return c.String(http.StatusBadRequest, "Failed to parse form.")
+		return web.Render(c, http.StatusOK, components.ErrorMessage("Failed to parse form. Please check log"))
 	}
 	authorStrs := form["author_names"]
 	keywordStrs := form["keyword_names"]
@@ -251,7 +249,7 @@ func (h *Handler) HandleMetadataSave(c echo.Context) error {
 	docID, err := uuid.Parse(fileId)
 	if err != nil {
 		log.Printf("[ERROR] Invalid UUID in form: %v", err)
-		return c.Redirect(http.StatusSeeOther, "/upload")
+		return err
 	}
 
 	var parsedDate sql.NullTime
@@ -271,7 +269,7 @@ func (h *Handler) HandleMetadataSave(c echo.Context) error {
 	})
 	if err != nil {
 		log.Printf("[ERROR] Error updating document metadata: %v", err)
-		return c.Redirect(http.StatusSeeOther, "/upload")
+		return web.Render(c, http.StatusOK, components.ErrorMessage(fmt.Sprintf("[ERROR] Error updating document metadata: %v", err)))
 	}
 	documentID := uuid.NullUUID{UUID: docID, Valid: true}
 
@@ -352,5 +350,5 @@ func (h *Handler) HandleMetadataSave(c echo.Context) error {
 	}
 
 	log.Printf("[INFO] Metadata updated successfully for fileId '%s'", docID.String())
-	return c.Redirect(http.StatusSeeOther, "/upload")
+	return web.Render(c, http.StatusOK, components.SuccessMessage(fmt.Sprintf("Metadata updated successfully for fileId '%s'", docID)))
 }

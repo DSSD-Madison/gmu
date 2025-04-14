@@ -29,7 +29,7 @@ templ PDFMetadataEditForm(
 				<span class="block text-xs text-gray-400 break-all dark:text-gray-500">File ID: { fileId }</span>
 			</p>
 
-			<form action="/save-metadata" method="post" hx-credentials="include">
+			<form hx-post="/save-metadata" method="post" hx-target="#metadata-message" hx-swap="innerHTML" hx-credentials="include">
 				<input type="hidden" name="fileId" value={ fileId } />
 				<input type="hidden" name="_csrf" value={ csrf } />
 
@@ -72,6 +72,8 @@ templ PDFMetadataEditForm(
 						Save Metadata
 					</button>
 				</div>
+
+				<div class="pt-2" id="metadata-message"></div>
 			</form>
 		</div>
 		<script>
@@ -107,7 +109,7 @@ templ PDFMetadataEditForm(
 
 				const removeButton = document.createElement('button');
 				removeButton.type = 'button';
-				removeButton.className = 'ml-1 text-blue-600 hover:text-blue-800 focus:outline-none';
+				removeButton.className = 'ml-1 text-blue-600 hover:text-blue-400 focus:outline-none';
 				removeButton.innerHTML = '×';
 				removeButton.setAttribute('aria-label', `Remove ${tagLabel}`);
 				removeButton.onclick = function () { removeTag(this); };

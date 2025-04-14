@@ -88,19 +88,19 @@ func TagInputJS(idPrefix, label, fieldName, searchURL string, initialValues []Pa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" class=\"flex flex-wrap gap-1 mb-1 p-1 border border-gray-200 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 min-h-[30px]\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" class=\"flex flex-wrap gap-1 mb-1 border border-transparent dark:border-transparent rounded min-h-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if len(initialValues) == 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<span class=\"p-1 text-xs italic text-gray-400 tag-placeholder\">No ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<span class=\"text-xs italic text-gray-400 tag-placeholder\">No ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(strings.ToLower(label))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/tag-input.templ`, Line: 23, Col: 95}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/tag-input.templ`, Line: 23, Col: 91}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -271,7 +271,7 @@ func TagInputJS(idPrefix, label, fieldName, searchURL string, initialValues []Pa
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\" class=\"absolute z-10 w-full mt-1 overflow-y-auto bg-white border border-gray-300 rounded shadow-lg dark:bg-gray-800 dark:border-gray-600 max-h-60\"></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\" class=\"absolute z-10 w-full mt-1 overflow-y-auto bg-white border border-gray-300 rounded shadow-lg dark:bg-gray-800 dark:border-gray-600 max-h-60 empty:h-0 empty:p-0 empty:border-0 empty:shadow-none\"></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -339,7 +339,7 @@ func TagItemJS(idPrefix, fieldName, valueID, valueName string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\" class=\"tag-item bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 text-xs font-medium me-2 px-2.5 py-0.5 rounded inline-flex items-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\" class=\"tag-item bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300 inline-flex items-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -352,7 +352,7 @@ func TagItemJS(idPrefix, fieldName, valueID, valueName string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, " <button type=\"button\" class=\"ml-1 text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 focus:outline-none\" onclick=\"removeTag(this)\" aria-label=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, " <button type=\"button\" class=\"ml-1 text-blue-600 hover:text-blue-400 focus:outline-none\" onclick=\"removeTag(this)\" aria-label=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -414,7 +414,7 @@ func SuggestionItemJS(idPrefix, fieldName, id, name string) templ.Component {
 		var templ_7745c5c3_Var25 string
 		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/tag-input.templ`, Line: 86, Col: 8}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/tag-input.templ`, Line: 87, Col: 8}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 		if templ_7745c5c3_Err != nil {

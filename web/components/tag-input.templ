@@ -18,9 +18,9 @@ templ TagInputJS(idPrefix, label, fieldName, searchURL string, initialValues []P
 	<div class="mb-4 tag-input-container">
 		<label for={ idPrefix + "-search-input" } class="block mb-2 text-sm font-bold text-gray-700 dark:text-gray-200">{ label }</label>
 		<div class="relative">
-			<div id={ idPrefix + "-tags-display" } class="flex flex-wrap gap-1 mb-1 p-1 border border-gray-200 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 min-h-[30px]">
+			<div id={ idPrefix + "-tags-display" } class="flex flex-wrap gap-1 mb-1 border border-transparent dark:border-transparent rounded min-h-0">
 				if len(initialValues) == 0 {
-					<span class="p-1 text-xs italic text-gray-400 tag-placeholder">No { strings.ToLower(label) } added yet.</span>
+					<span class="text-xs italic text-gray-400 tag-placeholder">No { strings.ToLower(label) } added yet.</span>
 				} else {
 					for _, item := range initialValues {
 						@TagItemJS(idPrefix, fieldName, item.ID, item.Name)
@@ -53,7 +53,7 @@ templ TagInputJS(idPrefix, label, fieldName, searchURL string, initialValues []P
 				</svg>
 			</span>
 
-			<div id={ idPrefix + "-suggestions" } class="absolute z-10 w-full mt-1 overflow-y-auto bg-white border border-gray-300 rounded shadow-lg dark:bg-gray-800 dark:border-gray-600 max-h-60">
+			<div id={ idPrefix + "-suggestions" } class="absolute z-10 w-full mt-1 overflow-y-auto bg-white border border-gray-300 rounded shadow-lg dark:bg-gray-800 dark:border-gray-600 max-h-60 empty:h-0 empty:p-0 empty:border-0 empty:shadow-none">
 			</div>
 		</div>
 	</div>
@@ -64,12 +64,12 @@ templ TagItemJS(idPrefix, fieldName, valueID, valueName string) {
 		data-tag-value={ valueID }
 		data-id-prefix={ idPrefix }
 		data-field-name={ fieldName }
-		class="tag-item bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 text-xs font-medium me-2 px-2.5 py-0.5 rounded inline-flex items-center"
+		class="tag-item bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300 inline-flex items-center"
 	>
 		{ valueName }
 		<button
 			type="button"
-			class="ml-1 text-blue-600 hover:text-blue-800 dark:hover:text-blue-400 focus:outline-none"
+			class="ml-1 text-blue-600 hover:text-blue-400 focus:outline-none"
 			onclick="removeTag(this)"
 			aria-label={ "Remove " + valueName }
 		>
@@ -77,6 +77,7 @@ templ TagItemJS(idPrefix, fieldName, valueID, valueName string) {
 		</button>
 	</span>
 }
+
 
 templ SuggestionItemJS(idPrefix, fieldName, id, name string) {
 	<div

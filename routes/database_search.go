@@ -34,7 +34,15 @@ func (h *Handler) DatabaseFieldSearch(c echo.Context, fieldName string) error {
 	}
 
 	ctx := c.Request().Context()
+
 	var suggestions []components.Pair
+
+	if len(searchQuery) > 3 {
+		suggestions = append(suggestions, components.Pair{
+			ID:   "NON",
+			Name: searchQuery,
+		})
+	}
 	var dbErr error
 
 	dbQuery := sql.NullString{String: searchQuery, Valid: true}
@@ -91,7 +99,7 @@ func (h *Handler) DatabaseFieldSearch(c echo.Context, fieldName string) error {
 					Name: item.Name,
 				})
 			}
-		}	
+		}
 	}
 
 	if dbErr != nil && len(suggestions) > 0 {
