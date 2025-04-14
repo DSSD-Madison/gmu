@@ -1,17 +1,19 @@
 BEGIN;
 
 -- ========================================
--- Deduplicate KEYWORDS (favor lowercase + normalized)
+-- Deduplicate KEYWORDS (lowercase + remove () + strip punctuation)
 -- ========================================
 
--- Step 1 & 2: Normalize and deduplicate
 WITH normalized_keywords AS (
   SELECT id, name,
     LOWER(
       TRIM(
         REGEXP_REPLACE(
-          REGEXP_REPLACE(name, '[:_-]+', ' ', 'g'),
-          '\s+', ' ', 'g'
+          REGEXP_REPLACE(
+            REGEXP_REPLACE(name, '[()]', '', 'g'),  -- remove all parentheses
+            '^[[:punct:]\s]+|[[:punct:]\s]+$', '', 'g'
+          ),
+          '[:_-]+', ' ', 'g'
         )
       )
     ) AS norm_name
@@ -23,25 +25,27 @@ grouped_keywords AS (
   GROUP BY norm_name
 ),
 keyword_dupes AS (
-  SELECT nk.id AS old_id, gk.canonical_id, nk.norm_name
+  SELECT nk.id AS old_id, gk.canonical_id
   FROM normalized_keywords nk
   JOIN grouped_keywords gk ON nk.norm_name = gk.norm_name
   WHERE nk.id != gk.canonical_id
 )
--- Repoint doc_keywords to canonical ID
 UPDATE doc_keywords dk
 SET keyword_id = kd.canonical_id
 FROM keyword_dupes kd
 WHERE dk.keyword_id = kd.old_id;
 
--- Step 3: Delete duplicate keyword rows
+-- Delete duplicate keywords
 WITH normalized_keywords AS (
   SELECT id, name,
     LOWER(
       TRIM(
         REGEXP_REPLACE(
-          REGEXP_REPLACE(name, '[:_-]+', ' ', 'g'),
-          '\s+', ' ', 'g'
+          REGEXP_REPLACE(
+            REGEXP_REPLACE(name, '[()]', '', 'g'),
+            '^[[:punct:]\s]+|[[:punct:]\s]+$', '', 'g'
+          ),
+          '[:_-]+', ' ', 'g'
         )
       )
     ) AS norm_name
@@ -61,14 +65,17 @@ keyword_dupes AS (
 DELETE FROM keywords
 WHERE id IN (SELECT old_id FROM keyword_dupes);
 
--- Step 4: Rename surviving entries to their normalized form
+-- Rename surviving keyword entries
 WITH normalized_keywords AS (
   SELECT id,
     LOWER(
       TRIM(
         REGEXP_REPLACE(
-          REGEXP_REPLACE(name, '[:_-]+', ' ', 'g'),
-          '\s+', ' ', 'g'
+          REGEXP_REPLACE(
+            REGEXP_REPLACE(name, '[()]', '', 'g'),
+            '^[[:punct:]\s]+|[[:punct:]\s]+$', '', 'g'
+          ),
+          '[:_-]+', ' ', 'g'
         )
       )
     ) AS norm_name
@@ -81,19 +88,108 @@ WHERE k.id = nk.id AND k.name IS DISTINCT FROM nk.norm_name;
 
 
 -- ========================================
--- Same process for REGIONS (favor Uppercase)
+-- Deduplicate CATEGORIES (lowercase + remove () + strip punctuation)
 -- ========================================
 
--- Step 1 & 2: Normalize and deduplicate
+WITH normalized_categories AS (
+  SELECT id, name,
+    LOWER(
+      TRIM(
+        REGEXP_REPLACE(
+          REGEXP_REPLACE(
+            REGEXP_REPLACE(name, '[()]', '', 'g'),
+            '^[[:punct:]\s]+|[[:punct:]\s]+$', '', 'g'
+          ),
+          '[:_-]+', ' ', 'g'
+        )
+      )
+    ) AS norm_name
+  FROM categories
+),
+grouped_categories AS (
+  SELECT norm_name, MIN(id::text)::uuid AS canonical_id
+  FROM normalized_categories
+  GROUP BY norm_name
+),
+category_dupes AS (
+  SELECT nc.id AS old_id, gc.canonical_id
+  FROM normalized_categories nc
+  JOIN grouped_categories gc ON nc.norm_name = gc.norm_name
+  WHERE nc.id != gc.canonical_id
+)
+UPDATE doc_categories dc
+SET category_id = cd.canonical_id
+FROM category_dupes cd
+WHERE dc.category_id = cd.old_id;
+
+-- Delete duplicate categories
+WITH normalized_categories AS (
+  SELECT id, name,
+    LOWER(
+      TRIM(
+        REGEXP_REPLACE(
+          REGEXP_REPLACE(
+            REGEXP_REPLACE(name, '[()]', '', 'g'),
+            '^[[:punct:]\s]+|[[:punct:]\s]+$', '', 'g'
+          ),
+          '[:_-]+', ' ', 'g'
+        )
+      )
+    ) AS norm_name
+  FROM categories
+),
+grouped_categories AS (
+  SELECT norm_name, MIN(id::text)::uuid AS canonical_id
+  FROM normalized_categories
+  GROUP BY norm_name
+),
+category_dupes AS (
+  SELECT nc.id AS old_id
+  FROM normalized_categories nc
+  JOIN grouped_categories gc ON nc.norm_name = gc.norm_name
+  WHERE nc.id != gc.canonical_id
+)
+DELETE FROM categories
+WHERE id IN (SELECT old_id FROM category_dupes);
+
+-- Rename surviving category entries
+WITH normalized_categories AS (
+  SELECT id,
+    LOWER(
+      TRIM(
+        REGEXP_REPLACE(
+          REGEXP_REPLACE(
+            REGEXP_REPLACE(name, '[()]', '', 'g'),
+            '^[[:punct:]\s]+|[[:punct:]\s]+$', '', 'g'
+          ),
+          '[:_-]+', ' ', 'g'
+        )
+      )
+    ) AS norm_name
+  FROM categories
+)
+UPDATE categories c
+SET name = nc.norm_name
+FROM normalized_categories nc
+WHERE c.id = nc.id AND c.name IS DISTINCT FROM nc.norm_name;
+
+
+-- ========================================
+-- Deduplicate REGIONS (title case + remove () + strip punctuation)
+-- ========================================
+
 WITH normalized_regions AS (
   SELECT id, name,
     INITCAP(
-        TRIM(
-            REGEXP_REPLACE(
-            REGEXP_REPLACE(name, '[:_-]+', ' ', 'g'),
-            '\s+', ' ', 'g'
-            )
+      TRIM(
+        REGEXP_REPLACE(
+          REGEXP_REPLACE(
+            REGEXP_REPLACE(name, '[()]', '', 'g'),
+            '^[[:punct:]\s]+|[[:punct:]\s]+$', '', 'g'
+          ),
+          '[:_-]+', ' ', 'g'
         )
+      )
     ) AS norm_name
   FROM regions
 ),
@@ -113,16 +209,19 @@ SET region_id = rd.canonical_id
 FROM region_dupes rd
 WHERE dr.region_id = rd.old_id;
 
--- Step 3: Delete duplicate region rows
+-- Delete duplicate regions
 WITH normalized_regions AS (
   SELECT id, name,
     INITCAP(
-        TRIM(
-            REGEXP_REPLACE(
-            REGEXP_REPLACE(name, '[:_-]+', ' ', 'g'),
-            '\s+', ' ', 'g'
-            )
+      TRIM(
+        REGEXP_REPLACE(
+          REGEXP_REPLACE(
+            REGEXP_REPLACE(name, '[()]', '', 'g'),
+            '^[[:punct:]\s]+|[[:punct:]\s]+$', '', 'g'
+          ),
+          '[:_-]+', ' ', 'g'
         )
+      )
     ) AS norm_name
   FROM regions
 ),
@@ -140,16 +239,19 @@ region_dupes AS (
 DELETE FROM regions
 WHERE id IN (SELECT old_id FROM region_dupes);
 
--- Step 4: Rename surviving entries to their normalized form
+-- Rename surviving region entries
 WITH normalized_regions AS (
   SELECT id,
     INITCAP(
-        TRIM(
-            REGEXP_REPLACE(
-            REGEXP_REPLACE(name, '[:_-]+', ' ', 'g'),
-            '\s+', ' ', 'g'
-            )
+      TRIM(
+        REGEXP_REPLACE(
+          REGEXP_REPLACE(
+            REGEXP_REPLACE(name, '[()]', '', 'g'),
+            '^[[:punct:]\s]+|[[:punct:]\s]+$', '', 'g'
+          ),
+          '[:_-]+', ' ', 'g'
         )
+      )
     ) AS norm_name
   FROM regions
 )
