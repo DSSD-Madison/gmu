@@ -57,7 +57,15 @@ func Base(title string) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"icon\" href=\"/images/logo.ico\" type=\"image/x-icon\"><script src=\"https://unpkg.com/htmx.org/dist/htmx.min.js\"></script><script src=\"/js/theme.js\"></script><link href=\"/css/output.css\" rel=\"stylesheet\"><style>\n\t\t\t\tsummary::-webkit-details-marker {\n\t\t\t\t\tdisplay: none;\n\t\t\t\t}\n\t\t\t</style></head><body class=\"m-0 dark:bg-gray-900\"><div id=\"root\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"icon\" href=\"/images/logo.ico\" type=\"image/x-icon\"><script src=\"https://unpkg.com/htmx.org/dist/htmx.min.js\"></script><script src=\"/js/theme.js\"></script><link href=\"/css/output.css\" rel=\"stylesheet\"><style>\n\t\t\t\tsummary::-webkit-details-marker {\n\t\t\t\t\tdisplay: none;\n\t\t\t\t}\n\t\t\t</style></head>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = Navbar().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<body class=\"m-0 dark:bg-gray-900\"><div id=\"root\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -65,7 +73,7 @@ func Base(title string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
