@@ -99,7 +99,7 @@ func selectResultsFromTarget(target string, r searchRequest, h *Handler, c echo.
 			return awskendra.KendraResults{}, err
 		}
 		if r.target == "results-container" && len(r.kendraFilters) > 0 {
-			tempResults := h.kendra.MakeQuery(r.query, nil, 1)
+			tempResults := h.kendra.MakeQuery(h.q, r.query, nil, 1)
 			results.Filters = tempResults.Filters
 			selectFilters(r.filters, &results)
 		}
@@ -136,7 +136,7 @@ func convertFilterstoKendra(filters url.Values) []awskendra.Filter {
 }
 
 func (h *Handler) getResults(c echo.Context, query string, filters url.Values, num int) (awskendra.KendraResults, error) {
-	results := h.kendra.MakeQuery(query, filters, num)
+	results := h.kendra.MakeQuery(h.q, query, filters, num)
 	db_util.AddImagesToResults(results, c, h.db)
 	return results, nil
 }

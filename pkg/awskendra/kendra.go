@@ -15,6 +15,32 @@ type KendraClient struct {
 	config Config
 }
 
+type QueryExecutor interface {
+	EnqueueQuery(query kendra.QueryInput) QueryResult
+}
+
+type KendraClientExecutor struct {
+	client *kendra.Client
+}
+
+func (e *KendraClientExecutor) EnqueueQuery(query kendra.QueryInput) QueryResult {
+	out, err := e.client.Query(context.TODO(), &query)
+	if err != nil {
+		log.Printf("Kendra Query Failed: %q", err)
+		return QueryResult{
+			Results: KendraResults{},
+			Error:   err,
+		}
+	}
+
+	results := queryOutputToResults(*out)
+
+	return QueryResult{
+		Results: results,
+		Error:   nil,
+	}
+}
+
 func NewKendraClient(config Config) (*KendraClient, error) {
 	opts := kendra.Options{
 		Credentials: config.Credentials,
@@ -97,7 +123,7 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	return kendraResults
 }
 
-func (c KendraClient) MakeQuery(query string, filters map[string][]string, pageNum int) KendraResults {
+func (c KendraClient) MakeQuery(executor QueryExecutor, query string, filters map[string][]string, pageNum int) KendraResults {
 	kendraFilters := types.AttributeFilter{
 		AndAllFilters: make([]types.AttributeFilter, len(filters)),
 	}
@@ -137,13 +163,12 @@ func (c KendraClient) MakeQuery(query string, filters map[string][]string, pageN
 		QueryText:       &query,
 		PageNumber:      &page,
 	}
-	out, err := c.client.Query(context.TODO(), &kendraQuery)
 
-	// TODO: this needs to be fixed to a proper error
-	if err != nil {
-		log.Printf("Kendra Query Failed %+filterCategory", err)
+	queryResults := executor.EnqueueQuery(kendraQuery)
+	if queryResults.Error != nil {
+		return KendraResults{}
 	}
-	results := queryOutputToResults(*out)
+	results := queryResults.Results
 
 	calculatedPages := (results.Count + 9) / 10
 	totalPages := min(calculatedPages, 10)

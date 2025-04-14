@@ -122,7 +122,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	routesHandler := routes.NewHandler(dbQuerier, kendraClient, logHandler)
+	queryQueue := awskendra.NewKendraQueryQueue(kendraClient, 2, 4)
+
+	routesHandler := routes.NewHandler(dbQuerier, queryQueue, kendraClient, logHandler)
 
 	// Static file handlers
 	e.Static("/images", "web/assets/images")
