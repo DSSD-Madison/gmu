@@ -36,7 +36,7 @@ func ResultsPage(results awskendra.KendraResults) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"grid-container\" class=\"pt-10 pr-10 grid grid-cols-[1fr_3fr] grid-rows-[auto_1fr_auto] w-full gap-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"grid-container\" class=\"py-4 md:grid md:grid-cols-[1fr_4fr] md:w-full md:gap-4 flex flex-col justify-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -134,7 +134,7 @@ func ResultCard(result awskendra.KendraResult) templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<details class=\"group dark:bg-gray-800 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-150 ease-in-out overflow-hidden\"><summary class=\"list-none cursor-pointer p-4 block dark:hover:bg-gray-700 hover:bg-gray-100 transition duration-150 ease-in-out\"><div class=\"flex items-start space-x-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<details class=\"group dark:bg-gray-800 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-150 ease-in-out overflow-hidden\"><summary class=\"list-none cursor-pointer p-4 block dark:hover:bg-gray-700 hover:bg-gray-100 transition duration-150 ease-in-out\"><div class=\"flex flex-col md:flex-row items-start\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -152,17 +152,17 @@ func ResultCard(result awskendra.KendraResult) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" alt=\"Preview\" class=\"w-24 h-24 object-cover rounded-md flex-shrink-0 border border-gray-100\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" alt=\"Preview\" class=\"md:w-24 md:h-24 w-auto md:self-start self-center h-auto object-cover rounded-md flex-shrink-0 border border-gray-100\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<div class=\"w-24 h-24 dark:bg-gray-700 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 text-xs flex-shrink-0 border border-gray-200\">(No Preview)</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<div class=\"md:w-24 md:h-24 w-auto h-auto dark:bg-gray-700 bg-gray-100 rounded-md flex items-center justify-center text-gray-400 text-xs flex-shrink-0 border border-gray-200\">(No Preview)</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<div class=\"flex-grow min-w-0\"><a href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<div class=\"md:pl-4 flex-grow min-w-0\"><a href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -229,7 +229,7 @@ func ResultCard(result awskendra.KendraResult) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div></div><div class=\"self-center text-gray-400 group-open:rotate-90 transition-transform duration-300 flex-shrink-0 ml-2\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-5 w-5\" viewBox=\"0 0 20 20\" fill=\"currentColor\"><path fill-rule=\"evenodd\" d=\"M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z\" clip-rule=\"evenodd\"></path></svg></div></div></summary><div class=\"px-6 py-4 border-t border-gray-200 dark:border-gray-600 dark:bg-gray-800 bg-gray-50/75\"><dl class=\"grid grid-cols-[max-content_1fr] gap-x-3 gap-y-2.5 text-sm\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div></div><div class=\"self-center text-gray-400 rotate-90 md:rotate-none group-open:rotate-270 md:group-open:rotate-90 transition-transform duration-300 flex-shrink-0 ml-2\"><svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-5 w-5\" viewBox=\"0 0 20 20\" fill=\"currentColor\"><path fill-rule=\"evenodd\" d=\"M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z\" clip-rule=\"evenodd\"></path></svg></div></div></summary><div class=\"px-6 py-4 border-t border-gray-200 dark:border-gray-600 dark:bg-gray-800 bg-gray-50/75\"><dl class=\"grid grid-cols-[max-content_1fr] gap-x-3 gap-y-2.5 text-sm\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
