@@ -11,7 +11,7 @@ templ ResultsPage(results awskendra.KendraResults, isAuthorized bool) {
 	<div id="grid-container" class="py-4 md:grid md:grid-cols-[1fr_4fr] md:w-full md:gap-4 flex flex-col justify-center">
 		@sidecolumn(results)
 		<div id="results-and-pagination">
-			@ResultsAndPagination(results, true)
+			@ResultsAndPagination(results, isAuthorized)
 		</div>
 	</div>
 	@Searchbar(results.UrlData, isAuthorized)
@@ -30,9 +30,21 @@ func nonemptyExpand(result awskendra.KendraResult) bool {
 }
 
 templ ResultCard(result awskendra.KendraResult, isAuthorized bool) {
-	// 'relative' is removed from <details> unless needed for other elements
 	<details class="overflow-hidden transition-shadow duration-150 ease-in-out bg-white rounded-lg shadow-md group dark:bg-gray-800 hover:shadow-lg">
-		<summary class="block p-4 list-none transition duration-150 ease-in-out cursor-pointer dark:hover:bg-gray-700 hover:bg-gray-100">
+		<summary class="relative block p-4 pr-12 list-none transition duration-150 ease-in-out cursor-pointer dark:hover:bg-gray-700 hover:bg-gray-100">
+			
+			if isAuthorized {
+				<a href={ templ.URL("/edit-metadata/" + result.UUID) }
+				   target="_blank"
+				   title="Edit Result"
+				   aria-label="Edit Result"
+				   class="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500 hover:text-gray-800 dark:hover:text-gray-100 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800">
+					<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+					</svg>
+				</a>
+			}
+
 			<div class="flex items-start space-x-4">
 				if result.Image != "" {
 					<img src={ result.Image } alt="Preview" class="self-center flex-shrink-0 object-cover w-auto h-auto border border-gray-100 rounded-md md:w-24 md:h-24 md:self-start"/>
@@ -69,9 +81,8 @@ templ ResultCard(result awskendra.KendraResult, isAuthorized bool) {
 					</svg>
 				</div>
 			</div>
-		</summary> // End of Summary
+		</summary>
 
-		// Expanded content remains the same
 		<div class="px-6 py-4 border-t border-gray-200 dark:border-gray-600 dark:bg-gray-800 bg-gray-50/75">
 			<dl class="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-2.5 text-sm">
 				if nonemptyExpand(result) {
@@ -108,6 +119,7 @@ templ ResultCard(result awskendra.KendraResult, isAuthorized bool) {
 		</div>
 	</details>
 }
+
 
 templ ResultsContainer(results awskendra.KendraResults, isAuthorized bool) {
 	<div id="results-content-container" class="space-y-6">

@@ -102,6 +102,8 @@ func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
 		log.Println("CSRF token not found in context")
 	}
 	isAuthorized, isMaster := middleware.GetSessionFlags(c)
+	
+	s3Link := util.ConvertS3URIToURL(doc.S3File)
 	return web.Render(c, http.StatusOK, components.PDFMetadataEditForm(
 		fileId,
 		doc.FileName,
@@ -120,6 +122,7 @@ func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
 		allCategories,
 		isAuthorized,
 		isMaster,
+		s3Link,
 	))
 
 }
