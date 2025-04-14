@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
+	"github.com/DSSD-Madison/gmu/pkg/db/util"
 	"github.com/DSSD-Madison/gmu/pkg/middleware"
 	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
@@ -58,94 +58,6 @@ func (h *Handler) HandlePDFUpload(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func toAuthorPairs(all []db.Author, selected []string) []components.Pair {
-	seen := make(map[string]bool)
-	var out []components.Pair
-	for _, name := range selected {
-		norm := strings.ToLower(name)
-		if seen[norm] {
-			continue
-		}
-		for _, a := range all {
-			if strings.EqualFold(a.Name, name) {
-				out = append(out, components.Pair{
-					ID:   a.ID.String(),
-					Name: a.Name,
-				})
-				seen[norm] = true
-				break
-			}
-		}
-	}
-	return out
-}
-
-func toKeywordPairs(all []db.Keyword, selected []string) []components.Pair {
-	seen := make(map[string]bool)
-	var out []components.Pair
-	for _, name := range selected {
-		norm := strings.ToLower(name)
-		if seen[norm] {
-			continue
-		}
-		for _, k := range all {
-			if strings.EqualFold(k.Name, name) {
-				out = append(out, components.Pair{
-					ID:   k.ID.String(),
-					Name: k.Name,
-				})
-				seen[norm] = true
-				break
-			}
-		}
-	}
-	return out
-}
-
-func toRegionPairs(all []db.Region, selected []string) []components.Pair {
-	seen := make(map[string]bool)
-	var out []components.Pair
-	for _, name := range selected {
-		norm := strings.ToLower(name)
-		if seen[norm] {
-			continue
-		}
-		for _, r := range all {
-			if strings.EqualFold(r.Name, name) {
-				out = append(out, components.Pair{
-					ID:   r.ID.String(),
-					Name: r.Name,
-				})
-				seen[norm] = true
-				break
-			}
-		}
-	}
-	return out
-}
-
-func toCategoryPairs(all []db.Category, selected []string) []components.Pair {
-	seen := make(map[string]bool)
-	var out []components.Pair
-	for _, name := range selected {
-		norm := strings.ToLower(name)
-		if seen[norm] {
-			continue
-		}
-		for _, c := range all {
-			if strings.EqualFold(c.Name, name) {
-				out = append(out, components.Pair{
-					ID:   c.ID.String(),
-					Name: c.Name,
-				})
-				seen[norm] = true
-				break
-			}
-		}
-	}
-	return out
-}
-
 func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
 	fileId := c.Param("fileId")
 	if fileId == "" {
@@ -172,10 +84,10 @@ func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
 	regionNames := []string(doc.RegionNames)
 	categoryNames := []string(doc.CategoryNames)
 
-	selectedAuthors := toAuthorPairs(allAuthors, authorNames)
-	selectedKeywords := toKeywordPairs(allKeywords, keywordNames)
-	selectedRegions := toRegionPairs(allRegions, regionNames)
-	selectedCategories := toCategoryPairs(allCategories, categoryNames)
+	selectedAuthors := util.ToAuthorPairs(allAuthors, authorNames)
+	selectedKeywords := util.ToKeywordPairs(allKeywords, keywordNames)
+	selectedRegions := util.ToRegionPairs(allRegions, regionNames)
+	selectedCategories := util.ToCategoryPairs(allCategories, categoryNames)
 
 	csrf, ok := c.Get("csrf").(string)
 	if !ok {
@@ -203,106 +115,6 @@ func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
 	))
 
 }
-
-func parseDocument(row db.FindDocumentByIDRow) awskendra.KendraResult {
-	res := awskendra.KendraResult{
-		Title:      row.Title,
-		Authors:    row.AuthorNames,
-		Categories: row.CategoryNames,
-		Keywords:   row.KeywordNames,
-		Regions:    row.RegionNames,
-	}
-
-	parts := strings.Split(row.S3File, "/")
-	if len(parts) >= 2 {
-		res.Link = parts[3]
-	}
-
-	if row.PublishDate.Valid {
-		res.PublishDate = row.PublishDate.Time.Format("2006-01-02")
-	}
-	if row.Abstract.Valid {
-		res.Abstract = row.Abstract.String
-	}
-	if row.Source.Valid {
-		res.Source = row.Source.String
-	}
-
-	return res
-}
-
-func getOrCreateAuthor(ctx context.Context, q *db.Queries, name string) (uuid.UUID, error) {
-	existing, err := q.FindAuthorByName(ctx, name)
-	if err == nil {
-		return existing.ID, nil
-	}
-	if err == sql.ErrNoRows {
-		newID := uuid.New()
-		if err := q.InsertAuthor(ctx, db.InsertAuthorParams{
-			ID:   newID,
-			Name: name,
-		}); err != nil {
-			return uuid.Nil, err
-		}
-		return newID, nil
-	}
-	return uuid.Nil, err
-}
-
-func getOrCreateKeyword(ctx context.Context, q *db.Queries, name string) (uuid.UUID, error) {
-	existing, err := q.FindKeywordByName(ctx, name)
-	if err == nil {
-		return existing.ID, nil
-	}
-	if err == sql.ErrNoRows {
-		newID := uuid.New()
-		if err := q.InsertKeyword(ctx, db.InsertKeywordParams{
-			ID:   newID,
-			Name: name,
-		}); err != nil {
-			return uuid.Nil, err
-		}
-		return newID, nil
-	}
-	return uuid.Nil, err
-}
-
-func getOrCreateRegion(ctx context.Context, q *db.Queries, name string) (uuid.UUID, error) {
-	existing, err := q.FindRegionByName(ctx, name)
-	if err == nil {
-		return existing.ID, nil
-	}
-	if err == sql.ErrNoRows {
-		newID := uuid.New()
-		if err := q.InsertRegion(ctx, db.InsertRegionParams{
-			ID:   newID,
-			Name: name,
-		}); err != nil {
-			return uuid.Nil, err
-		}
-		return newID, nil
-	}
-	return uuid.Nil, err
-}
-
-func getOrCreateCategory(ctx context.Context, q *db.Queries, name string) (uuid.UUID, error) {
-	existing, err := q.FindCategoryByName(ctx, name)
-	if err == nil {
-		return existing.ID, nil
-	}
-	if err == sql.ErrNoRows {
-		newID := uuid.New()
-		if err := q.InsertCategory(ctx, db.InsertCategoryParams{
-			ID:   newID,
-			Name: name,
-		}); err != nil {
-			return uuid.Nil, err
-		}
-		return newID, nil
-	}
-	return uuid.Nil, err
-}
-
 
 func (h *Handler) HandleMetadataSave(c echo.Context) error {
 	ctx := c.Request().Context()
@@ -354,40 +166,12 @@ func (h *Handler) HandleMetadataSave(c echo.Context) error {
 	h.db.DeleteDocKeywordsByDocID(ctx, documentID)
 	h.db.DeleteDocCategoriesByDocID(ctx, documentID)
 	h.db.DeleteDocRegionsByDocID(ctx, documentID)
-
-	resolveIDs := func(entries []string, resolver func(context.Context, *db.Queries, string) (uuid.UUID, error)) []uuid.UUID {
-		var ids []uuid.UUID
-		for _, raw := range entries {
-			raw = strings.TrimSpace(raw)
-			if raw == "" {
-				continue
-			}
-			if strings.HasPrefix(raw, "new:") {
-				name := strings.TrimPrefix(raw, "new:")
-				id, err := resolver(ctx, h.db, name)
-				if err != nil {
-					log.Printf("[ERROR] resolving %q: %v", name, err)
-					continue
-				}
-				ids = append(ids, id)
-			} else {
-				u, err := uuid.Parse(raw)
-				if err == nil {
-					ids = append(ids, u)
-				} else {
-					log.Printf("[WARN] Skipping invalid UUID: %s", raw)
-				}
-			}
-		}
-		return ids
-	}
 	
-	authors := resolveIDs(authorStrs, getOrCreateAuthor)
-	keywords := resolveIDs(keywordStrs, getOrCreateKeyword)
-	categories := resolveIDs(categoryStrs, getOrCreateCategory)
-	regions := resolveIDs(regionStrs, getOrCreateRegion)
+	authors := util.ResolveIDs(ctx, h.db, authorStrs, util.GetOrCreateAuthor)
+	keywords := util.ResolveIDs(ctx, h.db, keywordStrs, util.GetOrCreateKeyword)
+	categories := util.ResolveIDs(ctx, h.db, categoryStrs, util.GetOrCreateCategory)
+	regions := util.ResolveIDs(ctx, h.db, regionStrs, util.GetOrCreateRegion)
 	
-
 	log.Printf("[DEBUG] Parsed author IDs: %v", authors)
 	log.Printf("[DEBUG] Parsed keyword IDs: %v", keywords)
 	log.Printf("[DEBUG] Parsed category IDs: %v", categories)
