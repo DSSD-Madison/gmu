@@ -1,14 +1,14 @@
-name: Remove Untitled Documents
+name: Clean Database
 
 on:
   schedule:
     - cron: '0 0 * * *'  # Run daily at midnight UTC
-#   push:
-#     branches:
-#       - batch-put
+  push:
+    branches:
+      - batch-put
 
 jobs:
-  index-documents:
+  clean-duplicates:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -44,7 +44,7 @@ jobs:
           if [ -n "${{ secrets.AWS_INDEX_ID }}" ]; then echo "AWS_INDEX_ID is set"; else echo "AWS_INDEX_ID is not set"; fi
           if [ -n "${{ secrets.AWS_ROLE_ARN }}" ]; then echo "AWS_ROLE_ARN is set"; else echo "AWS_ROLE_ARN is not set"; fi
 
-      - name: Run indexing script
+      - name: Run duplicate cleanup script
         env:
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_USER: ${{ secrets.DB_USER }}
@@ -52,5 +52,4 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           INDEX_ID: ${{ secrets.AWS_INDEX_ID }}
           ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-        run: python scripts/remove_untitled.py
-
+        run: python scripts/batch_delete.py --dry-run

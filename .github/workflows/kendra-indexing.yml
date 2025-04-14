@@ -58,8 +58,8 @@ jobs:
           INDEX_ID: ${{ secrets.AWS_INDEX_ID }}
           ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
         run: |
-          echo "=== Running batchput.py (Kendra Indexing) ==="
-          python scripts/batchput.py
+          echo "=== Running batch_put.py (Kendra Indexing) ==="
+          python scripts/batch_put.py
 
       - name: Run preview generation script
         env:
