@@ -166,60 +166,6 @@ templ PDFMetadataEditForm(
 					}
 				});
 			});
-
-			document.addEventListener("input", function (event) {
-				const input = event.target;
-				if (!input.matches(".tag-search-input")) return;
-
-				const container = input.closest(".tag-input-container");
-				if (!container) return;
-
-				const suggestionsContainer = container.querySelector(`#${input.id.replace("-search-input", "-suggestions")}`);
-				const query = input.value.trim();
-				if (!query) {
-					suggestionsContainer.innerHTML = '';
-					return;
-				}
-
-				// Load suggestions from the server
-				const endpoint = input.getAttribute("data-endpoint");
-				fetch(`${endpoint}?q=${encodeURIComponent(query)}`)
-					.then(res => res.json())
-					.then(data => {
-						suggestionsContainer.innerHTML = "";
-
-						const alreadyExists = data.some(item => item.name.toLowerCase() === query.toLowerCase());
-						if (!alreadyExists) {
-							const newOption = document.createElement("div");
-							newOption.className = "tag-suggestion text-green-700 hover:bg-green-100 dark:hover:bg-gray-700 px-2 py-1 cursor-pointer font-semibold";
-							newOption.textContent = `+ Create "${query}"`;
-							newOption.onclick = function () {
-								addTag(
-									input.getAttribute("data-id-prefix"),
-									input.getAttribute("data-field-name"),
-									`new:${query}`,
-									query
-								);
-							};
-							suggestionsContainer.appendChild(newOption);
-						}
-
-						for (const item of data) {
-							const div = document.createElement("div");
-							div.className = "tag-suggestion px-2 py-1 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700";
-							div.textContent = item.name;
-							div.onclick = function () {
-								addTag(
-									input.getAttribute("data-id-prefix"),
-									input.getAttribute("data-field-name"),
-									item.id,
-									item.name
-								);
-							};
-							suggestionsContainer.appendChild(div);
-						}
-					});
-			});
 		</script>
 	}
 }
