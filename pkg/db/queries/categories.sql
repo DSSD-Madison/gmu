@@ -9,3 +9,6 @@ WHERE
 ORDER BY
     name
     LIMIT 10;
+
+-- name: ListAllCategories :many
+SELECT id, name FROM categories ORDER BY name;

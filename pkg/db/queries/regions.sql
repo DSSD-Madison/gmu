@@ -9,3 +9,6 @@ WHERE
 ORDER BY
     name
     LIMIT 10;
+
+-- name: ListAllRegions :many
+SELECT id, name FROM regions ORDER BY name;
