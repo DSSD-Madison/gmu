@@ -52,3 +52,9 @@ LEFT JOIN doc_categories dc ON d.id = dc.doc_id
 LEFT JOIN categories c ON dc.category_id = c.id
 WHERE d.id = $1
 GROUP BY d.id;
+
+-- name: FindDocumentByS3Path :one
+SELECT *
+FROM documents
+WHERE s3_file = $1;
+

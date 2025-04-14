@@ -80,6 +80,33 @@ func (q *Queries) FindDocumentByID(ctx context.Context, id uuid.UUID) (FindDocum
 	return i, err
 }
 
+const findDocumentByS3Path = `-- name: FindDocumentByS3Path :one
+SELECT id, file_name, title, abstract, publish_date, source, indexed_by_kendra, s3_file, s3_file_preview, pdf_link, created_at, deleted_at, has_duplicate
+FROM documents
+WHERE s3_file = $1
+`
+
+func (q *Queries) FindDocumentByS3Path(ctx context.Context, s3File string) (Document, error) {
+	row := q.db.QueryRowContext(ctx, findDocumentByS3Path, s3File)
+	var i Document
+	err := row.Scan(
+		&i.ID,
+		&i.FileName,
+		&i.Title,
+		&i.Abstract,
+		&i.PublishDate,
+		&i.Source,
+		&i.IndexedByKendra,
+		&i.S3File,
+		&i.S3FilePreview,
+		&i.PdfLink,
+		&i.CreatedAt,
+		&i.DeletedAt,
+		&i.HasDuplicate,
+	)
+	return i, err
+}
+
 const getDocumentsByURIs = `-- name: GetDocumentsByURIs :many
 SELECT
     d.id, d.file_name, d.title, d.abstract, d.publish_date, d.source, d.indexed_by_kendra, d.s3_file, d.s3_file_preview, d.pdf_link, d.created_at, d.deleted_at, d.has_duplicate,  -- Select all columns from the documents table

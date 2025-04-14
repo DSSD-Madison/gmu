@@ -1,18 +1,19 @@
-// File: web/components/upload_response.templ
 package components
 
-// UploadResponse renders a simple success or error message.
-// Used primarily for HTMX responses on the upload page for errors.
 templ UploadResponse(success bool, message string) {
 	if success {
-		// Green text for success messages
-		<div class="text-green-600 p-2">
-			{ message }
-		</div>
+		@SuccessMessage(message)
 	} else {
-		// Red text for error messages
-		<div class="text-red-600 font-semibold p-2">
-			Error: { message }
-		</div>
+		@ErrorMessage(message)
 	}
 }
+
+templ DuplicateUploadResponse(docID string) {
+	<div class="p-2 font-semibold text-red-600">
+		Error: A file with this name has already been uploaded.
+		<a href={ templ.URL("/edit-metadata/" + docID) } class="text-blue-600 underline hover:text-blue-800">
+			Edit its metadata here
+		</a>.
+	</div>
+}
+

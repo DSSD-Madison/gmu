@@ -26,6 +26,8 @@ func (h *Handler) PDFUploadPage(c echo.Context) error {
 }
 
 func (h *Handler) HandlePDFUpload(c echo.Context) error {
+	ctx := c.Request().Context()
+
 	fileHeader, err := c.FormFile("pdf")
 	if err != nil {
 		log.Printf("Error getting uploaded file: %v", err)
@@ -36,17 +38,22 @@ func (h *Handler) HandlePDFUpload(c echo.Context) error {
 
 	originalFilename := fileHeader.Filename
 	fileID := uuid.New()
-
 	s3Path := fmt.Sprintf("s3://your-bucket-name/documents/%s", originalFilename)
 	title := strings.TrimSuffix(originalFilename, path.Ext(originalFilename))
 
-	err = h.db.InsertUploadedDocument(c.Request().Context(), db.InsertUploadedDocumentParams{
+	// 🧠 Check if document already exists in DB by S3 path
+	existingDoc, err := h.db.FindDocumentByS3Path(ctx, s3Path)
+	if err == nil {
+		return web.Render(c, http.StatusOK, components.DuplicateUploadResponse(existingDoc.ID.String()))
+	}
+
+
+	if err := h.db.InsertUploadedDocument(ctx, db.InsertUploadedDocumentParams{
 		ID:       fileID,
 		S3File:   s3Path,
 		FileName: originalFilename,
 		Title:    title,
-	})
-	if err != nil {
+	}); err != nil {
 		log.Printf("DB insert failed: %v", err)
 		errorMessage := "Could not save file metadata to database"
 		c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
@@ -57,6 +64,7 @@ func (h *Handler) HandlePDFUpload(c echo.Context) error {
 	c.Response().Header().Set("HX-Redirect", redirectPath)
 	return c.NoContent(http.StatusOK)
 }
+
 
 func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
 	fileId := c.Param("fileId")
