@@ -1,20 +1,24 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/DSSD-Madison/gmu/pkg/middleware"
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
+	"github.com/DSSD-Madison/gmu/pkg/middleware"
 	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
 )
 
 func (h *Handler) ManageUsersPage(c echo.Context) error {
-	if !middleware.IsMaster(c) {
+	csrf := c.Get("csrf").(string)
+	isAuthorized, isMaster := middleware.GetSessionFlags(c)
+
+	if !isMaster {
 		return c.String(http.StatusForbidden, "Access denied")
 	}
 
@@ -23,36 +27,35 @@ func (h *Handler) ManageUsersPage(c echo.Context) error {
 		return err
 	}
 
-	csrf := c.Get("csrf").(string)
-	return web.Render(c, http.StatusOK, components.ManageUsersForm(csrf, "", users))
+	return web.Render(c, http.StatusOK, components.ManageUsersForm(csrf, "", users, isAuthorized, isMaster))
 }
 
-
 func (h *Handler) CreateNewUser(c echo.Context) error {
-	if !middleware.IsMaster(c) {
+	csrf := c.Get("csrf").(string)
+	isAuthorized, isMaster := middleware.GetSessionFlags(c)
+	if !isMaster {
 		return c.String(http.StatusForbidden, "Access denied")
 	}
 
 	username := strings.TrimSpace(c.FormValue("username"))
 	password := c.FormValue("password")
 	confirm := c.FormValue("confirm_password")
-	csrf := c.Get("csrf").(string)
 
 	users, _ := h.db.ListUsers(c.Request().Context()) // Get users up front for reuse
-
+	
 	if password != confirm {
-		return web.Render(c, http.StatusBadRequest, components.ManageUsersForm(csrf, "Passwords do not match", users))
+		return web.Render(c, http.StatusBadRequest, components.ManageUsersForm(csrf, "Passwords do not match", users, isAuthorized, isMaster))
 	}
 
 	// Optional: check if user already exists
 	_, err := h.db.GetUserByUsername(c.Request().Context(), username)
 	if err == nil {
-		return web.Render(c, http.StatusConflict, components.ManageUsersForm(csrf, "User already exists", users))
+		return web.Render(c, http.StatusConflict, components.ManageUsersForm(csrf, "User already exists", users, isAuthorized, isMaster))
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return web.Render(c, http.StatusInternalServerError, components.ManageUsersForm(csrf, "Error hashing password", users))
+		return web.Render(c, http.StatusInternalServerError, components.ManageUsersForm(csrf, "Error hashing password", users, isAuthorized, isMaster))
 	}
 
 	err = h.db.CreateUser(c.Request().Context(), db.CreateUserParams{
@@ -61,14 +64,15 @@ func (h *Handler) CreateNewUser(c echo.Context) error {
 		IsMaster:     false,
 	})
 	if err != nil {
-		return web.Render(c, http.StatusInternalServerError, components.ManageUsersForm(csrf, "Failed to create user", users))
+		return web.Render(c, http.StatusInternalServerError, components.ManageUsersForm(csrf, "Failed to create user", users, isAuthorized, isMaster))
 	}
 
 	return c.Redirect(http.StatusSeeOther, "/admin/users")
 }
 
 func (h *Handler) DeleteUser(c echo.Context) error {
-	if !middleware.IsMaster(c) {
+	_, isMaster := middleware.GetSessionFlags(c)
+	if !isMaster {
 		return c.String(http.StatusForbidden, "Access denied")
 	}
 

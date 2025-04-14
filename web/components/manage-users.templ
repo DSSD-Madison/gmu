@@ -4,8 +4,8 @@ import (
     db "github.com/DSSD-Madison/gmu/pkg/db/generated"
 )
 
-templ ManageUsersForm(csrf string, err string, users []db.ListUsersRow) {
-	@Base("Manage Users") {
+templ ManageUsersForm(csrf string, err string, users []db.ListUsersRow, isAuthorized bool, isMaster bool) {
+	@Base("Manage Users", isAuthorized, isMaster) {
 		<div class="max-w-xl p-6 mx-auto mt-10 bg-white rounded shadow-md dark:bg-gray-800">
 			<h2 class="mb-4 text-xl font-bold dark:text-white">Add New User</h2>
 

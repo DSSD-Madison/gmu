@@ -30,8 +30,8 @@ templ LoginFormPartial(err string, csrf string, redirect string) {
 	</div>
 }
 
-templ LoginPage(err string, csrf string, redirect string) {
-	@Base("Login") {
+templ LoginPage(err string, csrf string, redirect string, isAuthorized bool, isMaster bool) {
+	@Base("Login", isAuthorized, isMaster) {
 		@LoginFormPartial(err, csrf, redirect)
 	}
 }

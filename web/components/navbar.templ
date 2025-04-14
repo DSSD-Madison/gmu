@@ -1,33 +1,43 @@
 package components
 
-templ Navbar() {
-	<nav class="dark:bg-gray-800">
-		<div class="mx-5 max-w-7xl px-2">
-			<div class="relative flex h-16 items-center justify-between">
-				<div class="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
-					@NavItems()
+templ Navbar(isAuthenticated bool, isMaster bool) {
+	<nav class="shadow dark:bg-gray-800">
+		<div class="px-2 mx-5 max-w-7xl">
+			<div class="relative flex items-center justify-between h-16">
+				<div class="flex items-center justify-center flex-1 sm:items-stretch sm:justify-start">
+					@NavItems(isAuthenticated, isMaster)
 				</div>
 			</div>
 		</div>
 	</nav>
 }
 
-templ NavItems() {
+templ NavItems(isAuthenticated bool, isMaster bool) {
 	@NavLogo("BEP", templ.URL("/"))
+
 	<div class="hidden sm:ml-6 sm:block">
 		<div class="flex space-x-4">
 			@NavButton("Home", templ.URL("/"))
-			//@NavButton("Upload", templ.URL("/upload"))
+
+			if isAuthenticated {
+				@NavButton("Upload", templ.URL("/upload"))
+				if isMaster {
+					@NavButton("Create Users", templ.URL("/admin/users"))
+				}
+				@NavButton("Logout", templ.URL("/logout"))
+			} else {
+				@NavButton("Login", templ.URL("/login"))
+			}
 		</div>
 	</div>
 }
 
 templ NavButton(content string, url templ.SafeURL) {
-	<a class="dark:bg-gray-900 dark:text-gray-300 rounded-md px-3 py-2 text-sm font-medium bg-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 dark:hover:text-white" href={ url }>{content}</a>
+	<a class="px-3 py-2 text-sm font-medium bg-gray-100 rounded-md dark:bg-gray-900 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 dark:hover:text-white" href={ url }>{content}</a>
 }
 
 templ NavLogo(content string, url templ.SafeURL) {
 	<!-- Could/Should be swapped with an actual logo img -->
-	<a class="dark:text-white rounded-md px-3 py-2 text-m font-medium" href={url}>{content}</a>
+	<a class="px-3 py-2 font-medium rounded-md dark:text-white text-m" href={url}>{content}</a>
 }
 

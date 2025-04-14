@@ -12,6 +12,7 @@ import (
 
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
+	"github.com/DSSD-Madison/gmu/pkg/middleware"
 	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
 	"github.com/google/uuid"
@@ -20,7 +21,8 @@ import (
 
 func (h *Handler) PDFUploadPage(c echo.Context) error {
 	csrf := c.Get("csrf").(string)
-	return web.Render(c, http.StatusOK, components.PDFUpload(csrf))
+	isAuthorized, isMaster := middleware.GetSessionFlags(c)
+	return web.Render(c, http.StatusOK, components.PDFUpload(csrf, isAuthorized, isMaster))
 }
 
 func (h *Handler) HandlePDFUpload(c echo.Context) error {
@@ -179,7 +181,7 @@ func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
 	if !ok {
 		log.Println("CSRF token not found in context")
 	}
-	
+	isAuthorized, isMaster := middleware.GetSessionFlags(c)
 	return web.Render(c, http.StatusOK, components.PDFMetadataEditForm(
 		fileId,
 		doc.FileName,
@@ -196,6 +198,8 @@ func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
 		allKeywords,
 		allAuthors,
 		allCategories,
+		isAuthorized,
+		isMaster,
 	))
 
 }

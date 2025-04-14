@@ -20,8 +20,10 @@ templ PDFMetadataEditForm(
 	allKeywords []db.Keyword,
 	allAuthors []db.Author,
 	allCategories []db.Category,
+	isAuthorized bool,
+	isMaster bool,
 ) {
-	@Base("Edit PDF Metadata") {
+	@Base("Edit PDF Metadata", isAuthorized, isMaster) {
 		<div class="container max-w-2xl p-6 mx-auto mt-10 mb-10 bg-white rounded shadow-md dark:bg-gray-800">
 			<h1 class="mb-4 text-2xl font-bold text-gray-900 dark:text-white">Edit Metadata</h1>
 			<p class="mb-6 text-gray-600 dark:text-gray-300">

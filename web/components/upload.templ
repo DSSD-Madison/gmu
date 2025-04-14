@@ -1,20 +1,20 @@
 package components
 
-templ PDFUpload(csrf string) {
-	@Base("PDF Upload") {
-		<div id="upload-container" class="relative flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900 cursor-pointer">
+templ PDFUpload(csrf string, isAuthorized bool, isMaster bool) {
+	@Base("PDF Upload", isAuthorized, isMaster) {
+		<div id="upload-container" class="relative flex items-center justify-center min-h-screen bg-gray-100 cursor-pointer dark:bg-gray-900">
 			<form id="pdf-upload-form"
 				action="/upload"
 				method="post"
 				enctype="multipart/form-data"
-				class="z-10 w-full max-w-md p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md"
+				class="z-10 w-full max-w-md p-6 bg-white rounded-lg shadow-md dark:bg-gray-800"
 				hx-encoding="multipart/form-data"
 				hx-post="/upload"
 				hx-target="#upload-response"
 				hx-swap="innerHTML"
 			>
 				<input type="hidden" name="_csrf" value={ csrf } />
-				<div id="file-status-display" class="flex flex-col items-center justify-center w-full h-32 px-4 mb-4 text-center transition bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md">
+				<div id="file-status-display" class="flex flex-col items-center justify-center w-full h-32 px-4 mb-4 text-center transition bg-white border-2 border-gray-300 border-dashed rounded-md dark:bg-gray-800 dark:border-gray-600">
 					<span id="upload-status-text" class="text-gray-600 dark:text-gray-300">Click anywhere or drag & drop a PDF</span>
 				</div>
 
@@ -27,7 +27,7 @@ templ PDFUpload(csrf string) {
 				<div id="upload-response" class="h-6 mt-4 text-sm text-center text-gray-700 dark:text-gray-300"></div>
 			</form>
 
-			<div id="page-drag-overlay" class="fixed inset-0 z-40 flex items-center justify-center hidden transition-opacity duration-200 bg-blue-500 bg-opacity-75 dark:bg-blue-400 dark:bg-opacity-80 pointer-events-none">
+			<div id="page-drag-overlay" class="fixed inset-0 z-40 flex items-center justify-center hidden transition-opacity duration-200 bg-blue-500 bg-opacity-75 pointer-events-none dark:bg-blue-400 dark:bg-opacity-80">
 				<span class="text-3xl font-bold text-white dark:text-gray-900">Drop PDF Here</span>
 			</div>
 		</div>

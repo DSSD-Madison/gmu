@@ -21,16 +21,22 @@ func init() {
 	}
 }
 
-func IsMaster(c echo.Context) bool {
+func isMaster(c echo.Context) bool {
 	session, _ := Store.Get(c.Request(), "session")
 	isMaster, ok := session.Values["is_master"].(bool)
 	return ok && isMaster
 }
 
-func IsAuthorized(c echo.Context) bool {
+func isAuthorized(c echo.Context) bool {
 	session, _ := Store.Get(c.Request(), "session")
 	auth, ok := session.Values["authenticated"].(bool)
 	return ok && auth
+}
+
+func GetSessionFlags(c echo.Context) (isAuthorizedUser, isMasterUser bool) {
+	isAuthorizedUser = isAuthorized(c)
+	isMasterUser = isMaster(c)
+	return
 }
 
 // Middleware to check auth

@@ -28,6 +28,8 @@ func PDFMetadataEditForm(
 	allKeywords []db.Keyword,
 	allAuthors []db.Author,
 	allCategories []db.Category,
+	isAuthorized bool,
+	isMaster bool,
 ) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -68,7 +70,7 @@ func PDFMetadataEditForm(
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(originalFilename)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 28, Col: 100}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 30, Col: 100}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -81,7 +83,7 @@ func PDFMetadataEditForm(
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fileId)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 29, Col: 92}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 31, Col: 92}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -94,7 +96,7 @@ func PDFMetadataEditForm(
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fileId)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 33, Col: 53}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 35, Col: 53}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -107,7 +109,7 @@ func PDFMetadataEditForm(
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(csrf)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 34, Col: 50}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 36, Col: 50}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -120,7 +122,7 @@ func PDFMetadataEditForm(
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 38, Col: 61}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 40, Col: 61}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -133,7 +135,7 @@ func PDFMetadataEditForm(
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(abstract)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 45, Col: 229}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 47, Col: 229}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -146,7 +148,7 @@ func PDFMetadataEditForm(
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(publishDate)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 51, Col: 82}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 53, Col: 82}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -159,7 +161,7 @@ func PDFMetadataEditForm(
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(source)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 56, Col: 65}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/metadata-edit-form.templ`, Line: 58, Col: 65}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -191,7 +193,7 @@ func PDFMetadataEditForm(
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Base("Edit PDF Metadata").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Base("Edit PDF Metadata", isAuthorized, isMaster).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

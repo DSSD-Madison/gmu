@@ -23,6 +23,8 @@ func (h *Handler) Login(c echo.Context) error {
 		csrf = ""
 	}
 
+	isAuthorized, isMaster := middleware.GetSessionFlags(c)
+
 	// Try to fetch user
 	user, err := h.db.GetUserByUsername(c.Request().Context(), username)
 	if err != nil {
@@ -30,7 +32,7 @@ func (h *Handler) Login(c echo.Context) error {
 		if c.Request().Header.Get("HX-Request") == "true" {
 			return web.Render(c, http.StatusOK, components.LoginFormPartial("Invalid credentials", csrf, redirect))
 		}
-		return web.Render(c, http.StatusOK, components.LoginPage("Invalid credentials", csrf, redirect))
+		return web.Render(c, http.StatusOK, components.LoginPage("Invalid credentials", csrf, redirect, isAuthorized, isMaster))
 	}
 
 	// Check password
@@ -40,7 +42,7 @@ func (h *Handler) Login(c echo.Context) error {
 		if c.Request().Header.Get("HX-Request") == "true" {
 			return web.Render(c, http.StatusOK, components.LoginFormPartial("Invalid credentials", csrf, redirect))
 		}
-		return web.Render(c, http.StatusOK, components.LoginPage("Invalid credentials", csrf, redirect))
+		return web.Render(c, http.StatusOK, components.LoginPage("Invalid credentials", csrf, redirect, isAuthorized, isMaster))
 	}
 
 	// Success: create session
@@ -62,13 +64,12 @@ func (h *Handler) Login(c echo.Context) error {
 	return c.Redirect(http.StatusSeeOther, redirect)
 }
 
-
 func (h *Handler) LoginPage(c echo.Context) error {
 	csrf, ok := c.Get("csrf").(string)
 	if !ok {
 		csrf = ""
 	}
 	redirect := c.QueryParam("redirect")
-	return web.Render(c, http.StatusOK, components.LoginPage("", csrf, redirect))
+	isAuthorized, isMaster := middleware.GetSessionFlags(c)
+	return web.Render(c, http.StatusOK, components.LoginPage("", csrf, redirect, isAuthorized, isMaster))
 }
-
