@@ -179,7 +179,7 @@ func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
 	if !ok {
 		log.Println("CSRF token not found in context")
 	}
-
+	
 	return web.Render(c, http.StatusOK, components.PDFMetadataEditForm(
 		fileId,
 		doc.FileName,

@@ -80,6 +80,8 @@ func main() {
 	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
 		TokenLookup:    "form:_csrf",
 		CookieName:     "csrf",
+		CookiePath:     "/",
+		CookieDomain:   "",
 		ContextKey:     "csrf",
 		CookieSameSite: http.SameSiteStrictMode,
 		CookieSecure:   appConfig.Mode == "prod", // Only set secure cookies in prod
