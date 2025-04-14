@@ -52,4 +52,6 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           INDEX_ID: ${{ secrets.AWS_INDEX_ID }}
           ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-        run: python scripts/batch_delete.py --dry-run
+        run: |
+          echo "=== Running batch_delete.py (Clean Database) ==="
+          python scripts/batch_delete.py --dry-run
