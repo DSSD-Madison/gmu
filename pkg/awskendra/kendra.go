@@ -11,14 +11,24 @@ import (
 )
 
 type KendraClient struct {
+	queue  *KendraQueryQueue
 	client *kendra.Client
 	config Config
 }
 
+type QueryExecutor interface {
+	EnqueueQuery(query kendra.QueryInput) QueryResult
+}
+
+type KendraClientExecutor struct {
+	client *kendra.Client
+}
+
 func NewKendraClient(config Config) (*KendraClient, error) {
 	opts := kendra.Options{
-		Credentials: config.Credentials,
-		Region:      config.Region,
+		Credentials:      config.Credentials,
+		Region:           config.Region,
+		RetryMaxAttempts: config.RetryMaxAttempts,
 	}
 
 	client := kendra.New(opts)
@@ -27,7 +37,10 @@ func NewKendraClient(config Config) (*KendraClient, error) {
 		return &KendraClient{}, err
 	}
 
-	return &KendraClient{client, config}, nil
+	queue := NewKendraQueryQueue(client)
+
+	fmt.Printf("number of retries: %d\n", client.Options().RetryMaxAttempts)
+	return &KendraClient{queue, client, config}, nil
 }
 
 func queryOutputToResults(out kendra.QueryOutput) KendraResults {
@@ -137,13 +150,12 @@ func (c KendraClient) MakeQuery(query string, filters map[string][]string, pageN
 		QueryText:       &query,
 		PageNumber:      &page,
 	}
-	out, err := c.client.Query(context.TODO(), &kendraQuery)
 
-	// TODO: this needs to be fixed to a proper error
-	if err != nil {
-		log.Printf("Kendra Query Failed %+filterCategory", err)
+	queryResults := c.queue.EnqueueQuery(kendraQuery)
+	if queryResults.Error != nil {
+		return KendraResults{}
 	}
-	results := queryOutputToResults(*out)
+	results := queryResults.Results
 
 	calculatedPages := (results.Count + 9) / 10
 	totalPages := min(calculatedPages, 10)
