@@ -23,26 +23,18 @@ func (h *Handler) Login(c echo.Context) error {
 		csrf = ""
 	}
 
-	isAuthorized, isMaster := middleware.GetSessionFlags(c)
-
 	// Try to fetch user
 	user, err := h.db.GetUserByUsername(c.Request().Context(), username)
 	if err != nil {
 		fmt.Println("Login error: user not found:", err)
-		if c.Request().Header.Get("HX-Request") == "true" {
-			return web.Render(c, http.StatusOK, components.LoginFormPartial("Invalid credentials", csrf, redirect))
-		}
-		return web.Render(c, http.StatusOK, components.LoginPage("Invalid credentials", csrf, redirect, isAuthorized, isMaster))
+		return web.Render(c, http.StatusOK, components.LoginFormPartial("Invalid credentials", csrf, redirect))
 	}
 
 	// Check password
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
 		fmt.Println("Login error: incorrect password:", err)
-		if c.Request().Header.Get("HX-Request") == "true" {
-			return web.Render(c, http.StatusOK, components.LoginFormPartial("Invalid credentials", csrf, redirect))
-		}
-		return web.Render(c, http.StatusOK, components.LoginPage("Invalid credentials", csrf, redirect, isAuthorized, isMaster))
+		return web.Render(c, http.StatusOK, components.LoginFormPartial("Invalid credentials", csrf, redirect))
 	}
 
 	// Success: create session
@@ -57,11 +49,8 @@ func (h *Handler) Login(c echo.Context) error {
 		redirect = "/"
 	}
 
-	if c.Request().Header.Get("HX-Request") == "true" {
-		c.Response().Header().Set("HX-Redirect", redirect)
-		return c.NoContent(http.StatusOK)
-	}
-	return c.Redirect(http.StatusSeeOther, redirect)
+	c.Response().Header().Set("HX-Redirect", redirect)
+	return c.NoContent(http.StatusOK)
 }
 
 func (h *Handler) LoginPage(c echo.Context) error {
@@ -72,4 +61,14 @@ func (h *Handler) LoginPage(c echo.Context) error {
 	redirect := c.QueryParam("redirect")
 	isAuthorized, isMaster := middleware.GetSessionFlags(c)
 	return web.Render(c, http.StatusOK, components.LoginPage("", csrf, redirect, isAuthorized, isMaster))
+}
+
+func (h *Handler) Logout(c echo.Context) error {
+	session, _ := middleware.Store.Get(c.Request(), "session")
+	session.Values["authenticated"] = false
+	session.Values["is_master"] = false
+	session.Options.MaxAge = -1
+	session.Save(c.Request(), c.Response())
+
+	return c.Redirect(http.StatusSeeOther, "/")
 }
