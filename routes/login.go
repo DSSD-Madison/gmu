@@ -23,18 +23,24 @@ func (h *Handler) Login(c echo.Context) error {
 		csrf = ""
 	}
 
-	// Try to fetch user
+	isAuthorized, isMaster := middleware.GetSessionFlags(c)
+
 	user, err := h.db.GetUserByUsername(c.Request().Context(), username)
 	if err != nil {
 		fmt.Println("Login error: user not found:", err)
-		return web.Render(c, http.StatusOK, components.LoginFormPartial("Invalid credentials", csrf, redirect))
+		if c.Request().Header.Get("HX-Request") == "true" {
+			return web.Render(c, http.StatusOK, components.ErrorMessage("Invalid credentials"))
+		}
+		return web.Render(c, http.StatusOK, components.LoginPage("Invalid credentials", csrf, redirect, isAuthorized, isMaster))
 	}
 
-	// Check password
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
 		fmt.Println("Login error: incorrect password:", err)
-		return web.Render(c, http.StatusOK, components.LoginFormPartial("Invalid credentials", csrf, redirect))
+		if c.Request().Header.Get("HX-Request") == "true" {
+			return web.Render(c, http.StatusOK, components.ErrorMessage("Invalid credentials"))
+		}
+		return web.Render(c, http.StatusOK, components.LoginPage("Invalid credentials", csrf, redirect, isAuthorized, isMaster))
 	}
 
 	// Success: create session
@@ -49,8 +55,11 @@ func (h *Handler) Login(c echo.Context) error {
 		redirect = "/"
 	}
 
-	c.Response().Header().Set("HX-Redirect", redirect)
-	return c.NoContent(http.StatusOK)
+	if c.Request().Header.Get("HX-Request") == "true" {
+		c.Response().Header().Set("HX-Redirect", redirect)
+		return c.NoContent(http.StatusOK)
+	}
+	return c.Redirect(http.StatusSeeOther, redirect)
 }
 
 func (h *Handler) LoginPage(c echo.Context) error {
