@@ -16,6 +16,8 @@ type KendraResult struct {
 	PublishDate string
 	Categories  []string
 	Abstract    string
+	Source      string
+	UUID        string
 }
 
 type PageStatus struct {

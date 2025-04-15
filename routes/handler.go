@@ -4,7 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
-	"github.com/DSSD-Madison/gmu/pkg/db"
+	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
 )
 
 type Handler struct {

@@ -1,0 +1,112 @@
+package components
+
+import (
+	"strings"
+)
+
+type Pair struct {
+	ID   string
+	Name string
+}
+
+// --- Define the script call helper ---
+script addTagScript(idPrefix, fieldName, id, name string) {
+	addTag(idPrefix, fieldName, id, name);
+}
+
+templ TagInputJS(idPrefix, label, fieldName, searchURL string, initialValues []Pair) {
+	<div class="mb-4 tag-input-container">
+		<label for={ idPrefix + "-search-input" } class="block mb-2 text-sm font-bold text-gray-700 dark:text-gray-200">{ label }</label>
+		<div class="relative">
+			<div id={ idPrefix + "-tags-display" } class="flex flex-wrap min-h-0 gap-1 mb-1 border border-transparent rounded dark:border-transparent">
+				if len(initialValues) == 0 {
+					<span class="text-xs italic text-gray-400 tag-placeholder">No { strings.ToLower(label) } added yet.</span>
+				} else {
+					for _, item := range initialValues {
+						@TagItemJS(idPrefix, fieldName, item.ID, item.Name)
+					}
+				}
+			</div>
+			<div id={ idPrefix + "-hidden-inputs" } class="hidden">
+				for _, item := range initialValues {
+					<input type="hidden" name={ fieldName } value={ item.ID } data-tag-value={ item.ID }/>
+				}
+			</div>
+			<input
+				type="text"
+				id={ idPrefix + "-search-input" }
+				name="name"
+				autocomplete="off"
+				placeholder={ "Search for " + strings.ToLower(label) + "..." }
+				class="w-full px-3 py-2 leading-tight text-gray-700 bg-white border border-gray-300 rounded shadow appearance-none tag-search-input dark:border-gray-600 dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:shadow-outline"
+				data-id-prefix={ idPrefix }
+				data-field-name={ fieldName }
+				hx-get={ searchURL }
+				hx-trigger="input changed delay:300ms, focus"
+				hx-target={ "#" + idPrefix + "-suggestions" }
+				hx-swap="innerHTML"
+				hx-indicator={ "#" + idPrefix + "-loading-indicator" }
+			/>
+			<span class="htmx-indicator absolute right-3 top-[calc(50%-0.5rem+1rem)]" id={ idPrefix + "-loading-indicator" }>
+				<svg class="w-4 h-4 text-gray-400 animate-spin dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+				</svg>
+			</span>
+
+			<div id={ idPrefix + "-suggestions" } class="absolute z-10 w-full mt-1 overflow-y-auto bg-white border border-gray-300 rounded shadow-lg dark:bg-gray-800 dark:border-gray-600 max-h-60 empty:h-0 empty:p-0 empty:border-0 empty:shadow-none">
+			</div>
+		</div>
+	</div>
+}
+
+templ TagItemJS(idPrefix, fieldName, valueID, valueName string) {
+	<span
+		data-tag-value={ valueID }
+		data-id-prefix={ idPrefix }
+		data-field-name={ fieldName }
+		class="tag-item bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300 inline-flex items-center"
+	>
+		{ valueName }
+		<button
+			type="button"
+			class="ml-1 text-blue-600 hover:text-blue-400 focus:outline-none"
+			onclick="removeTag(this)"
+			aria-label={ "Remove " + valueName }
+		>
+			×
+		</button>
+	</span>
+}
+
+templ SuggestionItemJS(idPrefix, fieldName, id, name string) {
+	if id == "NON" {
+		<div
+			class="px-3 py-2 text-sm font-semibold text-green-700 cursor-pointer hover:bg-green-100 dark:hover:bg-gray-700"
+			onclick={ addTagScript(idPrefix, fieldName, "new:" + name, name) }
+		>
+			+ Create "{ name }"
+		</div>
+	} else {
+		<div
+			class="px-3 py-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200"
+			onclick={ addTagScript(idPrefix, fieldName, id, name) }
+		>
+			{ name }
+		</div>
+	}
+}
+
+templ NoSuggestionResultJS() {
+	<div class="px-3 py-2 text-sm italic text-gray-500 dark:text-gray-400">No matches found.</div>
+}
+
+templ SuggestionList(idPrefix, fieldName string, suggestions []Pair) {
+	if len(suggestions) == 0 {
+		@NoSuggestionResultJS()
+	} else {
+		for _, s := range suggestions {
+			@SuggestionItemJS(idPrefix, fieldName, s.ID, s.Name)
+		}
+	}
+}

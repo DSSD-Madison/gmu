@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"net/http"
 	"os"
 
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -15,7 +16,7 @@ import (
 
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 	"github.com/DSSD-Madison/gmu/pkg/config"
-	"github.com/DSSD-Madison/gmu/pkg/db"
+	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
 	db_util "github.com/DSSD-Madison/gmu/pkg/db/util"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/DSSD-Madison/gmu/routes"
@@ -73,6 +74,24 @@ func main() {
 				)
 			}
 			return nil
+		},
+	}))
+
+	e.Use(middleware.CSRFWithConfig(middleware.CSRFConfig{
+		TokenLookup:    "form:_csrf",
+		CookieName:     "csrf",
+		CookiePath:     "/",
+		CookieDomain:   "",
+		ContextKey:     "csrf",
+		CookieSameSite: http.SameSiteStrictMode,
+		CookieSecure:   appConfig.Mode == "prod", // Only set secure cookies in prod
+		Skipper: func(c echo.Context) bool {
+			switch c.Path() {
+			case "/", "/search", "/search/suggestions", "/login", "/logout":
+				return true
+			default:
+				return false
+			}
 		},
 	}))
 
