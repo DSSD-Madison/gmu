@@ -1,13 +1,14 @@
 package awskendra
 
-type Job[Payload, Result any] struct {
-	Payload    Payload
-	ResultChan chan Result
-	Callback   func(result Payload)
+import "context"
+
+type Job[P, R any] struct {
+	Payload    P
+	ResultChan chan<- R
+	ctx        context.Context
 }
 
-type Queue[Payload, Result any] interface {
-	Enqueue(job Job[Payload, Result])
-	startWorkers(workerCount int)
-	stopWorkers()
+type Queue[P, R any] interface {
+	Enqueue(job Job[P, R]) bool
+	Shutdown(ctx context.Context) error
 }

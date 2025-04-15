@@ -19,6 +19,7 @@ import (
 	"github.com/DSSD-Madison/gmu/pkg/db"
 	db_util "github.com/DSSD-Madison/gmu/pkg/db/util"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
+	"github.com/DSSD-Madison/gmu/pkg/services"
 	"github.com/DSSD-Madison/gmu/routes"
 )
 
@@ -88,15 +89,28 @@ func main() {
 	dbQuerier := db.New(sqlDB)
 
 	// --- AWS Kendra Initialization ---
-	kendraClient, err := awskendra.NewKendraClient(*kendraConfig)
+	kendraClient, err := awskendra.New(*kendraConfig, appLogger)
 	if err != nil {
 		appLogger.Error("Could not initialize kendra client", "err", err)
 		os.Exit(1)
 	}
 	appLogger.Info("Kendra client initialized")
 
-	queryQueue := awskendra.NewKendraQueryQueue(kendraClient, 2, 5)
-	appLogger.Info("Kendra query queue initialized")
+	appLogger.Info("Initializing services...")
+
+	searchService := services.NewSearchService(appLogger, kendraClient, dbQuerier)
+	suggestionService := services.NewSuggestionService(appLogger, kendraClient)
+
+	appLogger.Info("Services initialized")
+
+	// --- Handler Initialization ---
+	appLogger.Info("Initializing Handlers...")
+
+	homeHandler := routes.NewHomeHandler(appLogger)
+	searchHandler := routes.NewSearchHandler(appLogger, searchService)
+	suggestionsHandler := routes.NewSuggestionsHandler(appLogger, suggestionService)
+
+	appLogger.Info("Handlers initialized")
 
 	// --- Echo Setup ---
 	e := echo.New()
@@ -127,15 +141,9 @@ func main() {
 		},
 	}))
 
-	// --- Handler Initialization ---
-	appLogger.Info("Initializing Handlers...")
-
-	routesHandler := routes.NewHandler(dbQuerier, queryQueue, kendraClient, appLogger)
-
-	appLogger.Info("Handlers initialized")
-
 	// --- Routes Initialization ---
-	routes.InitRoutes(e, routesHandler)
+	routes.InitRoutes(e, homeHandler, searchHandler, suggestionsHandler)
+	appLogger.Info("Routes initialized")
 
 	e.Static("/images", "web/assets/images")
 	e.Static("/css", "web/assets/css")

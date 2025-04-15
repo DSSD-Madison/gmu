@@ -10,15 +10,15 @@ import (
 type Handler struct {
 	db     *db.Queries
 	q      awskendra.QueryExecutor
-	kendra *awskendra.KendraClient
+	client awskendra.Client
 	logger *slog.Logger
 }
 
-func NewHandler(db *db.Queries, q awskendra.QueryExecutor, k *awskendra.KendraClient, l *slog.Logger) Handler {
+func NewHandler(db *db.Queries, q awskendra.QueryExecutor, c awskendra.Client, l *slog.Logger) Handler {
 	return Handler{
 		db:     db,
 		q:      q,
-		kendra: k,
+		client: c,
 		logger: l,
 	}
 }

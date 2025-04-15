@@ -76,7 +76,12 @@ func (h *Handler) Enabled(ctx context.Context, level slog.Level) bool {
 }
 
 func (h *Handler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return &Handler{handler: h.handler.WithAttrs(attrs), bytes: h.bytes, mutex: h.mutex}
+	return &Handler{
+		handler:     h.handler.WithAttrs(attrs),
+		bytes:       h.bytes,
+		mutex:       h.mutex,
+		prettyPrint: h.prettyPrint,
+	}
 }
 
 func (h *Handler) WithGroup(name string) slog.Handler {

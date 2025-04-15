@@ -8,12 +8,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type Config struct {
-	Credentials Provider
-	Region string
-	IndexID string
-}
-
 func LoadConfig() (*Config, error) {
 	if err := godotenv.Load(); err != nil {
 		return nil, err
@@ -28,9 +22,10 @@ func LoadConfig() (*Config, error) {
 	}}
 
 	return &Config{
-		Credentials: creds,
-		Region: os.Getenv("REGION"),
-		IndexID: os.Getenv("INDEX_ID"),
+		Credentials:      creds,
+		Region:           os.Getenv("REGION"),
+		IndexID:          os.Getenv("INDEX_ID"),
+		RetryMaxAttempts: 10,
 	}, nil
 }
 
@@ -41,4 +36,3 @@ type Provider struct {
 func (p Provider) Retrieve(ctx context.Context) (aws.Credentials, error) {
 	return p.Credentials, nil
 }
-

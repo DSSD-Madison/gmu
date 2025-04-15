@@ -1,77 +1,142 @@
 package awskendra
 
 import (
+	"context"
+	"fmt"
 	"sync"
+
+	"github.com/DSSD-Madison/gmu/pkg/logger"
 )
 
-type KendraQueue[Payload, Result any] struct {
-	jobs      []Job[Payload, Result]
-	mu        sync.Mutex
-	cond      *sync.Cond
-	workers   []chan bool
+type ProcessorFunc[P, R any] func(ctx context.Context, payload P) R
+
+type genericQueue[P, R any] struct {
+	jobChan   chan Job[P, R]
+	processor ProcessorFunc[P, R]
+	log       logger.Logger
+	wg        sync.WaitGroup
+	stopChan  chan struct{}
 	semaphore chan struct{}
 }
 
-func NewKendraQueue[Payload, Result any](workerCount int, maxItems int) *KendraQueue[Payload, Result] {
-	q := &KendraQueue[Payload, Result]{
-		semaphore: make(chan struct{}, maxItems),
+func NewGenericQueue[P, R any](
+	workerCount int,
+	bufferSize int,
+	log logger.Logger,
+	processor ProcessorFunc[P, R],
+) Queue[P, R] {
+	if workerCount <= 0 {
+		workerCount = 1
 	}
-	q.cond = sync.NewCond(&q.mu)
+	if bufferSize < 0 {
+		bufferSize = 0
+	}
+
+	q := &genericQueue[P, R]{
+		jobChan:   make(chan Job[P, R], bufferSize),
+		processor: processor,
+		log:       log.With("component", "GenericQueue"),
+		stopChan:  make(chan struct{}),
+	}
+
 	q.startWorkers(workerCount)
+	q.log.Info("Generic Queue started", "workers", workerCount, "buffer", bufferSize)
 	return q
 }
 
-func (q *KendraQueue[Payload, Result]) Enqueue(job Job[Payload, Result]) {
-	q.semaphore <- struct{}{}
-
-	q.mu.Lock()
-	defer q.mu.Unlock()
-	q.jobs = append(q.jobs, job)
-	q.cond.Signal()
+func (q *genericQueue[P, R]) Enqueue(job Job[P, R]) bool {
+	select {
+	case <-q.stopChan:
+		q.log.WarnContext(job.ctx, "Enqueue failed: Queue is shutting down")
+		return false
+	default:
+		select {
+		case q.jobChan <- job:
+			q.log.DebugContext(job.ctx, "Job enqueued successfully")
+			return true
+		case <-job.ctx.Done():
+			q.log.WarnContext(job.ctx, "Enqueue failed: Job context cancelled before enqueueing")
+			return false
+		case <-q.stopChan:
+			q.log.WarnContext(job.ctx, "Enqueu failed: Queue shut down during enqueue attempt")
+			return false
+		}
+	}
 }
 
-func (q *KendraQueue[Payload, Result]) startWorkers(workerCount int) {
-	q.workers = make([]chan bool, workerCount)
-
+func (q *genericQueue[P, R]) startWorkers(workerCount int) {
+	q.wg.Add(workerCount)
 	for i := 0; i < workerCount; i++ {
-		stopChan := make(chan bool)
-		q.workers[i] = stopChan
-
-		go func(workerID int, stopChan chan bool) {
+		go func(workerID int) {
+			defer q.wg.Done()
+			q.log.Info("Worker started", "worker_id", workerID)
 			for {
-				q.mu.Lock()
-
-				for len(q.jobs) == 0 {
-					q.cond.Wait()
-				}
-
-				job := q.jobs[0]
-				q.jobs = q.jobs[1:]
-				q.mu.Unlock()
-
-				if job.Callback != nil {
-					job.Callback(job.Payload)
-				}
-
-				<-q.semaphore
-
 				select {
-				case <-stopChan:
+				case job, ok := <-q.jobChan:
+					if !ok {
+						q.log.Info("Worker stopping: job channel closed", "worker_id", workerID)
+						return
+					}
+
+					q.processJob(job, workerID)
+
+				case <-q.stopChan:
+					q.log.Info("Worker stopping: shutdown signal received", "worker_id", workerID)
 					return
-				default:
 				}
 			}
-		}(i, stopChan)
+		}(i)
 	}
 }
 
-func (q *KendraQueue[Payload, Result]) stopWorkers() {
-	for _, stopChan := range q.workers {
-		close(stopChan)
+func (q *genericQueue[P, R]) processJob(job Job[P, R], workerID int) {
+	defer func() {
+		if r := recover(); r != nil {
+			q.log.ErrorContext(job.ctx, "Worker panicked while processing job", "panic", r, "worker_id", workerID)
+			close(job.ResultChan)
+		}
+	}()
+
+	if err := job.ctx.Err(); err != nil {
+		q.log.WarnContext(job.ctx, "Job context cancelled before processing started", "error", err, "worker_id", workerID)
+		close(job.ResultChan)
+		return
 	}
+
+	q.log.DebugContext(job.ctx, "Worker processing job", "worker_id", workerID)
+	result := q.processor(job.ctx, job.Payload)
+	q.log.DebugContext(job.ctx, "Worker finished processing job", "worker_id", workerID)
+
+	select {
+	case job.ResultChan <- result:
+		q.log.DebugContext(job.ctx, "Worker sent result successfully", "worker_id", workerID)
+	case <-job.ctx.Done():
+		q.log.WarnContext(job.ctx, "Job context cancelled before worker could send result", "error", job.ctx.Err(), "worker_id", workerID)
+	case <-q.stopChan:
+		q.log.WarnContext(job.ctx, "Queue shutdown before worker could send result", "worker_id", workerID)
+	}
+	close(job.ResultChan)
 }
 
-type QueryResult struct {
-	Results KendraResults
-	Error   error
+func (q *genericQueue[P, R]) Shutdown(ctx context.Context) error {
+	q.log.Info("Initiating queue shutdown...")
+
+	close(q.stopChan)
+
+	close(q.jobChan)
+
+	done := make(chan struct{})
+	go func() {
+		q.wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		q.log.Info("Queue shutdown complete.")
+		return nil
+	case <-ctx.Done():
+		q.log.Error("Queue shutdown timed out", "error", ctx.Err())
+		return fmt.Errorf("queue shutdown timed out: %w", ctx.Err())
+	}
 }
