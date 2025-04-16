@@ -59,7 +59,7 @@ def call_claude(prompt):
         "stop_sequences": ["\n\nHuman:"]
     }
     response = bedrock.invoke_model(
-        modelId = "anthropic.claude-3-haiku-20240307-v1:0",
+        modelId = "anthropic.claude-3-5-haiku-20241022-v1:0",
         body=json.dumps(body),
         contentType="application/json",
         accept="application/json"
