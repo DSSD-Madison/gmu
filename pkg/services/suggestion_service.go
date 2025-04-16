@@ -14,14 +14,15 @@ type suggestionService struct {
 }
 
 func NewSuggestionService(log logger.Logger, kendraClient awskendra.Client) Suggester {
+	serviceLogger := log.With("Service", "Suggestion")
 	return &suggestionService{
-		log:          log.With("service", "SuggestionService"),
+		log:          serviceLogger,
 		kendraClient: kendraClient,
 	}
 }
 
 func (s *suggestionService) GetSuggestions(ctx context.Context, query string) (awskendra.KendraSuggestions, error) {
-	s.log.InfoContext(ctx, "Fetching suggestions", "query", query)
+	s.log.DebugContext(ctx, "Fetching suggestions", "query", query)
 
 	suggestions, err := s.kendraClient.GetSuggestions(ctx, query)
 	if err != nil {
@@ -29,6 +30,6 @@ func (s *suggestionService) GetSuggestions(ctx context.Context, query string) (a
 		return awskendra.KendraSuggestions{}, fmt.Errorf("failed to retrieve suggestions: %w", err)
 	}
 
-	s.log.InfoContext(ctx, "Suggestions fetched successfully", "query", query, "count", len(suggestions.Suggestions))
+	s.log.DebugContext(ctx, "Suggestions fetched successfully", "query", query, "count", len(suggestions.Suggestions))
 	return suggestions, nil
 }

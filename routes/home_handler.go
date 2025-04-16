@@ -16,7 +16,8 @@ type HomeHandler struct {
 }
 
 func NewHomeHandler(log logger.Logger) *HomeHandler {
-	return &HomeHandler{log: log}
+	handlerLogger := log.With("handler", "Home")
+	return &HomeHandler{log: handlerLogger}
 }
 
 func (h *HomeHandler) Home(c echo.Context) error {

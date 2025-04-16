@@ -6,14 +6,28 @@ import (
 	"strings"
 
 	"github.com/labstack/echo/v4"
-	"golang.org/x/crypto/bcrypt"
 
+	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/DSSD-Madison/gmu/pkg/middleware"
+	"github.com/DSSD-Madison/gmu/pkg/services"
 	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
 )
 
-func (h *Handler) Login(c echo.Context) error {
+type LoginHandler struct {
+	log     logger.Logger
+	manager services.LoginManager
+}
+
+func NewLoginHandler(log logger.Logger, manager services.LoginManager) *LoginHandler {
+	handlerLogger := log.With("Handler", "Login")
+	return &LoginHandler{
+		log:     handlerLogger,
+		manager: manager,
+	}
+}
+
+func (lh *LoginHandler) Login(c echo.Context) error {
 	username := c.FormValue("username")
 	password := c.FormValue("password")
 	redirect := c.FormValue("redirect")
@@ -25,7 +39,7 @@ func (h *Handler) Login(c echo.Context) error {
 
 	isAuthorized, isMaster := middleware.GetSessionFlags(c)
 
-	user, err := h.db.GetUserByUsername(c.Request().Context(), username)
+	user, err := lh.manager.ValidateUser(c.Request().Context(), username)
 	if err != nil {
 		fmt.Println("Login error: user not found:", err)
 		if c.Request().Header.Get("HX-Request") == "true" {
@@ -34,7 +48,7 @@ func (h *Handler) Login(c echo.Context) error {
 		return web.Render(c, http.StatusOK, components.LoginPage("Invalid credentials", csrf, redirect, isAuthorized, isMaster))
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
+	err = lh.manager.ValidatePassword(user, password)
 	if err != nil {
 		fmt.Println("Login error: incorrect password:", err)
 		if c.Request().Header.Get("HX-Request") == "true" {
@@ -44,11 +58,11 @@ func (h *Handler) Login(c echo.Context) error {
 	}
 
 	// Success: create session
-	session, _ := middleware.Store.Get(c.Request(), "session")
-	session.Values["authenticated"] = true
-	session.Values["username"] = user.Username
-	session.Values["is_master"] = user.IsMaster
-	session.Save(c.Request(), c.Response())
+	_, err = lh.manager.CreateSession(c, user)
+	if err != nil {
+		lh.log.ErrorContext(c.Request().Context(), "Failed to create session", "error", err)
+		return err
+	}
 
 	// Secure redirect
 	if redirect == "" || !strings.HasPrefix(redirect, "/") || strings.HasPrefix(redirect, "//") {
@@ -62,7 +76,7 @@ func (h *Handler) Login(c echo.Context) error {
 	return c.Redirect(http.StatusSeeOther, redirect)
 }
 
-func (h *Handler) LoginPage(c echo.Context) error {
+func (lh *LoginHandler) LoginPage(c echo.Context) error {
 	csrf, ok := c.Get("csrf").(string)
 	if !ok {
 		csrf = ""
@@ -72,12 +86,11 @@ func (h *Handler) LoginPage(c echo.Context) error {
 	return web.Render(c, http.StatusOK, components.LoginPage("", csrf, redirect, isAuthorized, isMaster))
 }
 
-func (h *Handler) Logout(c echo.Context) error {
-	session, _ := middleware.Store.Get(c.Request(), "session")
-	session.Values["authenticated"] = false
-	session.Values["is_master"] = false
-	session.Options.MaxAge = -1
-	session.Save(c.Request(), c.Response())
-
+func (lh *LoginHandler) Logout(c echo.Context) error {
+	err := lh.manager.Logout(c)
+	if err != nil {
+		lh.log.ErrorContext(c.Request().Context(), "Failed to log out", "error", err)
+		return err
+	}
 	return c.Redirect(http.StatusSeeOther, "/")
 }

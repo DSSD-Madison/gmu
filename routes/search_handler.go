@@ -29,8 +29,9 @@ type SearchHandler struct {
 }
 
 func NewSearchHandler(log logger.Logger, searcher services.Searcher) *SearchHandler {
+	handlerLogger := log.With("Handler", "Search")
 	return &SearchHandler{
-		log:      log,
+		log:      handlerLogger,
 		searcher: searcher,
 	}
 }

@@ -18,15 +18,16 @@ type SearchService struct {
 }
 
 func NewSearchService(log logger.Logger, kendra awskendra.Client, dbQuerier *db.Queries) *SearchService {
+	serviceLogger := log.With("Service", "Search")
 	return &SearchService{
-		log:          log,
+		log:          serviceLogger,
 		kendraClient: kendra,
 		dbQuerier:    dbQuerier,
 	}
 }
 
 func (s *SearchService) SearchDocuments(ctx context.Context, query string, filters url.Values, pageNum int) (awskendra.KendraResults, error) {
-	s.log.InfoContext(ctx, "Starting document search", "query", query, "page", pageNum)
+	s.log.DebugContext(ctx, "Starting document search", "query", query, "page", pageNum)
 
 	kendraFilterMap := convertURLValuesToKendraFilters(filters)
 	s.log.DebugContext(ctx, "Converted filters for Kendra", "filter_map", kendraFilterMap)
@@ -51,7 +52,7 @@ func (s *SearchService) SearchDocuments(ctx context.Context, query string, filte
 		s.log.DebugContext(ctx, "No results from Kendra to enrich")
 	}
 
-	s.log.InfoContext(ctx, "Document search completed", "query", query, "page", pageNum, "results_found", results.Count)
+	s.log.DebugContext(ctx, "Document search completed", "query", query, "page", pageNum, "results_found", results.Count)
 	return results, nil
 }
 

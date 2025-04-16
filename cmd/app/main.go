@@ -100,6 +100,7 @@ func main() {
 
 	searchService := services.NewSearchService(appLogger, kendraClient, dbQuerier)
 	suggestionService := services.NewSuggestionService(appLogger, kendraClient)
+	loginService := services.NewLoginService(appLogger, dbQuerier)
 
 	appLogger.Info("Services initialized")
 
@@ -109,7 +110,9 @@ func main() {
 	routeHandler := routes.NewHandler(dbQuerier, kendraClient, appLogger)
 	homeHandler := routes.NewHomeHandler(appLogger)
 	searchHandler := routes.NewSearchHandler(appLogger, searchService)
+	loginHandler := routes.NewLoginHandler(appLogger, loginService)
 	suggestionsHandler := routes.NewSuggestionsHandler(appLogger, suggestionService)
+	uploadHandler := routes.NewUploadHandler(appLogger, dbQuerier)
 
 	appLogger.Info("Handlers initialized")
 
@@ -160,7 +163,7 @@ func main() {
 		},
 	}))
 	// --- Routes Initialization ---
-	routes.InitRoutes(e, homeHandler, searchHandler, suggestionsHandler, routeHandler)
+	routes.InitRoutes(e, homeHandler, searchHandler, suggestionsHandler, loginHandler, uploadHandler, routeHandler)
 	appLogger.Info("Routes initialized")
 
 	e.Static("/images", "web/assets/images")

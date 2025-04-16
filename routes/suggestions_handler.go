@@ -18,8 +18,9 @@ type SuggestionsHandler struct {
 }
 
 func NewSuggestionsHandler(log logger.Logger, suggester services.Suggester) *SuggestionsHandler {
+	handlerLogger := log.With("Handler", "Suggestions")
 	return &SuggestionsHandler{
-		log:       log,
+		log:       handlerLogger,
 		suggester: suggester,
 	}
 }

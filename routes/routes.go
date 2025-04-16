@@ -7,7 +7,7 @@ import (
 )
 
 // InitRoutes registers all the application routes
-func InitRoutes(e *echo.Echo, homeHandler *HomeHandler, searchHandler *SearchHandler, suggestionsHandler *SuggestionsHandler, h *Handler) {
+func InitRoutes(e *echo.Echo, homeHandler *HomeHandler, searchHandler *SearchHandler, suggestionsHandler *SuggestionsHandler, loginHandler *LoginHandler, uploadHandler *UploadHandler, h *Handler) {
 	e.GET("/", homeHandler.Home)
 
 	// --- Search Routes ---
@@ -16,24 +16,24 @@ func InitRoutes(e *echo.Echo, homeHandler *HomeHandler, searchHandler *SearchHan
 
 	// --- PDF Upload and Metadata Routes ---
 	// Page to display the upload form
-	e.GET("/upload", h.PDFUploadPage, middleware.RequireAuth)
+	e.GET("/upload", uploadHandler.PDFUploadPage, middleware.RequireAuth)
 
 	// Action endpoint to handle the actual file upload POST request
-	e.POST("/upload", h.HandlePDFUpload, middleware.RequireAuth) // <<< CORRECTED HANDLER
+	e.POST("/upload", uploadHandler.HandlePDFUpload, middleware.RequireAuth) // <<< CORRECTED HANDLER
 
 	// Page to display the metadata edit form, identified by fileId
-	e.GET("/edit-metadata/:fileId", h.PDFMetadataEditPage, middleware.RequireAuth) // <<< ADDED ROUTE
+	e.GET("/edit-metadata/:fileId", uploadHandler.PDFMetadataEditPage, middleware.RequireAuth) // <<< ADDED ROUTE
 
 	// Action endpoint to handle the saving of edited metadata
-	e.POST("/save-metadata", h.HandleMetadataSave, middleware.RequireAuth) // <<< ADDED ROUTE
+	e.POST("/save-metadata", uploadHandler.HandleMetadataSave, middleware.RequireAuth) // <<< ADDED ROUTE
 
 	// Login Route
-	e.GET("/login", h.LoginPage)
-	e.POST("/login", h.Login)
+	e.GET("/login", loginHandler.LoginPage)
+	e.POST("/login", loginHandler.Login)
 
 	// Logout Route
-	e.GET("/logout", h.Logout) // for dev testing, remove when nav bar added
-	e.POST("/logout", h.Logout)
+	e.GET("/logout", loginHandler.Logout) // for dev testing, remove when nav bar added
+	e.POST("/logout", loginHandler.Logout)
 
 	// Admin Routes
 	e.GET("/admin/users", h.ManageUsersPage, middleware.RequireAuth)
