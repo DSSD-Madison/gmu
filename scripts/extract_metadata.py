@@ -18,17 +18,17 @@ PDF_KEYS = [
 # === AWS Clients ===
 s3 = boto3.client("s3")
 bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
-bedrock_2 = boto3.client("bedrock", region_name="us-east-2")
-models = bedrock_2.list_foundation_models()["modelSummaries"]
+# bedrock_2 = boto3.client("bedrock", region_name="us-east-2")
+# models = bedrock_2.list_foundation_models()["modelSummaries"]
 
-print("\n✅ On-demand-compatible foundation models:\n")
+# print("\n✅ On-demand-compatible foundation models:\n")
 
-for model in models:
-    if "ON_DEMAND" in model.get("inferenceTypesSupported", []):
-        print(f"- {model['modelName']}")
-        print(f"  ID: {model['modelId']}")
-        print(f"  Provider: {model['providerName']}")
-        print(f"  Supported: {model['inferenceTypesSupported']}\n")
+# for model in models:
+#     if "ON_DEMAND" in model.get("inferenceTypesSupported", []):
+#         print(f"- {model['modelName']}")
+#         print(f"  ID: {model['modelId']}")
+#         print(f"  Provider: {model['providerName']}")
+#         print(f"  Supported: {model['inferenceTypesSupported']}\n")
 
 # === Helpers ===
 def extract_text_until_metadata(pdf_bytes, max_pages=15):
@@ -70,7 +70,7 @@ def call_claude(prompt):
         "stop_sequences": ["\n\nHuman:"]
     }
     response = bedrock.invoke_model(
-        modelId = "anthropic.claude-3-5-haiku-20241022-v1:0",
+        modelId = "meta.llama3-3-70b-instruct-v1:0",
         body=json.dumps(body),
         contentType="application/json",
         accept="application/json"
