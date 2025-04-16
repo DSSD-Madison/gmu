@@ -4,28 +4,25 @@ import json
 import re
 from io import BytesIO
 
-# === Config ===
-BUCKET = "allianceforpeacebuilding-org"
-PDF_KEYS = [
-    "0010.pdf", "0011.pdf", "0022.pdf", "1860.pdf", "0027.pdf"
-]
-
+# === AWS Clients ===
 s3 = boto3.client("s3")
 bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
+flag = False
 
-# === Helpers ===
+# === Token + Cost Estimation ===
 def estimate_tokens(text: str) -> int:
     return int(len(text.split()) * 0.75)
 
 def estimate_cost(input_tokens: int, output_tokens: int = 200) -> float:
     return round((input_tokens / 1000 * 0.00025) + (output_tokens / 1000 * 0.001), 6)
 
+# === PDF Text Cleaning ===
 def clean_text(text: str) -> str:
     lines = text.splitlines()
     cleaned = []
     for line in lines:
-        if re.fullmatch(r"\s*\d+\s*", line): continue
-        if len(line.strip()) < 6: continue
+        if re.fullmatch(r"\s*\d+\s*", line): continue  # Remove standalone page numbers
+        if len(line.strip()) < 6: continue  # Likely headers/footers
         cleaned.append(line.strip())
     return "\n".join(cleaned)
 
@@ -35,11 +32,12 @@ def extract_text_first_n_pages_cleaned(pdf_bytes, max_pages=10):
     for i in range(min(max_pages, len(doc))):
         text += doc[i].get_text() + "\n"
     cleaned = clean_text(text)
-    tokens = estimate_tokens(cleaned)
-    print(f"📄 Estimated input tokens: {tokens}")
-    print(f"💸 Estimated cost for this doc: ${estimate_cost(tokens):.4f}")
-    return cleaned, tokens
+    input_tokens = estimate_tokens(cleaned)
+    print(f"📄 Estimated input tokens: {input_tokens}")
+    print(f"💸 Estimated cost for this doc (input only): ${estimate_cost(input_tokens, 0):.4f}")
+    return cleaned, input_tokens
 
+# === Prompt + Claude Call ===
 def build_prompt(text: str) -> str:
     return f"""
 You are an assistant extracting structured metadata from an academic policy document.
@@ -54,12 +52,12 @@ Return only a valid JSON object with the following fields:
 - "keyword_name" (array of unique strings, required, max 10)
 - "author_name" (array of unique strings, required, max 10)
 
-Only return the JSON — no explanations or extra text.
+Do not explain. Do not say "Here is the JSON". Do not use Markdown. Just return the JSON object.
 TEXT:
 {text}
 """
 
-def call_claude(prompt: str) -> str:
+def call_claude(prompt: str) -> tuple[str, int]:
     body = {
         "messages": [{"role": "user", "content": prompt}],
         "max_tokens": 512,
@@ -76,52 +74,101 @@ def call_claude(prompt: str) -> str:
     )
 
     result = json.loads(response["body"].read())
-    return result["content"][0]["text"].strip()
+    output_text = result["content"][0]["text"].strip()
+    output_tokens = estimate_tokens(output_text)
+    print(f"📝 Estimated output tokens: {output_tokens}")
+    return output_text, output_tokens
+
+# === JSON Cleaner ===
+def extract_first_json(text: str):
+    match = re.search(r"\{.*\}", text, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group(0))
+        except json.JSONDecodeError:
+            return None
+    return None
 
 def clip_list(values, max_items=10):
     return list(set(values))[:max_items] if isinstance(values, list) else []
 
-# === Main ===
+# === MAIN ===
 results = []
 total_cost = 0.0
 
-for key in PDF_KEYS:
-    print(f"\n📄 Processing {key}...")
+buckets = s3.list_buckets()["Buckets"]
+
+for bucket in buckets:
+    bucket_name = bucket["Name"]
+    print(f"\n🪣 Checking bucket: {bucket_name}")
     try:
-        obj = s3.get_object(Bucket=BUCKET, Key=key)
-        pdf_bytes = obj["Body"].read()
+        paginator = s3.get_paginator('list_objects_v2')
+        page_iterator = paginator.paginate(Bucket=bucket_name)
 
-        text, tokens = extract_text_first_n_pages_cleaned(pdf_bytes, max_pages=10)
-        prompt = build_prompt(text)
-        response = call_claude(prompt)
-        print("🔎 Claude raw response:")
-        print(response)
+        pdf_keys = []
+        for page in page_iterator:
+            if "Contents" in page:
+                for obj in page["Contents"]:
+                    key = obj["Key"]
+                    if key.lower().endswith(".pdf"):
+                        pdf_keys.append(key)
 
-
-        try:
-            metadata = json.loads(response)
-        except json.JSONDecodeError:
-            print(f"❌ Failed to parse Claude response.")
-            results.append({"s3_file": f"s3://{BUCKET}/{key}", "error": "Invalid JSON"})
+        if not pdf_keys:
+            print("📭 No PDFs found in this bucket.")
             continue
 
-        cost = estimate_cost(tokens)
-        total_cost += cost
+        for key in pdf_keys[:5]:  # Max 5 PDFs per bucket
+            print(f"\n📄 Processing {key}...")
+            try:
+                obj = s3.get_object(Bucket=bucket_name, Key=key)
+                pdf_bytes = obj["Body"].read()
 
-        results.append({
-            "s3_file": f"s3://{BUCKET}/{key}",
-            "title": metadata.get("title"),
-            "abstract": metadata.get("abstract"),
-            "category": (metadata.get("category") or "")[:100],
-            "publish_date": metadata.get("publish_date"),
-            "source": "bucket",
-            "region_name": clip_list(metadata.get("region_name", [])),
-            "keyword_name": clip_list(metadata.get("keyword_name", [])),
-            "author_name": clip_list(metadata.get("author_name", [])),
-            "estimated_cost": f"${cost:.4f}"
-        })
+                text, input_tokens = extract_text_first_n_pages_cleaned(pdf_bytes, max_pages=10)
+                if not flag:
+                    print("🔎 Text:")
+                    print(text)
+                    flag = True
+                    
+                prompt = build_prompt(text)
+                response, output_tokens = call_claude(prompt)
 
-    except Exception as e:
-        results.append({"s3_file": f"s3://{BUCKET}/{key}", "error": str(e)})
+                print("🔎 Claude raw response:")
+                print(response)
 
-print(f"\n💰 Total estimated cost for {len(results)} documents: ${total_cost:.4f}")
+                metadata = extract_first_json(response)
+                if not metadata:
+                    raise ValueError("❌ Failed to parse Claude response.")
+
+                cost = estimate_cost(input_tokens, output_tokens)
+                total_cost += cost
+
+                results.append({
+                    "s3_file": f"s3://{bucket_name}/{key}",
+                    "title": metadata.get("title"),
+                    "abstract": metadata.get("abstract"),
+                    "category": (metadata.get("category") or "")[:100],
+                    "publish_date": metadata.get("publish_date"),
+                    "source": "bucket",
+                    "region_name": clip_list(metadata.get("region_name", [])),
+                    "keyword_name": clip_list(metadata.get("keyword_name", [])),
+                    "author_name": clip_list(metadata.get("author_name", [])),
+                    "estimated_cost": f"${cost:.4f}"
+                })
+
+            except Exception as e:
+                results.append({
+                    "s3_file": f"s3://{bucket_name}/{key}",
+                    "error": str(e),
+                    "claude_output": response if 'response' in locals() else "No response"
+                })
+
+    except Exception as bucket_error:
+        print(f"⚠️ Error accessing bucket {bucket_name}: {bucket_error}")
+
+print(f"\n💰 Total estimated cost for all processed documents: ${total_cost:.4f}")
+
+# Save results
+with open("metadata_results.json", "w") as f:
+    json.dump(results, f, indent=2)
+
+print("\n✅ Done processing all buckets.")
