@@ -37,6 +37,6 @@ jobs:
         run: pip install boto3 pymupdf
 
       - name: Run metadata extraction
-        run: python scripts/extract_metadata_from_s3.py
+        run: python scripts/extract_metadata.py
 
 
