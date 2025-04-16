@@ -1,22 +1,21 @@
 package routes
 
 import (
-	"log/slog"
-
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
+	"github.com/DSSD-Madison/gmu/pkg/logger"
 )
 
 type Handler struct {
-	db *db.Queries
-	kendra *awskendra.KendraClient
-	logger *slog.Logger
+	db     *db.Queries
+	client awskendra.Client
+	logger logger.Logger
 }
 
-func NewHandler(db *db.Queries, k *awskendra.KendraClient, l *slog.Logger) Handler {
-	return Handler{
-		db: db,
-		kendra: k,
+func NewHandler(db *db.Queries, c awskendra.Client, l logger.Logger) *Handler {
+	return &Handler{
+		db:     db,
+		client: c,
 		logger: l,
 	}
 }

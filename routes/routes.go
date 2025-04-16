@@ -7,13 +7,12 @@ import (
 )
 
 // InitRoutes registers all the application routes
-func InitRoutes(e *echo.Echo, h Handler) {
-	// --- General Routes ---
-	e.GET("/", h.Home)
+func InitRoutes(e *echo.Echo, homeHandler *HomeHandler, searchHandler *SearchHandler, suggestionsHandler *SuggestionsHandler, h *Handler) {
+	e.GET("/", homeHandler.Home)
 
 	// --- Search Routes ---
-	e.GET("/search", h.Search)
-	e.POST("/search/suggestions", h.SearchSuggestions)
+	e.GET("/search", searchHandler.Search)
+	e.POST("/search/suggestions", suggestionsHandler.SearchSuggestions)
 
 	// --- PDF Upload and Metadata Routes ---
 	// Page to display the upload form
@@ -34,13 +33,12 @@ func InitRoutes(e *echo.Echo, h Handler) {
 
 	// Logout Route
 	e.GET("/logout", h.Logout) // for dev testing, remove when nav bar added
-	e.POST("/logout", h.Logout) 
+	e.POST("/logout", h.Logout)
 
 	// Admin Routes
 	e.GET("/admin/users", h.ManageUsersPage, middleware.RequireAuth)
 	e.POST("/admin/users", h.CreateNewUser, middleware.RequireAuth)
 	e.POST("/admin/users/delete", h.DeleteUser, middleware.RequireAuth)
-
 
 	// --- Database Search Routes ---
 	e.GET("/authors", h.DatabaseSearchAuthors, middleware.RequireAuth)
