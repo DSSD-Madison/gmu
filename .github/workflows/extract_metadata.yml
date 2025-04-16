@@ -33,9 +33,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r scripts/requirements.txt
 
-      - name: Install Python dependencies
-        run: pip install boto3 pymupdf
-
       - name: Run metadata extraction
         run: python scripts/extract_metadata.py
 
