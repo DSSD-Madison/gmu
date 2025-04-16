@@ -18,6 +18,16 @@ PDF_KEYS = [
 # === AWS Clients ===
 s3 = boto3.client("s3")
 bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
+models = bedrock.list_foundation_models()["modelSummaries"]
+
+print("\n✅ On-demand-compatible foundation models:\n")
+
+for model in models:
+    if "ON_DEMAND" in model.get("inferenceTypesSupported", []):
+        print(f"- {model['modelName']}")
+        print(f"  ID: {model['modelId']}")
+        print(f"  Provider: {model['providerName']}")
+        print(f"  Supported: {model['inferenceTypesSupported']}\n")
 
 # === Helpers ===
 def extract_text_until_metadata(pdf_bytes, max_pages=15):
