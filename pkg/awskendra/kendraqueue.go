@@ -71,7 +71,7 @@ func (q *KendraQueue[Payload, Result]) stopWorkers() {
 	}
 }
 
-type QueryResult struct {
-	Results KendraResults
+type QueryResult[R any] struct {
+	Results R
 	Error   error
 }

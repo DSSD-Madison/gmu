@@ -1,9 +1,7 @@
 package awskendra
 
 import (
-	"context"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/kendra"
@@ -11,13 +9,15 @@ import (
 )
 
 type KendraClient struct {
-	queue  *KendraQueryQueue
+	searchQueue      *KendraSearchQueue
+	suggestionsQueue *KendraSuggestionsQueue
+
 	client *kendra.Client
 	config Config
 }
 
-type QueryExecutor interface {
-	EnqueueQuery(query kendra.QueryInput) QueryResult
+type QueryExecutor[R any] interface {
+	EnqueueQuery(query kendra.QueryInput) QueryResult[R]
 }
 
 type KendraClientExecutor struct {
@@ -37,10 +37,11 @@ func NewKendraClient(config Config) (*KendraClient, error) {
 		return &KendraClient{}, err
 	}
 
-	queue := NewKendraQueryQueue(client)
+	searchQueue := NewKendraSearchQueue(client)
+	suggestionsQueue := NewKendraSuggestionsQueue(client)
 
 	fmt.Printf("number of retries: %d\n", client.Options().RetryMaxAttempts)
-	return &KendraClient{queue, client, config}, nil
+	return &KendraClient{searchQueue, suggestionsQueue, client, config}, nil
 }
 
 func queryOutputToResults(out kendra.QueryOutput) KendraResults {
@@ -151,7 +152,7 @@ func (c KendraClient) MakeQuery(query string, filters map[string][]string, pageN
 		PageNumber:      &page,
 	}
 
-	queryResults := c.queue.EnqueueQuery(kendraQuery)
+	queryResults := c.searchQueue.EnqueueQuery(kendraQuery)
 	if queryResults.Error != nil {
 		return KendraResults{}
 	}
@@ -187,18 +188,12 @@ func querySuggestionsOutputToSuggestions(out kendra.GetQuerySuggestionsOutput) K
 }
 
 func (c KendraClient) GetSuggestions(query string) (KendraSuggestions, error) {
-	kendraQuery := kendra.GetQuerySuggestionsInput{
-		IndexId:   &c.config.IndexID,
-		QueryText: &query,
-	}
-	out, err := c.client.GetQuerySuggestions(context.TODO(), &kendraQuery)
-	if err != nil {
-		log.Printf("Kendra Suggestions Query Failed %+v", err)
-		return KendraSuggestions{}, err
+	suggestionsResults := c.suggestionsQueue.EnqueueQuery(query, &c.config.IndexID)
+	if suggestionsResults.Error != nil {
+		return KendraSuggestions{}, nil
 	}
 
-	suggestions := querySuggestionsOutputToSuggestions(*out)
-	return suggestions, nil
+	return suggestionsResults.Results, nil
 }
 
 func TrimExtension(s string) string {

@@ -7,23 +7,23 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/kendra"
 )
 
-type KendraQueryQueue struct {
-	queue  Queue[kendra.QueryInput, QueryResult]
+type KendraSearchQueue struct {
+	queue  Queue[kendra.QueryInput, QueryResult[KendraResults]]
 	client *kendra.Client
 }
 
-func NewKendraQueryQueue(c *kendra.Client) *KendraQueryQueue {
-	return &KendraQueryQueue{
-		queue:  NewKendraQueue[kendra.QueryInput, QueryResult](2, 4),
+func NewKendraSearchQueue(c *kendra.Client) *KendraSearchQueue {
+	return &KendraSearchQueue{
+		queue:  NewKendraQueue[kendra.QueryInput, QueryResult[KendraResults]](2, 4),
 		client: c,
 	}
 }
 
 // replace this with a handler for dependency injection
-func (q *KendraQueryQueue) EnqueueQuery(query kendra.QueryInput) QueryResult {
-	resultChan := make(chan QueryResult)
+func (q *KendraSearchQueue) EnqueueQuery(query kendra.QueryInput) QueryResult[KendraResults] {
+	resultChan := make(chan QueryResult[KendraResults])
 
-	job := Job[kendra.QueryInput, QueryResult]{
+	job := Job[kendra.QueryInput, QueryResult[KendraResults]]{
 		Payload:    query,
 		ResultChan: resultChan,
 		Callback: func(query kendra.QueryInput) {
@@ -31,14 +31,14 @@ func (q *KendraQueryQueue) EnqueueQuery(query kendra.QueryInput) QueryResult {
 			if err != nil {
 				log.Printf("Kendra Query Failed %q", err)
 
-				resultChan <- QueryResult{
+				resultChan <- QueryResult[KendraResults]{
 					Results: KendraResults{},
 					Error:   err,
 				}
 			}
 			results := queryOutputToResults(*out)
 
-			resultChan <- QueryResult{
+			resultChan <- QueryResult[KendraResults]{
 				Results: results,
 				Error:   nil,
 			}
