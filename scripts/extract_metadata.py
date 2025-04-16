@@ -62,21 +62,28 @@ TEXT:
 
 def call_claude(prompt):
     body = {
-        "prompt": f"\n\nHuman: {prompt}\n\nAssistant:",
-        "max_tokens_to_sample": 512,
+        "messages": [
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+        "max_tokens": 512,
         "temperature": 0.3,
-        "top_k": 250,
         "top_p": 1.0,
-        "stop_sequences": ["\n\nHuman:"]
+        "anthropic_version": "bedrock-2023-05-31"
     }
+
     response = bedrock.invoke_model(
-        modelId = "anthropic.claude-3-haiku-20240307-v1:0",
+        modelId="anthropic.claude-3-haiku-20240307-v1:0",
         body=json.dumps(body),
         contentType="application/json",
         accept="application/json"
     )
+
     result = json.loads(response["body"].read())
-    return result["completion"].strip()
+    return result["content"][0]["text"].strip()
+
 
 def clip_list(values, max_items=10):
     return list(set(values))[:max_items] if isinstance(values, list) else []
