@@ -94,6 +94,9 @@ for key in PDF_KEYS:
         text, tokens = extract_text_first_n_pages_cleaned(pdf_bytes, max_pages=10)
         prompt = build_prompt(text)
         response = call_claude(prompt)
+        print("🔎 Claude raw response:")
+        print(response)
+
 
         try:
             metadata = json.loads(response)
