@@ -1,51 +1,50 @@
 import boto3
 import fitz  # PyMuPDF
 import json
+import re
 from io import BytesIO
 
-# === Configuration ===
+# === Config ===
 BUCKET = "allianceforpeacebuilding-org"
-
 PDF_KEYS = [
-    "0010.pdf",
-    "0011.pdf",
-    "0022.pdf",
-    "1860.pdf",
-    "0027.pdf"
+    "0010.pdf", "0011.pdf", "0022.pdf", "1860.pdf", "0027.pdf"
 ]
 
-
-# === AWS Clients ===
 s3 = boto3.client("s3")
 bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
-# bedrock_2 = boto3.client("bedrock", region_name="us-east-2")
-# models = bedrock_2.list_foundation_models()["modelSummaries"]
-
-# print("\n✅ On-demand-compatible foundation models:\n")
-
-# for model in models:
-#     if "ON_DEMAND" in model.get("inferenceTypesSupported", []):
-#         print(f"- {model['modelName']}")
-#         print(f"  ID: {model['modelId']}")
-#         print(f"  Provider: {model['providerName']}")
-#         print(f"  Supported: {model['inferenceTypesSupported']}\n")
 
 # === Helpers ===
-def extract_text_until_metadata(pdf_bytes, max_pages=15):
+def estimate_tokens(text: str) -> int:
+    return int(len(text.split()) * 0.75)
+
+def estimate_cost(input_tokens: int, output_tokens: int = 200) -> float:
+    return round((input_tokens / 1000 * 0.00025) + (output_tokens / 1000 * 0.001), 6)
+
+def clean_text(text: str) -> str:
+    lines = text.splitlines()
+    cleaned = []
+    for line in lines:
+        if re.fullmatch(r"\s*\d+\s*", line): continue
+        if len(line.strip()) < 6: continue
+        cleaned.append(line.strip())
+    return "\n".join(cleaned)
+
+def extract_text_first_n_pages_cleaned(pdf_bytes, max_pages=10):
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     text = ""
     for i in range(min(max_pages, len(doc))):
-        page = doc[i].get_text()
-        text += page + "\n"
-        if any(word in page.lower() for word in ["abstract", "introduction", "region", "keyword", "author", "category"]):
-            break
-    return text.strip()
+        text += doc[i].get_text() + "\n"
+    cleaned = clean_text(text)
+    tokens = estimate_tokens(cleaned)
+    print(f"📄 Estimated input tokens: {tokens}")
+    print(f"💸 Estimated cost for this doc: ${estimate_cost(tokens):.4f}")
+    return cleaned, tokens
 
-def build_prompt(text):
+def build_prompt(text: str) -> str:
     return f"""
 You are an assistant extracting structured metadata from an academic policy document.
 
-Return only a valid JSON object with these fields:
+Return only a valid JSON object with the following fields:
 - "title" (string, required)
 - "abstract" (string)
 - "category" (string, max 100 characters): e.g., article, research paper, etc.
@@ -60,14 +59,9 @@ TEXT:
 {text}
 """
 
-def call_claude(prompt):
+def call_claude(prompt: str) -> str:
     body = {
-        "messages": [
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
+        "messages": [{"role": "user", "content": prompt}],
         "max_tokens": 512,
         "temperature": 0.3,
         "top_p": 1.0,
@@ -84,45 +78,47 @@ def call_claude(prompt):
     result = json.loads(response["body"].read())
     return result["content"][0]["text"].strip()
 
-
 def clip_list(values, max_items=10):
     return list(set(values))[:max_items] if isinstance(values, list) else []
 
 # === Main ===
-def main():
-    for key in PDF_KEYS:
-        print(f"\n📄 Processing {key}...")
+results = []
+total_cost = 0.0
+
+for key in PDF_KEYS:
+    print(f"\n📄 Processing {key}...")
+    try:
+        obj = s3.get_object(Bucket=BUCKET, Key=key)
+        pdf_bytes = obj["Body"].read()
+
+        text, tokens = extract_text_first_n_pages_cleaned(pdf_bytes, max_pages=10)
+        prompt = build_prompt(text)
+        response = call_claude(prompt)
 
         try:
-            obj = s3.get_object(Bucket=BUCKET, Key=key)
-            pdf_bytes = obj["Body"].read()
-            text = extract_text_until_metadata(pdf_bytes)
+            metadata = json.loads(response)
+        except json.JSONDecodeError:
+            print(f"❌ Failed to parse Claude response.")
+            results.append({"s3_file": f"s3://{BUCKET}/{key}", "error": "Invalid JSON"})
+            continue
 
-            prompt = build_prompt(text)
-            raw_result = call_claude(prompt)
+        cost = estimate_cost(tokens)
+        total_cost += cost
 
-            try:
-                metadata = json.loads(raw_result)
-            except json.JSONDecodeError:
-                print(f"❌ Invalid JSON from Claude for {key}")
-                continue
+        results.append({
+            "s3_file": f"s3://{BUCKET}/{key}",
+            "title": metadata.get("title"),
+            "abstract": metadata.get("abstract"),
+            "category": (metadata.get("category") or "")[:100],
+            "publish_date": metadata.get("publish_date"),
+            "source": "bucket",
+            "region_name": clip_list(metadata.get("region_name", [])),
+            "keyword_name": clip_list(metadata.get("keyword_name", [])),
+            "author_name": clip_list(metadata.get("author_name", [])),
+            "estimated_cost": f"${cost:.4f}"
+        })
 
-            final = {
-                "s3_file": f"s3://{BUCKET}/{key}",
-                "title": metadata.get("title"),
-                "abstract": metadata.get("abstract"),
-                "category": (metadata.get("category") or "")[:100],
-                "publish_date": metadata.get("publish_date"),
-                "source": "bucket",
-                "region_name": clip_list(metadata.get("region_name", [])),
-                "keyword_name": clip_list(metadata.get("keyword_name", [])),
-                "author_name": clip_list(metadata.get("author_name", []))
-            }
+    except Exception as e:
+        results.append({"s3_file": f"s3://{BUCKET}/{key}", "error": str(e)})
 
-            print("✅ Metadata:\n", json.dumps(final, indent=2))
-
-        except Exception as e:
-            print(f"❌ Error processing {key}: {e}")
-
-if __name__ == "__main__":
-    main()
+print(f"\n💰 Total estimated cost for {len(results)} documents: ${total_cost:.4f}")
