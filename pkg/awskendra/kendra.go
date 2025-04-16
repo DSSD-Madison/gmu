@@ -1,9 +1,7 @@
 package awskendra
 
 import (
-	"context"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/kendra"
@@ -11,14 +9,26 @@ import (
 )
 
 type KendraClient struct {
+	searchQueue      *KendraSearchQueue
+	suggestionsQueue *KendraSuggestionsQueue
+
 	client *kendra.Client
 	config Config
 }
 
+type QueryExecutor[R any] interface {
+	EnqueueQuery(query kendra.QueryInput) QueryResult[R]
+}
+
+type KendraClientExecutor struct {
+	client *kendra.Client
+}
+
 func NewKendraClient(config Config) (*KendraClient, error) {
 	opts := kendra.Options{
-		Credentials: config.Credentials,
-		Region:      config.Region,
+		Credentials:      config.Credentials,
+		Region:           config.Region,
+		RetryMaxAttempts: config.RetryMaxAttempts,
 	}
 
 	client := kendra.New(opts)
@@ -27,7 +37,11 @@ func NewKendraClient(config Config) (*KendraClient, error) {
 		return &KendraClient{}, err
 	}
 
-	return &KendraClient{client, config}, nil
+	searchQueue := NewKendraSearchQueue(client)
+	suggestionsQueue := NewKendraSuggestionsQueue(client)
+
+	fmt.Printf("number of retries: %d\n", client.Options().RetryMaxAttempts)
+	return &KendraClient{searchQueue, suggestionsQueue, client, config}, nil
 }
 
 func queryOutputToResults(out kendra.QueryOutput) KendraResults {
@@ -137,13 +151,12 @@ func (c KendraClient) MakeQuery(query string, filters map[string][]string, pageN
 		QueryText:       &query,
 		PageNumber:      &page,
 	}
-	out, err := c.client.Query(context.TODO(), &kendraQuery)
 
-	// TODO: this needs to be fixed to a proper error
-	if err != nil {
-		log.Printf("Kendra Query Failed %+filterCategory", err)
+	queryResults := c.searchQueue.EnqueueQuery(kendraQuery)
+	if queryResults.Error != nil {
+		return KendraResults{}
 	}
-	results := queryOutputToResults(*out)
+	results := queryResults.Results
 
 	calculatedPages := (results.Count + 9) / 10
 	totalPages := min(calculatedPages, 10)
@@ -175,18 +188,12 @@ func querySuggestionsOutputToSuggestions(out kendra.GetQuerySuggestionsOutput) K
 }
 
 func (c KendraClient) GetSuggestions(query string) (KendraSuggestions, error) {
-	kendraQuery := kendra.GetQuerySuggestionsInput{
-		IndexId:   &c.config.IndexID,
-		QueryText: &query,
-	}
-	out, err := c.client.GetQuerySuggestions(context.TODO(), &kendraQuery)
-	if err != nil {
-		log.Printf("Kendra Suggestions Query Failed %+v", err)
-		return KendraSuggestions{}, err
+	suggestionsResults := c.suggestionsQueue.EnqueueQuery(query, &c.config.IndexID)
+	if suggestionsResults.Error != nil {
+		return KendraSuggestions{}, nil
 	}
 
-	suggestions := querySuggestionsOutputToSuggestions(*out)
-	return suggestions, nil
+	return suggestionsResults.Results, nil
 }
 
 func TrimExtension(s string) string {
