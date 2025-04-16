@@ -58,10 +58,16 @@ def get_unindexed_documents(conn) -> List[Dict[str, Any]]:
                     FROM doc_keywords dk
                     JOIN keywords k ON dk.keyword_id = k.id
                     WHERE dk.doc_id = d.id
-                ) AS keywords
+                ) AS keywords,
+                (
+                    SELECT array_agg(c.name)
+                    FROM doc_categories dc
+                    JOIN categories c ON dc.category_id = c.id
+                    WHERE dc.doc_id = d.id
+                ) AS categories
             FROM documents d
             WHERE d.indexed_by_kendra = false
-              AND d.deleted_at IS NULL
+              AND d.has_duplicate = false
         """)
         return cur.fetchall()
 
@@ -85,7 +91,6 @@ def create_kendra_document(doc: Dict[str, Any]) -> Dict[str, Any]:
 
     attributes = [
         {'Key': '_file_type', 'Value': {'StringValue': 'PDF'}},
-        {'Key': 'Title', 'Value': {'StringValue': truncate(doc['title'])}},
         {'Key': '_source_uri', 'Value': {'StringValue': convert_s3_uri_to_url(s3_uri)}}
     ]
 
@@ -103,6 +108,11 @@ def create_kendra_document(doc: Dict[str, Any]) -> Dict[str, Any]:
         authors = [a for a in doc['authors'] if a and a.strip()]
         if authors:
             attributes.append({'Key': '_authors', 'Value': {'StringListValue': authors}})
+            
+    if doc.get('categories'):
+        categories = [a for a in doc['categories'] if a and a.strip()]
+        if categories:
+            attributes.append({'Key': 'Categories', 'Value': {'StringListValue': categories}})
     
     if doc.get('source') and doc['source'].strip():
         attributes.append({'Key': 'source', 'Value': {'StringListValue': [truncate(doc['source'])]}})
