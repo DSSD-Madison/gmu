@@ -3,15 +3,17 @@ import fitz  # PyMuPDF
 import json
 from io import BytesIO
 
-# === Config ===
-BUCKET = "your-s3-bucket-name"  # <-- Replace this
+# === Configuration ===
+BUCKET = "allianceforpeacebuilding-org"
+
 PDF_KEYS = [
-    "pdfs/doc1.pdf",
-    "pdfs/doc2.pdf",
-    "pdfs/doc3.pdf",
-    "pdfs/doc4.pdf",
-    "pdfs/doc5.pdf"
+    "0010.pdf",
+    "0011.pdf",
+    "0022.pdf",
+    "1860.pdf",
+    "0027.pdf"
 ]
+
 
 # === AWS Clients ===
 s3 = boto3.client("s3")

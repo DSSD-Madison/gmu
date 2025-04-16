@@ -1,17 +1,25 @@
-name: Extract Metadata
+name: Extract Metadata with Bedrock
 
 on:
-  push:
-    branches:
-      - metadata-generation
+  workflow_dispatch:
 
 jobs:
   extract-metadata:
     runs-on: ubuntu-latest
 
+    permissions:
+      id-token: write 
+      contents: read
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -21,10 +29,7 @@ jobs:
       - name: Install Python dependencies
         run: pip install boto3 pymupdf
 
-      - name: Run metadata extraction script
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-        run: |
-          python scripts/extract_metadata_from_s3.py
+      - name: Run metadata extraction
+        run: python scripts/extract_metadata_from_s3.py
+
+
