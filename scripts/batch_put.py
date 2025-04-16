@@ -169,7 +169,7 @@ def main():
             for doc in batch:
                 try:
                     if doc['title'].strip().lower() == 'untitled':
-                        logger.warning(f"Skipping document {doc['s3_file']} due to title='Untitled'")
+                        # logger.warning(f"Skipping document {doc['s3_file']} due to title='Untitled'")
                         continue
 
                     k_doc = create_kendra_document(doc)
