@@ -18,7 +18,8 @@ PDF_KEYS = [
 # === AWS Clients ===
 s3 = boto3.client("s3")
 bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
-models = bedrock.list_foundation_models()["modelSummaries"]
+bedrock_2 = boto3.client("bedrock", region_name="us-east-2")
+models = bedrock_2.list_foundation_models()["modelSummaries"]
 
 print("\n✅ On-demand-compatible foundation models:\n")
 
