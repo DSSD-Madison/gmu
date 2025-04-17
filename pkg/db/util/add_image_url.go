@@ -1,12 +1,12 @@
 package util
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/url"
 	"strings"
 
-	"github.com/labstack/echo/v4"
 	"github.com/lib/pq"
 
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
@@ -14,9 +14,9 @@ import (
 	"github.com/DSSD-Madison/gmu/pkg/db/handlers"
 )
 
-func AddImagesToResults(results awskendra.KendraResults, c echo.Context, queries *db.Queries) {
+func AddImagesToResults(ctx context.Context, results awskendra.KendraResults, queries *db.Queries) error {
 	uris := ConvertToS3URIs(results)
-	documentMap, err := handlers.GetDocuments(c, queries, uris)
+	documentMap, err := handlers.GetDocuments(ctx, queries, uris)
 	if err != nil {
 		log.Printf("GetDocuments failed: %v\n", err)
 	}
@@ -29,13 +29,13 @@ func AddImagesToResults(results awskendra.KendraResults, c echo.Context, queries
 
 		document, found := documentMap[s3URI]
 		if !found {
-			continue
+			return fmt.Errorf("Failed to find document")
 		}
 
 		if document.S3FilePreview.Valid {
 			image := ConvertS3URIToURL(document.S3FilePreview.String)
 			if image == "" {
-				continue
+				return fmt.Errorf("Failed to find document")
 			}
 			kendraResult.Image = image
 		} else {
@@ -71,7 +71,7 @@ func AddImagesToResults(results awskendra.KendraResults, c echo.Context, queries
 
 		results.Results[key] = kendraResult
 	}
-
+	return nil
 }
 
 func ConvertToS3URIs(kendraResults awskendra.KendraResults) []string {

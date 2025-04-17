@@ -10,6 +10,28 @@ import (
 	"sync"
 )
 
+type Logger interface {
+	Debug(msg string, args ...any)
+	Info(msg string, args ...any)
+	Warn(msg string, args ...any)
+	Error(msg string, args ...any)
+
+	DebugContext(ctx context.Context, msg string, args ...any)
+	InfoContext(ctx context.Context, msg string, args ...any)
+	WarnContext(ctx context.Context, msg string, args ...any)
+	ErrorContext(ctx context.Context, msg string, args ...any)
+
+	With(args ...any) Logger
+}
+
+type slogWrapper struct {
+	*slog.Logger
+}
+
+func (w *slogWrapper) With(args ...any) Logger {
+	return &slogWrapper{Logger: w.Logger.With(args...)}
+}
+
 type HandlerOptions struct {
 	Mode        string
 	AddSource   bool
@@ -54,7 +76,12 @@ func (h *Handler) Enabled(ctx context.Context, level slog.Level) bool {
 }
 
 func (h *Handler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return &Handler{handler: h.handler.WithAttrs(attrs), bytes: h.bytes, mutex: h.mutex}
+	return &Handler{
+		handler:     h.handler.WithAttrs(attrs),
+		bytes:       h.bytes,
+		mutex:       h.mutex,
+		prettyPrint: h.prettyPrint,
+	}
 }
 
 func (h *Handler) WithGroup(name string) slog.Handler {
@@ -148,7 +175,7 @@ func suppressDefaults(
 	}
 }
 
-func NewHandler(opts *HandlerOptions) *Handler {
+func newCustomHandler(opts *HandlerOptions) *Handler {
 	if opts == nil {
 		opts = &HandlerOptions{}
 	}
@@ -174,4 +201,11 @@ func NewHandler(opts *HandlerOptions) *Handler {
 		mutex:       &sync.Mutex{},
 		prettyPrint: prettyPrint,
 	}
+}
+
+func New(opts *HandlerOptions) Logger {
+	customHandler := newCustomHandler(opts)
+	slogger := slog.New(customHandler)
+
+	return &slogWrapper{Logger: slogger}
 }

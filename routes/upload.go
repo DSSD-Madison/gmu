@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
 	"path"
 	"strings"
@@ -12,6 +11,7 @@ import (
 
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
 	"github.com/DSSD-Madison/gmu/pkg/db/util"
+	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/DSSD-Madison/gmu/pkg/middleware"
 	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
@@ -19,18 +19,31 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func (h *Handler) PDFUploadPage(c echo.Context) error {
+type UploadHandler struct {
+	log logger.Logger
+	db  *db.Queries
+}
+
+func NewUploadHandler(log logger.Logger, db *db.Queries) *UploadHandler {
+	handlerLogger := log.With("Handler", "Upload")
+	return &UploadHandler{
+		log: handlerLogger,
+		db:  db,
+	}
+}
+
+func (uh *UploadHandler) PDFUploadPage(c echo.Context) error {
 	csrf := c.Get("csrf").(string)
 	isAuthorized, isMaster := middleware.GetSessionFlags(c)
 	return web.Render(c, http.StatusOK, components.PDFUpload(csrf, isAuthorized, isMaster))
 }
 
-func (h *Handler) HandlePDFUpload(c echo.Context) error {
+func (uh *UploadHandler) HandlePDFUpload(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	fileHeader, err := c.FormFile("pdf")
 	if err != nil {
-		log.Printf("Error getting uploaded file: %v", err)
+		uh.log.ErrorContext(c.Request().Context(), "Error getting uploaded file", "error", err)
 		errorMessage := fmt.Sprintf("Failed to get file: %v", err)
 		c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
 		return web.Render(c, http.StatusBadRequest, components.UploadResponse(false, errorMessage))
@@ -42,19 +55,18 @@ func (h *Handler) HandlePDFUpload(c echo.Context) error {
 	title := strings.TrimSuffix(originalFilename, path.Ext(originalFilename))
 
 	// 🧠 Check if document already exists in DB by S3 path
-	existingDoc, err := h.db.FindDocumentByS3Path(ctx, s3Path)
+	existingDoc, err := uh.db.FindDocumentByS3Path(ctx, s3Path)
 	if err == nil {
 		return web.Render(c, http.StatusOK, components.DuplicateUploadResponse(existingDoc.ID.String()))
 	}
 
-
-	if err := h.db.InsertUploadedDocument(ctx, db.InsertUploadedDocumentParams{
+	if err := uh.db.InsertUploadedDocument(ctx, db.InsertUploadedDocumentParams{
 		ID:       fileID,
 		S3File:   s3Path,
 		FileName: originalFilename,
 		Title:    title,
 	}); err != nil {
-		log.Printf("DB insert failed: %v", err)
+		uh.log.ErrorContext(c.Request().Context(), "DB insert failed", "error", err)
 		errorMessage := "Could not save file metadata to database"
 		c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
 		return web.Render(c, http.StatusInternalServerError, components.UploadResponse(false, errorMessage))
@@ -65,11 +77,10 @@ func (h *Handler) HandlePDFUpload(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-
-func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
+func (uh *UploadHandler) PDFMetadataEditPage(c echo.Context) error {
 	fileId := c.Param("fileId")
 	if fileId == "" {
-		log.Println("Missing fileId")
+		uh.log.ErrorContext(c.Request().Context(), "Missing fileId")
 		return c.Redirect(http.StatusTemporaryRedirect, "/upload")
 	}
 	docUUID, err := uuid.Parse(fileId)
@@ -77,15 +88,15 @@ func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
 		return err
 	}
 
-	doc, err := h.db.FindDocumentByID(context.Background(), docUUID)
+	doc, err := uh.db.FindDocumentByID(context.Background(), docUUID)
 	if err != nil {
 		return err
 	}
 
-	allAuthors, _ := h.db.ListAllAuthors(c.Request().Context())
-	allKeywords, _ := h.db.ListAllKeywords(c.Request().Context())
-	allRegions, _ := h.db.ListAllRegions(c.Request().Context())
-	allCategories, _ := h.db.ListAllCategories(c.Request().Context())
+	allAuthors, _ := uh.db.ListAllAuthors(c.Request().Context())
+	allKeywords, _ := uh.db.ListAllKeywords(c.Request().Context())
+	allRegions, _ := uh.db.ListAllRegions(c.Request().Context())
+	allCategories, _ := uh.db.ListAllCategories(c.Request().Context())
 
 	authorNames := []string(doc.AuthorNames)
 	keywordNames := []string(doc.KeywordNames)
@@ -99,10 +110,10 @@ func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
 
 	csrf, ok := c.Get("csrf").(string)
 	if !ok {
-		log.Println("CSRF token not found in context")
+		uh.log.WarnContext(c.Request().Context(), "CSRF token not found in context")
 	}
 	isAuthorized, isMaster := middleware.GetSessionFlags(c)
-	
+
 	s3Link := util.ConvertS3URIToURL(doc.S3File)
 	return web.Render(c, http.StatusOK, components.PDFMetadataEditForm(
 		fileId,
@@ -127,7 +138,7 @@ func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
 
 }
 
-func (h *Handler) HandleMetadataSave(c echo.Context) error {
+func (uh *UploadHandler) HandleMetadataSave(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	fileId := c.FormValue("fileId")
@@ -138,7 +149,7 @@ func (h *Handler) HandleMetadataSave(c echo.Context) error {
 
 	form, err := c.FormParams()
 	if err != nil {
-		log.Printf("[ERROR] Failed to parse form params: %v", err)
+		uh.log.ErrorContext(c.Request().Context(), "Failed to parse form params", "error", err)
 		return web.Render(c, http.StatusOK, components.ErrorMessage("Failed to parse form. Please check log"))
 	}
 	authorStrs := form["author_names"]
@@ -148,7 +159,7 @@ func (h *Handler) HandleMetadataSave(c echo.Context) error {
 
 	docID, err := uuid.Parse(fileId)
 	if err != nil {
-		log.Printf("[ERROR] Invalid UUID in form: %v", err)
+		uh.log.ErrorContext(c.Request().Context(), "Invalid UUID in form", "error", err)
 		return err
 	}
 
@@ -160,7 +171,7 @@ func (h *Handler) HandleMetadataSave(c echo.Context) error {
 		}
 	}
 
-	err = h.db.UpdateDocumentMetadata(ctx, db.UpdateDocumentMetadataParams{
+	err = uh.db.UpdateDocumentMetadata(ctx, db.UpdateDocumentMetadataParams{
 		ID:          docID,
 		Title:       title,
 		Abstract:    sql.NullString{String: abstract, Valid: abstract != ""},
@@ -168,70 +179,70 @@ func (h *Handler) HandleMetadataSave(c echo.Context) error {
 		Source:      sql.NullString{String: source, Valid: source != ""},
 	})
 	if err != nil {
-		log.Printf("[ERROR] Error updating document metadata: %v", err)
+		uh.log.ErrorContext(c.Request().Context(), "Error updating document metadata", "error", err)
 		return web.Render(c, http.StatusOK, components.ErrorMessage(fmt.Sprintf("[ERROR] Error updating document metadata: %v", err)))
 	}
 	documentID := uuid.NullUUID{UUID: docID, Valid: true}
 
-	h.db.DeleteDocAuthorsByDocID(ctx, documentID)
-	h.db.DeleteDocKeywordsByDocID(ctx, documentID)
-	h.db.DeleteDocCategoriesByDocID(ctx, documentID)
-	h.db.DeleteDocRegionsByDocID(ctx, documentID)
-	
-	authors := util.ResolveIDs(ctx, h.db, authorStrs, util.GetOrCreateAuthor)
-	keywords := util.ResolveIDs(ctx, h.db, keywordStrs, util.GetOrCreateKeyword)
-	categories := util.ResolveIDs(ctx, h.db, categoryStrs, util.GetOrCreateCategory)
-	regions := util.ResolveIDs(ctx, h.db, regionStrs, util.GetOrCreateRegion)
-	
-	log.Printf("[DEBUG] Parsed author IDs: %v", authors)
-	log.Printf("[DEBUG] Parsed keyword IDs: %v", keywords)
-	log.Printf("[DEBUG] Parsed category IDs: %v", categories)
-	log.Printf("[DEBUG] Parsed region IDs: %v", regions)
+	uh.db.DeleteDocAuthorsByDocID(ctx, documentID)
+	uh.db.DeleteDocKeywordsByDocID(ctx, documentID)
+	uh.db.DeleteDocCategoriesByDocID(ctx, documentID)
+	uh.db.DeleteDocRegionsByDocID(ctx, documentID)
+
+	authors := util.ResolveIDs(ctx, uh.db, authorStrs, util.GetOrCreateAuthor)
+	keywords := util.ResolveIDs(ctx, uh.db, keywordStrs, util.GetOrCreateKeyword)
+	categories := util.ResolveIDs(ctx, uh.db, categoryStrs, util.GetOrCreateCategory)
+	regions := util.ResolveIDs(ctx, uh.db, regionStrs, util.GetOrCreateRegion)
+
+	uh.log.DebugContext(c.Request().Context(), "Author IDs", authors)
+	uh.log.DebugContext(c.Request().Context(), "Keyword IDs", keywords)
+	uh.log.DebugContext(c.Request().Context(), "Category IDs", categories)
+	uh.log.DebugContext(c.Request().Context(), "Region IDs", regions)
 
 	for _, authorID := range authors {
-		err := h.db.InsertDocAuthor(ctx, db.InsertDocAuthorParams{
+		err := uh.db.InsertDocAuthor(ctx, db.InsertDocAuthorParams{
 			ID:       uuid.New(),
 			DocID:    documentID,
 			AuthorID: uuid.NullUUID{UUID: authorID, Valid: true},
 		})
 		if err != nil {
-			log.Printf("[ERROR] Failed to insert into doc_authors: %v", err)
+			uh.log.WarnContext(c.Request().Context(), "Failed to insert into doc_authors", "error", err)
 		}
 	}
 
 	for _, keywordID := range keywords {
-		err := h.db.InsertDocKeyword(ctx, db.InsertDocKeywordParams{
+		err := uh.db.InsertDocKeyword(ctx, db.InsertDocKeywordParams{
 			ID:        uuid.New(),
 			DocID:     documentID,
 			KeywordID: uuid.NullUUID{UUID: keywordID, Valid: true},
 		})
 		if err != nil {
-			log.Printf("[ERROR] Failed to insert into doc_keywords: %v", err)
+			uh.log.WarnContext(c.Request().Context(), "Failed to insert into doc_keywords", "error", err)
 		}
 	}
 
 	for _, categoryID := range categories {
-		err := h.db.InsertDocCategory(ctx, db.InsertDocCategoryParams{
+		err := uh.db.InsertDocCategory(ctx, db.InsertDocCategoryParams{
 			ID:         uuid.New(),
 			DocID:      documentID,
 			CategoryID: uuid.NullUUID{UUID: categoryID, Valid: true},
 		})
 		if err != nil {
-			log.Printf("[ERROR] Failed to insert into doc_categories: %v", err)
+			uh.log.WarnContext(c.Request().Context(), "Failed to insert into doc_categories", "error", err)
 		}
 	}
 
 	for _, regionID := range regions {
-		err := h.db.InsertDocRegion(ctx, db.InsertDocRegionParams{
+		err := uh.db.InsertDocRegion(ctx, db.InsertDocRegionParams{
 			ID:       uuid.New(),
 			DocID:    documentID,
 			RegionID: uuid.NullUUID{UUID: regionID, Valid: true},
 		})
 		if err != nil {
-			log.Printf("[ERROR] Failed to insert into doc_regions: %v", err)
+			uh.log.WarnContext(c.Request().Context(), "Failed to insert into doc_regions", "error", err)
 		}
 	}
 
-	log.Printf("[INFO] Metadata updated successfully for fileId '%s'", docID.String())
+	uh.log.InfoContext(c.Request().Context(), "Metadata updated successfully for fileId", "docID", docID.String())
 	return web.Render(c, http.StatusOK, components.SuccessMessage(fmt.Sprintf("Metadata updated successfully for fileId '%s'", docID)))
 }

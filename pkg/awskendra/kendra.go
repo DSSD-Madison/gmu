@@ -3,31 +3,65 @@ package awskendra
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 
+	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/aws/aws-sdk-go-v2/service/kendra"
 	"github.com/aws/aws-sdk-go-v2/service/kendra/types"
 )
 
-type KendraClient struct {
-	client *kendra.Client
-	config Config
+type kendraClientImpl struct {
+	awsClient  *kendra.Client
+	queryQueue QueryExecutor
+	config     Config
+	log        logger.Logger
 }
 
-func NewKendraClient(config Config) (*KendraClient, error) {
+func New(config Config, log logger.Logger) (Client, error) {
+	pkgLogger := log.With("package", "awskendra")
+
 	opts := kendra.Options{
-		Credentials: config.Credentials,
-		Region:      config.Region,
+		Credentials:      config.Credentials,
+		Region:           config.Region,
+		RetryMaxAttempts: config.RetryMaxAttempts,
 	}
 
-	client := kendra.New(opts)
-	if client == nil {
-		err := fmt.Errorf("Error making kendra client")
-		return &KendraClient{}, err
+	awsClient := kendra.New(opts)
+	if awsClient == nil {
+		pkgLogger.Error("Failed to create AWS Kendra SDK client instance.")
+		return nil, fmt.Errorf("error creating AWS Kendra SDK client")
+	}
+	pkgLogger.Info("AWS Kendra SDK Client initialized")
+
+	workers := 2
+	buffer := 5
+	queryQueue := NewKendraQueryQueue(awsClient, pkgLogger, workers, buffer)
+	pkgLogger.Info("Kendra query queue initialized", "workers", workers, "buffer", buffer)
+
+	return &kendraClientImpl{
+		awsClient:  awsClient,
+		queryQueue: queryQueue,
+		config:     config,
+		log:        pkgLogger,
+	}, nil
+}
+
+func (c *kendraClientImpl) GetSuggestions(ctx context.Context, query string) (KendraSuggestions, error) {
+	c.log.DebugContext(ctx, "Requesting Kendra suggestions", "query", query)
+	kendraQuery := kendra.GetQuerySuggestionsInput{
+		IndexId:   &c.config.IndexID,
+		QueryText: &query,
 	}
 
-	return &KendraClient{client, config}, nil
+	out, err := c.awsClient.GetQuerySuggestions(ctx, &kendraQuery)
+	if err != nil {
+		c.log.ErrorContext(ctx, "Kendra GetSuggestions API call failed", "error", err)
+		return KendraSuggestions{}, err
+	}
+
+	suggestions := querySuggestionsOutputToSuggestions(*out)
+	c.log.DebugContext(ctx, "Kendra suggestions retrieved", "count", len(suggestions.Suggestions))
+	return suggestions, nil
 }
 
 func queryOutputToResults(out kendra.QueryOutput) KendraResults {
@@ -97,54 +131,67 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	return kendraResults
 }
 
-func (c KendraClient) MakeQuery(query string, filters map[string][]string, pageNum int) KendraResults {
-	kendraFilters := types.AttributeFilter{
-		AndAllFilters: make([]types.AttributeFilter, len(filters)),
-	}
-	andAllIndex := 0
-	for k, filterCategory := range filters {
-		// _file_type is a string so we can't use ContainsAny
-		if k == "_file_type" {
-			kendraFilters.AndAllFilters[andAllIndex] = types.AttributeFilter{
-				OrAllFilters: make([]types.AttributeFilter, len(filterCategory)),
+func (c *kendraClientImpl) MakeQuery(ctx context.Context, query string, filters map[string][]string, pageNum int) (KendraResults, error) {
+	c.log.DebugContext(ctx, "Building kendra query", "query", query, "page", pageNum, "filter_count", len(filters))
+
+	kendraFilters := types.AttributeFilter{}
+	if len(filters) > 0 {
+		kendraFilters.AndAllFilters = make([]types.AttributeFilter, 0, len(filters))
+		for k, filterCategory := range filters {
+			if len(filterCategory) == 0 {
+				continue
 			}
-			for orAllIndex, str := range filterCategory {
-				kendraFilters.AndAllFilters[andAllIndex].OrAllFilters[orAllIndex] = types.AttributeFilter{
-					EqualsTo: &types.DocumentAttribute{
-						Key: &k,
-						Value: &types.DocumentAttributeValue{
-							StringValue: &str,
+			key := k
+
+			var subFilter types.AttributeFilter
+
+			if key == "_file_type" {
+				subFilter.OrAllFilters = make([]types.AttributeFilter, len(filterCategory))
+				for i, strVal := range filterCategory {
+					val := strVal
+					subFilter.OrAllFilters[i] = types.AttributeFilter{
+						EqualsTo: &types.DocumentAttribute{
+							Key: &key,
+							Value: &types.DocumentAttributeValue{
+								StringValue: &val,
+							},
 						},
-					},
+					}
 				}
-			}
-		} else {
-			kendraFilters.AndAllFilters[andAllIndex] = types.AttributeFilter{
-				ContainsAny: &types.DocumentAttribute{
-					Key: &k,
+			} else {
+				subFilter.ContainsAny = &types.DocumentAttribute{
+					Key: &key,
 					Value: &types.DocumentAttributeValue{
 						StringListValue: filterCategory,
 					},
-				},
+				}
 			}
+			kendraFilters.AndAllFilters = append(kendraFilters.AndAllFilters, subFilter)
 		}
-		andAllIndex += 1
 	}
+
 	page := int32(pageNum)
-	kendraQuery := kendra.QueryInput{
-		AttributeFilter: &kendraFilters,
+	kendraQueryInput := kendra.QueryInput{
+		AttributeFilter: nil,
 		IndexId:         &c.config.IndexID,
 		QueryText:       &query,
 		PageNumber:      &page,
 	}
-	out, err := c.client.Query(context.TODO(), &kendraQuery)
-
-	// TODO: this needs to be fixed to a proper error
-	if err != nil {
-		log.Printf("Kendra Query Failed %+filterCategory", err)
+	if len(kendraFilters.AndAllFilters) > 0 {
+		kendraQueryInput.AttributeFilter = &kendraFilters
 	}
-	results := queryOutputToResults(*out)
 
+	c.log.DebugContext(ctx, "Enqueuing Kendra query")
+	queryResult := c.queryQueue.EnqueueQuery(ctx, kendraQueryInput)
+
+	if queryResult.Error != nil {
+		c.log.ErrorContext(ctx, "Kendra query failed during execution", "error", queryResult.Error)
+		return KendraResults{}, queryResult.Error
+	}
+
+	c.log.DebugContext(ctx, "Kendra query executed successfully", "result_count", queryResult.Results.Count)
+
+	results := queryResult.Results
 	calculatedPages := (results.Count + 9) / 10
 	totalPages := min(calculatedPages, 10)
 
@@ -158,8 +205,8 @@ func (c KendraClient) MakeQuery(query string, filters map[string][]string, pageN
 	}
 
 	results.Query = query
-	results.UrlData.Query = results.Query
-	return results
+	// results.UrlData.Query = results.Query
+	return results, nil
 }
 
 func querySuggestionsOutputToSuggestions(out kendra.GetQuerySuggestionsOutput) KendraSuggestions {
@@ -172,21 +219,6 @@ func querySuggestionsOutputToSuggestions(out kendra.GetQuerySuggestionsOutput) K
 	}
 
 	return suggestions
-}
-
-func (c KendraClient) GetSuggestions(query string) (KendraSuggestions, error) {
-	kendraQuery := kendra.GetQuerySuggestionsInput{
-		IndexId:   &c.config.IndexID,
-		QueryText: &query,
-	}
-	out, err := c.client.GetQuerySuggestions(context.TODO(), &kendraQuery)
-	if err != nil {
-		log.Printf("Kendra Suggestions Query Failed %+v", err)
-		return KendraSuggestions{}, err
-	}
-
-	suggestions := querySuggestionsOutputToSuggestions(*out)
-	return suggestions, nil
 }
 
 func TrimExtension(s string) string {
