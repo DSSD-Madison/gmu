@@ -14,7 +14,7 @@ def estimate_tokens(text: str) -> int:
     return int(len(text.split()) * 0.75)
 
 def estimate_cost(input_tokens: int, output_tokens: int = 200) -> float:
-    return round((input_tokens / 1000 * 0.00025) + (output_tokens / 1000 * 0.001), 6)
+    return round((input_tokens / 1000 * 0.00025) + (output_tokens / 1000 * 0.00125), 6)
 
 # === PDF Text Cleaning ===
 def clean_text(text: str) -> str:
@@ -51,6 +51,7 @@ Return only a valid JSON object with the following fields:
 - "region_name" (array of unique strings, required, max 10)
 - "keyword_name" (array of unique strings, required, max 10)
 - "author_name" (array of unique strings, required, max 10)
+- "category_name" (array of unique strings, required, max 10 - like "article", "research paper", etc.)
 
 Do not explain. Do not say "Here is the JSON". Do not use Markdown. Just return the JSON object.
 TEXT:
