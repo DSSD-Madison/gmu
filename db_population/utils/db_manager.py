@@ -122,7 +122,7 @@ def add_or_update_document(data):
         raw_keywords = data.get("keywords", [])
         unique_keywords = set(kw.strip() for kw in raw_keywords if kw.strip())
         for keyword_text in unique_keywords:
-            keyword = get_or_create(session, DynamicKeyword, keyword=keyword_text)
+            keyword = get_or_create(session, DynamicKeyword, name=keyword_text)
             exists = (
                 session.query(DynamicDocKeyword)
                 .filter_by(doc_id=doc_id, keyword_id=keyword.id)

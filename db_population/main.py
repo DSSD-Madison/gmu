@@ -31,7 +31,7 @@ def migrate(bucket_name, file_key):
     json_data = get_s3_metadata(bucket_name, base_name)
 
     # Convert JSON metadata if available
-    document_data = {"file_name": file_key, "s3_file": s3_file}
+    document_data = {"file_name": file_key, "s3_file": s3_file, "source": bucket_name}
     if s3_file_preview:
         logger.info(f"Preview found for {file_key}")
         document_data["s3_file_preview"] = s3_file_preview
@@ -41,6 +41,7 @@ def migrate(bucket_name, file_key):
     if json_data:
         logger.info(f"json_data found for {file_key}")
         new_json = convert_metadata_to_document(json_data)
+        new_json.pop("source", None)
         document_data.update(new_json)
     else:
         logger.warning(f"json_data not found for {file_key}")

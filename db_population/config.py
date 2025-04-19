@@ -9,16 +9,16 @@ dotenv_path = os.path.join(PARENT_DIR, ".env")
 load_dotenv(dotenv_path=dotenv_path)
 
 # Local Database Configuration
-LOCAL_DB_HOST = os.getenv("LOCAL_DB_HOST")
-LOCAL_DB_PORT = os.getenv("LOCAL_DB_PORT")
-LOCAL_DB_USER = os.getenv("LOCAL_DB_USER")
-LOCAL_DB_PASSWORD = os.getenv("LOCAL_DB_PASSWORD")
-LOCAL_DB_NAME = os.getenv("LOCAL_DB_NAME")
+LOCAL_DB_HOST = os.getenv("DB_HOST")
+LOCAL_DB_PORT = "5432"
+LOCAL_DB_USER = os.getenv("DB_USER")
+LOCAL_DB_PASSWORD = os.getenv("DB_PASSWORD")
+LOCAL_DB_NAME = os.getenv("DB_NAME")
 
 # Production Database Configuration
 PROD_HOST = os.getenv("PROD_HOST")
 PROD_USER = os.getenv("PROD_USER")
-PROD_DB = os.getenv("PROD_DB")
+PROD_NAME = os.getenv("PROD_NAME")
 PROD_PASSWORD = os.getenv("PROD_PASSWORD")
 
 # Construct Local Database URL
@@ -26,8 +26,8 @@ LOCAL_DATABASE_URL = f"postgresql://{LOCAL_DB_USER}:{LOCAL_DB_PASSWORD}@{LOCAL_D
 
 # Construct Production Database URL
 PROD_DATABASE_URL = (
-    f"postgresql://{PROD_USER}:{PROD_PASSWORD}@{PROD_HOST}/{PROD_DB}"
-    if PROD_HOST and PROD_USER and PROD_DB and PROD_PASSWORD
+    f"postgresql://{PROD_USER}:{PROD_PASSWORD}@{PROD_HOST}/{PROD_NAME}"
+    if PROD_HOST and PROD_USER and PROD_NAME and PROD_PASSWORD
     else None
 )
 

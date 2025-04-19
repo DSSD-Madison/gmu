@@ -20,16 +20,13 @@ s3 = boto3.client(
 
 
 def get_s3_buckets():
-    """Retrieves and returns all S3 bucket names."""
-    try:
-        response = s3.list_buckets()
-        bucket_names = [bucket["Name"] for bucket in response.get("Buckets", [])]
-        logger.info(f"Found {len(bucket_names)} S3 buckets.")
-        return bucket_names
-    except (BotoCoreError, ClientError) as e:
-        logger.error(f"Error listing S3 buckets: {e}")
-        return []
-
+    known_kendra_buckets = {
+        "ipinst-org",
+        "allianceforpeacebuilding-org",
+        "better-evidence-repository",
+        "video-kendra-testing"
+    }
+    return known_kendra_buckets
 
 def get_s3_files(bucket_name, prefix=""):
     """Fetches files from an S3 bucket in batches and yields them."""
