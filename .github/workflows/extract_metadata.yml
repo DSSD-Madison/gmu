@@ -1,9 +1,12 @@
 name: Extract Metadata with Bedrock
 
 on:
-  push:
-    branches:
-      - metadata-generation
+  workflow_dispatch:
+# on:
+  # push:
+  #   branches:
+  #     - metadata-generation
+  
 
 jobs:
   extract-metadata:

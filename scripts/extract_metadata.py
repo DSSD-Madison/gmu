@@ -56,9 +56,9 @@ def extract_text_first_n_pages_cleaned(pdf_bytes, max_pages=10):
 
 def build_prompt(text: str) -> str:
     categories = [
-        "article", "background paper", "blog post", "book", "brief", "case study", "dataset", "educational guide",
-        "evaluation", "fact sheet", "government report", "organizational study", "paper", "policy brief", "policy paper",
-        "project evaluation", "project evaluations", "report", "working paper"
+        "Article", "Background Paper", "Blog Post", "Book", "Brief", "Case Study", "Dataset", "Educational Guide",
+        "Evaluation", "Fact Sheet", "Government Report", "Organizational Study", "Paper", "Policy Brief", "Policy Paper",
+        "Project Evaluation", "Project Evaluations", "Report", "Working Paper"
     ]
 
     regions = [
@@ -90,6 +90,8 @@ REGIONS:
 
 KEYWORDS:
 {', '.join(keywords)}
+
+Normalize all values by removing dashes and replacing them with spaces. For example, "conflict-resolution" becomes "conflict resolution".
 
 Return only a valid JSON object with the following fields:
 - "title" (string, required)
