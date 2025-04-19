@@ -34,14 +34,12 @@ def dict_to_dict(dict):
         "abstract": dict["Abstract"],
         #NEED TO DISCUSS THIS AS WELL, SHOULD WE JUST HAVE THE FIRST LISTED ONE
         #OR HAVE THE WHOLE STRING WITH COMMAS, DEPENDS ON HOW WE ARE GOING TO QUERY
-        "category": dict["Resource Type"].split(',')[0],
+        "category": dict["Resource Type"].split(","),
         "publish_date": date_published,
         #THIS PUBLICATION FIELD IS LIKE ALL BLANK ON THE SHEET
         "source": dict["Publication"],
-        "region": dict["Region"].split(','),
+        "region": dict["Region"].split(","),
         #WHAT DO WE DO FOR THIS TOO
-        "s3_file": "PLACEHOLDER",
-        "s3_file_preview": "PLACEHOLDER",
         "pdf_link": dict["Link"],
         "authors": dict["Authors"].split(','),
         "keywords": dict["Subject Keywords"].split(','),
@@ -49,27 +47,23 @@ def dict_to_dict(dict):
 
     }
 
-    return ""
+    return new_dict
 
 
 def format_datetime(year, month, day):
-    if not year or not str(year).isdigit():
-        return "0000-00-00T00:00:00"
-    if not month or not str(month).isdigit():
-        month = "00"
-        day = "00"
-    if not day or not str(day).isdigit():
-        day = "00"
-    # Ensure two-digit formatting
-    year = str(year)
-    month = str(month).zfill(2)
-    day = str(day).zfill(2)
+    try:
+        # Convert to int, will raise ValueError if invalid
+        y = int(year)
+        m = int(month)
+        d = int(day)
+        return f"{y:04d}-{m:02d}-{d:02d}T00:00:00"
+    except (TypeError, ValueError):
+        return None  # or a safe default like "1900-01-01T00:00:00"
 
-    return f"{year}-{month}-{day}T00:00:00"
 
 def main():
     # Authenticate
-    SERVICE_ACCOUNT_FILE = "googlecredentials.json"
+    SERVICE_ACCOUNT_FILE = "env.json"
     SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 
 
@@ -83,12 +77,10 @@ def main():
     #Would be great if this could be dynamic somehow, will look into
     RANGE = "Files!A1:M488"
 
-
     service = build("sheets", "v4", credentials=creds)
     sheet = service.spreadsheets()
     result = sheet.values().get(spreadsheetId=SHEET_ID, range=RANGE).execute()
     data = result.get("values", [])
-
 
     # Convert to DataFrame
     df = pd.DataFrame(data[1:], columns=data[0])  # Assuming first row is header
@@ -96,12 +88,16 @@ def main():
     print("reaches here")
     print(list(dict_list[10].keys()))
     for row_dict in dict_list:
-        break
+
         #Bens insert_document method takes in a dictionary, so no ned to convert it into json file
         #as long as the dictionary has all the information with correct key names and such, we should be good
-        add_or_update_document(dict_to_dict(row_dict))
+        try:
+            add_or_update_document(dict_to_dict(row_dict))
+        except ValueError as ve:
+            print(f"Validation error: {ve}")
+        except Exception as e:
+            print(f"Unexpected error: {e}")
 
 
 if __name__ == "__main__":
     main()
-
