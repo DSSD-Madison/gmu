@@ -8,14 +8,14 @@ import os
 from io import BytesIO
 from dotenv import load_dotenv
 from pathlib import Path
-
+from docx import Document
 
 load_dotenv()
 
 # === AWS Clients ===
 s3 = boto3.client("s3")
 bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
-include_buckets = {"ipinst-org", "allianceforpeacebuilding-org", "better-evidence-repository"}
+include_buckets = {"ipinst-org", "allianceforpeacebuilding-org", "better-evidence-repository", "video-kendra-testing"}
 
 # === DB Connection ===
 conn = psycopg2.connect(
@@ -33,7 +33,7 @@ def estimate_tokens(text: str) -> int:
 def estimate_cost(input_tokens: int, output_tokens: int = 200) -> float:
     return round((input_tokens / 1000 * 0.00025) + (output_tokens / 1000 * 0.00125), 6)
 
-# === PDF Text Cleaning ===
+# === Text Cleaning ===
 def clean_text(text: str) -> str:
     lines = text.splitlines()
     cleaned = []
@@ -43,6 +43,7 @@ def clean_text(text: str) -> str:
         cleaned.append(line.strip())
     return "\n".join(cleaned)
 
+# === PDF Extraction ===
 def extract_text_first_n_pages_cleaned(pdf_bytes, max_pages=10):
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     text = ""
@@ -54,6 +55,19 @@ def extract_text_first_n_pages_cleaned(pdf_bytes, max_pages=10):
     print(f"💸 Estimated cost for this doc (input only): ${estimate_cost(input_tokens, 0):.4f}")
     return cleaned, input_tokens
 
+# === DOCX Extraction ===
+def extract_text_from_docx(docx_bytes, max_chars=5000):
+    with BytesIO(docx_bytes) as f:
+        doc = Document(f)
+        text = "\n".join(p.text for p in doc.paragraphs)
+        trimmed = text[:max_chars]  # Approx 10-page cutoff
+        cleaned = clean_text(trimmed)
+        input_tokens = estimate_tokens(cleaned)
+        print(f"📄 Estimated input tokens (DOCX): {input_tokens}")
+        print(f"💸 Estimated cost (input only): ${estimate_cost(input_tokens, 0):.4f}")
+        return cleaned, input_tokens
+
+# === Prompt Builder ===
 def build_prompt(text: str) -> str:
     categories = [
         "Article", "Background Paper", "Blog Post", "Book", "Brief", "Case Study", "Dataset", "Educational Guide",
@@ -96,9 +110,9 @@ Normalize all values by removing dashes and replacing them with spaces. For exam
 Return only a valid JSON object with the following fields:
 - "title" (string, required)
 - "abstract" (string)
-- "category" (string, max 100 characters): e.g., article, research paper, etc.
+- "category" (string, max 100 characters)
 - "publish_date" (date)
-- "source" (string, max 255 characters): use "bucket" as a placeholder
+- "source" (string, max 255 characters)
 - "region_name" (array of unique strings, required, max 10)
 - "keyword_name" (array of unique strings, required, max 10)
 - "author_name" (array of unique strings, required, max 10)
@@ -109,7 +123,7 @@ TEXT:
 {text}
 """
 
-
+# === Claude API Call ===
 def call_claude(prompt: str) -> tuple[str, int]:
     body = {
         "messages": [{"role": "user", "content": prompt}],
@@ -132,6 +146,7 @@ def call_claude(prompt: str) -> tuple[str, int]:
     print(f"📝 Estimated output tokens: {output_tokens}")
     return output_text, output_tokens
 
+# === JSON Extraction from Claude Response ===
 def extract_first_json(text: str):
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if match:
@@ -197,14 +212,12 @@ def insert_doc_metadata(doc_id, metadata):
             )
             count += 1
 
-
     conn.commit()
 
 # === MAIN ===
 print("⚙️ Starting metadata enrichment...")
-output_log_path = Path("successful_metadata_updates.txt")
-output_log_path.touch(exist_ok=True)  # Creates the file if it doesn't exist
-
+output_log_path = Path("scripts/successful_metadata_updates.txt")
+output_log_path.touch(exist_ok=True)
 
 buckets = s3.list_buckets()["Buckets"]
 
@@ -213,40 +226,44 @@ for bucket in buckets:
     if bucket_name not in include_buckets:
         print(f"⏭️ Skipping bucket: {bucket_name}")
         continue
-    bucket_name = bucket["Name"]
     print(f"🪣 Checking bucket: {bucket_name}")
     try:
         paginator = s3.get_paginator('list_objects_v2')
         page_iterator = paginator.paginate(Bucket=bucket_name)
 
-        pdf_keys = []
+        file_keys = []
         for page in page_iterator:
             if "Contents" in page:
                 for obj in page["Contents"]:
                     key = obj["Key"]
-                    if key.lower().endswith(".pdf"):
-                        pdf_keys.append(key)
+                    # if key.lower().endswith(".pdf") or key.lower().endswith(".docx"):
+                    #     file_keys.append(key)
+                    if key.lower().endswith("docx"):
+                        file_keys.append(key)
 
-        if not pdf_keys:
-            print("📭 No PDFs found in this bucket.")
+        if not file_keys:
+            print("📭 No supported files found in this bucket.")
             continue
 
-        for key in pdf_keys[:5]:  # Max 5 PDFs per bucket
+        for key in file_keys[:2]:  # Limit per bucket
             print(f"📄 Processing {key}...")
             try:
                 cursor.execute("SELECT id FROM documents WHERE s3_file = %s", (f"s3://{bucket_name}/{key}",))
                 doc_row = cursor.fetchone()
                 if not doc_row:
-                    print("❌ No matching document in DB for this file (or it has has_duplicate = true).")
+                    print("❌ No matching document in DB for this file.")
                     continue
                 doc_id = doc_row[0]
-
                 print(f"🧾 Matched DB document UUID: {doc_id}")
 
                 obj = s3.get_object(Bucket=bucket_name, Key=key)
-                pdf_bytes = obj["Body"].read()
+                file_bytes = obj["Body"].read()
 
-                text, input_tokens = extract_text_first_n_pages_cleaned(pdf_bytes, max_pages=10)
+                if key.lower().endswith(".pdf"):
+                    text, input_tokens = extract_text_first_n_pages_cleaned(file_bytes, max_pages=10)
+                else:
+                    text, input_tokens = extract_text_from_docx(file_bytes)
+
                 prompt = build_prompt(text)
                 response, output_tokens = call_claude(prompt)
                 metadata = extract_first_json(response)

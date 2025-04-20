@@ -13,3 +13,5 @@ boto3==1.37.18
 dotenv==0.9.9
 psycopg2==2.9.10
 python-dotenv==1.1.0
+python-docx==1.1.0
+
