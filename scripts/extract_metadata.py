@@ -27,6 +27,7 @@ conn = psycopg2.connect(
 cursor = conn.cursor()
 
 # === Token + Cost Estimation ===
+# only used if information is not in claude
 def estimate_tokens(text: str) -> int:
     return int(len(text.split()) * 0.75)
 
@@ -50,10 +51,7 @@ def extract_text_first_n_pages_cleaned(pdf_bytes, max_pages=10):
     for i in range(min(max_pages, len(doc))):
         text += doc[i].get_text() + "\n"
     cleaned = clean_text(text)
-    input_tokens = estimate_tokens(cleaned)
-    print(f"📄 Estimated input tokens: {input_tokens}")
-    print(f"💸 Estimated cost for this doc (input only): ${estimate_cost(input_tokens, 0):.4f}")
-    return cleaned, input_tokens
+    return cleaned
 
 # === DOCX Extraction ===
 def extract_text_from_docx(docx_bytes, max_chars=5000):
@@ -62,10 +60,7 @@ def extract_text_from_docx(docx_bytes, max_chars=5000):
         text = "\n".join(p.text for p in doc.paragraphs)
         trimmed = text[:max_chars]  # Approx 10-page cutoff
         cleaned = clean_text(trimmed)
-        input_tokens = estimate_tokens(cleaned)
-        print(f"📄 Estimated input tokens (DOCX): {input_tokens}")
-        print(f"💸 Estimated cost (input only): ${estimate_cost(input_tokens, 0):.4f}")
-        return cleaned, input_tokens
+        return cleaned
 
 # === Prompt Builder ===
 def build_prompt(text: str) -> str:
@@ -124,7 +119,7 @@ TEXT:
 """
 
 # === Claude API Call ===
-def call_claude(prompt: str) -> tuple[str, int]:
+def call_claude(prompt: str) -> tuple[str, int, int]:
     body = {
         "messages": [{"role": "user", "content": prompt}],
         "max_tokens": 512,
@@ -141,10 +136,19 @@ def call_claude(prompt: str) -> tuple[str, int]:
     )
 
     result = json.loads(response["body"].read())
+
     output_text = result["content"][0]["text"].strip()
-    output_tokens = estimate_tokens(output_text)
-    print(f"📝 Estimated output tokens: {output_tokens}")
-    return output_text, output_tokens
+
+    usage = result.get("usage", {})
+    input_tokens = usage.get("input_tokens", estimate_tokens(prompt))
+    output_tokens = usage.get("output_tokens", estimate_tokens(output_text))
+
+    print(f"📊 Input tokens: {input_tokens}")
+    print(f"📝 Output tokens: {output_tokens}")
+    print(f"💸 Cost: ${estimate_cost(input_tokens, output_tokens):.6f}")
+
+    return output_text, input_tokens, output_tokens
+
 
 # === JSON Extraction from Claude Response ===
 def extract_first_json(text: str):
@@ -218,9 +222,12 @@ def insert_doc_metadata(doc_id, metadata):
 print("⚙️ Starting metadata enrichment...")
 output_log_path = Path("scripts/successful_metadata_updates.txt")
 output_log_path.touch(exist_ok=True)
+with output_log_path.open() as f:
+    processed_uuids = {line.strip() for line in f if line.strip()}
+
 
 buckets = s3.list_buckets()["Buckets"]
-
+total_cost = 0.0
 for bucket in buckets:
     bucket_name = bucket["Name"]
     if bucket_name not in include_buckets:
@@ -236,16 +243,15 @@ for bucket in buckets:
             if "Contents" in page:
                 for obj in page["Contents"]:
                     key = obj["Key"]
-                    # if key.lower().endswith(".pdf") or key.lower().endswith(".docx"):
-                    #     file_keys.append(key)
-                    if key.lower().endswith("docx"):
+                    if key.lower().endswith(".pdf") or key.lower().endswith(".docx"):
                         file_keys.append(key)
+
 
         if not file_keys:
             print("📭 No supported files found in this bucket.")
             continue
 
-        for key in file_keys[:2]:  # Limit per bucket
+        for key in file_keys:
             print(f"📄 Processing {key}...")
             try:
                 cursor.execute("SELECT id FROM documents WHERE s3_file = %s", (f"s3://{bucket_name}/{key}",))
@@ -254,18 +260,24 @@ for bucket in buckets:
                     print("❌ No matching document in DB for this file.")
                     continue
                 doc_id = doc_row[0]
+                if str(doc_id) in processed_uuids:
+                    print(f"⏭️ Skipping already-processed document: {doc_id}")
+                    continue
                 print(f"🧾 Matched DB document UUID: {doc_id}")
+
 
                 obj = s3.get_object(Bucket=bucket_name, Key=key)
                 file_bytes = obj["Body"].read()
 
                 if key.lower().endswith(".pdf"):
-                    text, input_tokens = extract_text_first_n_pages_cleaned(file_bytes, max_pages=10)
+                    text = extract_text_first_n_pages_cleaned(file_bytes, max_pages=10)
                 else:
-                    text, input_tokens = extract_text_from_docx(file_bytes)
+                    text = extract_text_from_docx(file_bytes)
 
                 prompt = build_prompt(text)
-                response, output_tokens = call_claude(prompt)
+                response, input_tokens, output_tokens = call_claude(prompt)
+                doc_cost = estimate_cost(input_tokens, output_tokens)
+                total_cost += doc_cost
                 metadata = extract_first_json(response)
 
                 if metadata:
@@ -280,6 +292,6 @@ for bucket in buckets:
 
     except Exception as e:
         print(f"⚠️ Error accessing bucket {bucket_name}: {e}")
-
+print(f"\n💰 Total Claude usage cost: ${total_cost:.6f}")
 conn.close()
 print("\n✅ Done.")

@@ -1,11 +1,11 @@
 name: Extract Metadata with Bedrock
 
-on:
-  workflow_dispatch:
 # on:
-  # push:
-  #   branches:
-  #     - metadata-generation
+#   workflow_dispatch:
+on:
+  push:
+    branches:
+      - metadata-generation
   
 
 jobs:
@@ -38,5 +38,10 @@ jobs:
 
       - name: Run metadata extraction
         run: python scripts/extract_metadata.py
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
 
 
