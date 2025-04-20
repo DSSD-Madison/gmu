@@ -4,9 +4,11 @@ INSERT INTO documents (
   s3_file,
   file_name,
   title,
+  abstract,
+  publish_date,
   created_at,
   has_duplicate
-) VALUES ($1, $2, $3, $4, NOW(), false);
+) VALUES ($1, $2, $3, $4, $5, $6,NOW(), false);
 
 -- name: InsertDocAuthor :exec
 INSERT INTO doc_authors (id, doc_id, author_id)

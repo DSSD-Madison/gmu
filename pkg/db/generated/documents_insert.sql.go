@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -81,16 +82,20 @@ INSERT INTO documents (
   s3_file,
   file_name,
   title,
+  abstract,
+  publish_date,
   created_at,
   has_duplicate
-) VALUES ($1, $2, $3, $4, NOW(), false)
+) VALUES ($1, $2, $3, $4, $5, $6,NOW(), false)
 `
 
 type InsertUploadedDocumentParams struct {
-	ID       uuid.UUID
-	S3File   string
-	FileName string
-	Title    string
+	ID          uuid.UUID
+	S3File      string
+	FileName    string
+	Title       string
+	Abstract    sql.NullString
+	PublishDate sql.NullTime
 }
 
 func (q *Queries) InsertUploadedDocument(ctx context.Context, arg InsertUploadedDocumentParams) error {
@@ -99,6 +104,8 @@ func (q *Queries) InsertUploadedDocument(ctx context.Context, arg InsertUploaded
 		arg.S3File,
 		arg.FileName,
 		arg.Title,
+		arg.Abstract,
+		arg.PublishDate,
 	)
 	return err
 }

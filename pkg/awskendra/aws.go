@@ -9,9 +9,11 @@ import (
 )
 
 type Config struct {
-	Credentials Provider
-	Region string
-	IndexID string
+	Credentials      Provider
+	Region           string
+	IndexID          string
+	ModelID          string
+	KeywordsFilePath string
 }
 
 func LoadConfig() (*Config, error) {
@@ -28,9 +30,11 @@ func LoadConfig() (*Config, error) {
 	}}
 
 	return &Config{
-		Credentials: creds,
-		Region: os.Getenv("REGION"),
-		IndexID: os.Getenv("INDEX_ID"),
+		Credentials:      creds,
+		Region:           os.Getenv("REGION"),
+		IndexID:          os.Getenv("INDEX_ID"),
+		ModelID:          os.Getenv("MODEL_ID"),
+		KeywordsFilePath: os.Getenv("KEYWORDS_FILE_PATH"),
 	}, nil
 }
 
@@ -41,4 +45,3 @@ type Provider struct {
 func (p Provider) Retrieve(ctx context.Context) (aws.Credentials, error) {
 	return p.Credentials, nil
 }
-

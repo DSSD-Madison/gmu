@@ -8,15 +8,17 @@ import (
 )
 
 type Handler struct {
-	db *db.Queries
-	kendra *awskendra.KendraClient
-	logger *slog.Logger
+	db      *db.Queries
+	kendra  *awskendra.KendraClient
+	bedrock *awskendra.BedrockClient
+	logger  *slog.Logger
 }
 
-func NewHandler(db *db.Queries, k *awskendra.KendraClient, l *slog.Logger) Handler {
+func NewHandler(db *db.Queries, k *awskendra.KendraClient, b *awskendra.BedrockClient, l *slog.Logger) Handler {
 	return Handler{
-		db: db,
-		kendra: k,
-		logger: l,
+		db:      db,
+		kendra:  k,
+		bedrock: b,
+		logger:  l,
 	}
 }

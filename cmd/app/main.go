@@ -129,19 +129,20 @@ func main() {
 
 	dbQuerier := db.New(sqlDB)
 
-	kendraConfig, err := awskendra.LoadConfig()
+	awsConfig, err := awskendra.LoadConfig()
 	if err != nil {
 		logHandler.Error("Could not load AWS Kendra config", "err", err)
 		os.Exit(1)
 	}
 
-	kendraClient, err := awskendra.NewKendraClient(*kendraConfig)
+	kendraClient, err := awskendra.NewKendraClient(*awsConfig)
+	bedrockClient, err := awskendra.NewBedrockClient(*awsConfig)
 	if err != nil {
 		logHandler.Error("Could not initialize kendra client", "err", err)
 		os.Exit(1)
 	}
 
-	routesHandler := routes.NewHandler(dbQuerier, kendraClient, logHandler)
+	routesHandler := routes.NewHandler(dbQuerier, kendraClient, bedrockClient, logHandler)
 
 	// Static file handlers
 	e.Static("/images", "web/assets/images")

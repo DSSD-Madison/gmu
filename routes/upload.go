@@ -3,11 +3,12 @@ package routes
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
-	"path"
-	"strings"
 	"time"
 
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
@@ -39,7 +40,6 @@ func (h *Handler) HandlePDFUpload(c echo.Context) error {
 	originalFilename := fileHeader.Filename
 	fileID := uuid.New()
 	s3Path := fmt.Sprintf("s3://your-bucket-name/documents/%s", originalFilename)
-	title := strings.TrimSuffix(originalFilename, path.Ext(originalFilename))
 
 	// 🧠 Check if document already exists in DB by S3 path
 	existingDoc, err := h.db.FindDocumentByS3Path(ctx, s3Path)
@@ -47,13 +47,78 @@ func (h *Handler) HandlePDFUpload(c echo.Context) error {
 		return web.Render(c, http.StatusOK, components.DuplicateUploadResponse(existingDoc.ID.String()))
 	}
 
+	file, err := fileHeader.Open()
+	if err != nil {
+		return web.Render(c, http.StatusOK, components.ErrorMessage(fmt.Sprintf("Error opening file: %v", err)))
+	}
+	defer func(file multipart.File) {
+		err := file.Close()
+		if err != nil {
+			h.logger.Error("Error closing file: %v", err)
+		}
+	}(file)
+
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		return web.Render(c, http.StatusOK, components.ErrorMessage(fmt.Sprintf("Error reading file: %v", err)))
+	}
+
+	metadata, err := h.bedrock.ProcessPdfAndExtractMetadata(context.Background(), fileBytes)
+	if err != nil {
+		return web.Render(c, http.StatusOK, components.ErrorMessage(err.Error()))
+	}
+
+	format := "2006-01-02"
+
+	parse, err := time.Parse(format, metadata.PublishDate)
+	if err != nil {
+		parse = time.Now()
+		fmt.Println(err)
+	}
+	sqlTime := sql.NullTime{
+		Time:  parse,
+		Valid: true,
+	}
+
+	prettyJSON, err := json.MarshalIndent(metadata, "", "  ")
+	if err != nil {
+		log.Printf("⚠️ Error formatting metadata as JSON: %v", err)
+		fmt.Printf("Raw Metadata: %+v\n", metadata) // Print raw struct if formatting fails
+	} else {
+		fmt.Println("--- Extracted Metadata ---")
+		fmt.Println(string(prettyJSON))
+		fmt.Println("--- End Extracted Metadata ---")
+	}
 
 	if err := h.db.InsertUploadedDocument(ctx, db.InsertUploadedDocumentParams{
-		ID:       fileID,
-		S3File:   s3Path,
-		FileName: originalFilename,
-		Title:    title,
+		ID:          fileID,
+		S3File:      s3Path,
+		FileName:    originalFilename,
+		Abstract:    sql.NullString{String: metadata.Abstract, Valid: true},
+		PublishDate: sqlTime,
+		Title:       metadata.Title,
 	}); err != nil {
+		log.Printf("DB insert failed: %v", err)
+		errorMessage := "Could not save file metadata to database"
+		c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
+		return web.Render(c, http.StatusInternalServerError, components.UploadResponse(false, errorMessage))
+	}
+
+	h.modifyAuthors(ctx, metadata.AuthorName)
+	h.modifyCategories(ctx, metadata.CategoryName)
+	h.modifyKeywords(ctx, metadata.KeywordName)
+	h.modifyRegions(ctx, metadata.RegionName)
+
+	err = h.updateManyToManyFieldsMetadata(
+		ctx,
+		uuid.NullUUID{UUID: fileID, Valid: true},
+		metadata.AuthorName,
+		metadata.KeywordName,
+		metadata.CategoryName,
+		metadata.RegionName,
+	)
+
+	if err != nil {
 		log.Printf("DB insert failed: %v", err)
 		errorMessage := "Could not save file metadata to database"
 		c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
@@ -64,7 +129,6 @@ func (h *Handler) HandlePDFUpload(c echo.Context) error {
 	c.Response().Header().Set("HX-Redirect", redirectPath)
 	return c.NoContent(http.StatusOK)
 }
-
 
 func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
 	fileId := c.Param("fileId")
@@ -102,7 +166,7 @@ func (h *Handler) PDFMetadataEditPage(c echo.Context) error {
 		log.Println("CSRF token not found in context")
 	}
 	isAuthorized, isMaster := middleware.GetSessionFlags(c)
-	
+
 	s3Link := util.ConvertS3URIToURL(doc.S3File)
 	return web.Render(c, http.StatusOK, components.PDFMetadataEditForm(
 		fileId,
@@ -177,16 +241,30 @@ func (h *Handler) HandleMetadataSave(c echo.Context) error {
 	h.db.DeleteDocKeywordsByDocID(ctx, documentID)
 	h.db.DeleteDocCategoriesByDocID(ctx, documentID)
 	h.db.DeleteDocRegionsByDocID(ctx, documentID)
-	
+
+	err = h.updateManyToManyFieldsMetadata(ctx, documentID, authorStrs, keywordStrs, categoryStrs, regionStrs)
+	if err != nil {
+		return web.Render(c, http.StatusOK, components.ErrorMessage(fmt.Sprintf("[ERROR] Error updating document metadata: %v", err)))
+	}
+
+	log.Printf("[INFO] Metadata updated successfully for fileId '%s'", docID.String())
+	return web.Render(c, http.StatusOK, components.SuccessMessage(fmt.Sprintf("Metadata updated successfully for fileId '%s'", docID)))
+}
+
+func (h *Handler) updateManyToManyFieldsMetadata(
+	ctx context.Context,
+	documentID uuid.NullUUID,
+	authorStrs []string,
+	keywordStrs []string,
+	categoryStrs []string,
+	regionStrs []string,
+) error {
 	authors := util.ResolveIDs(ctx, h.db, authorStrs, util.GetOrCreateAuthor)
 	keywords := util.ResolveIDs(ctx, h.db, keywordStrs, util.GetOrCreateKeyword)
 	categories := util.ResolveIDs(ctx, h.db, categoryStrs, util.GetOrCreateCategory)
 	regions := util.ResolveIDs(ctx, h.db, regionStrs, util.GetOrCreateRegion)
-	
-	log.Printf("[DEBUG] Parsed author IDs: %v", authors)
-	log.Printf("[DEBUG] Parsed keyword IDs: %v", keywords)
-	log.Printf("[DEBUG] Parsed category IDs: %v", categories)
-	log.Printf("[DEBUG] Parsed region IDs: %v", regions)
+
+	fmt.Println(documentID)
 
 	for _, authorID := range authors {
 		err := h.db.InsertDocAuthor(ctx, db.InsertDocAuthorParams{
@@ -195,7 +273,8 @@ func (h *Handler) HandleMetadataSave(c echo.Context) error {
 			AuthorID: uuid.NullUUID{UUID: authorID, Valid: true},
 		})
 		if err != nil {
-			log.Printf("[ERROR] Failed to insert into doc_authors: %v", err)
+			fmt.Println("[ERROR] Failed to insert into doc_authors: %v", err)
+			return err
 		}
 	}
 
@@ -207,6 +286,7 @@ func (h *Handler) HandleMetadataSave(c echo.Context) error {
 		})
 		if err != nil {
 			log.Printf("[ERROR] Failed to insert into doc_keywords: %v", err)
+			return err
 		}
 	}
 
@@ -218,6 +298,7 @@ func (h *Handler) HandleMetadataSave(c echo.Context) error {
 		})
 		if err != nil {
 			log.Printf("[ERROR] Failed to insert into doc_categories: %v", err)
+			return err
 		}
 	}
 
@@ -229,9 +310,36 @@ func (h *Handler) HandleMetadataSave(c echo.Context) error {
 		})
 		if err != nil {
 			log.Printf("[ERROR] Failed to insert into doc_regions: %v", err)
+			return err
 		}
 	}
+	return nil
+}
 
-	log.Printf("[INFO] Metadata updated successfully for fileId '%s'", docID.String())
-	return web.Render(c, http.StatusOK, components.SuccessMessage(fmt.Sprintf("Metadata updated successfully for fileId '%s'", docID)))
+func (h *Handler) modifyAuthors(ctx context.Context, authorStrs []string) error {
+	for i, authorStr := range authorStrs {
+		authorStrs[i] = "new:" + authorStr
+	}
+	return nil
+}
+
+func (h *Handler) modifyRegions(ctx context.Context, regionStrs []string) error {
+	for i, regionStr := range regionStrs {
+		regionStrs[i] = "new:" + regionStr
+	}
+	return nil
+}
+
+func (h *Handler) modifyCategories(ctx context.Context, categoriesStrs []string) error {
+	for i, categoriesStr := range categoriesStrs {
+		categoriesStrs[i] = "new:" + categoriesStr
+	}
+	return nil
+}
+
+func (h *Handler) modifyKeywords(ctx context.Context, keywordsStrs []string) error {
+	for i, keywordStr := range keywordsStrs {
+		keywordsStrs[i] = "new:" + keywordStr
+	}
+	return nil
 }
