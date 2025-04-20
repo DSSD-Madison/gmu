@@ -1,9 +1,3 @@
-#TODO this info should probably not be in commit
-#Service Account Name - BetterEvidenceDataInlet
-#Service Account ID - betterevidencedatainlet
-#Email Address - betterevidencedatainlet@betterevidence.iam.gserviceaccount.com
-
-
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 import pandas as pd
@@ -32,19 +26,13 @@ def dict_to_dict(dict):
         "file_name": dict["Filename"],
         "title": dict["Title"],
         "abstract": dict["Abstract"],
-        #NEED TO DISCUSS THIS AS WELL, SHOULD WE JUST HAVE THE FIRST LISTED ONE
-        #OR HAVE THE WHOLE STRING WITH COMMAS, DEPENDS ON HOW WE ARE GOING TO QUERY
         "category": dict["Resource Type"].split(","),
         "publish_date": date_published,
-        #THIS PUBLICATION FIELD IS LIKE ALL BLANK ON THE SHEET
         "source": dict["Publication"],
         "region": dict["Region"].split(","),
-        #WHAT DO WE DO FOR THIS TOO
         "pdf_link": dict["Link"],
         "authors": dict["Authors"].split(','),
         "keywords": dict["Subject Keywords"].split(','),
-
-
     }
 
     return new_dict
@@ -70,9 +58,6 @@ def main():
     creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 
 
-    #Google Sheets API setup
-    #https://docs.google.com/spreadsheets/d/1dAVDBNL23_ew6yJ-Cd8ACuMkLbrOXhaRFTvGgaRm0tI/edit?gid=1908289571#gid=1908289571
-    #This is the part between /d/ and /edit in the url of the spreadsheet
     SHEET_ID = "1dAVDBNL23_ew6yJ-Cd8ACuMkLbrOXhaRFTvGgaRm0tI"
     #Would be great if this could be dynamic somehow, will look into
     RANGE = "Files!A1:M488"
