@@ -52,19 +52,3 @@ func (h *SuggestionsHandler) SearchSuggestions(c echo.Context) error {
 	h.log.DebugContext(ctx, "Rendering suggestions", "count", len(suggestions.Suggestions))
 	return web.Render(c, http.StatusOK, components.Suggestions(suggestions))
 }
-
-func (h *Handler) SearchSuggestions(c echo.Context) error {
-	query := c.FormValue("query")
-
-	if query == "" {
-		return nil
-	}
-
-	suggestions, err := h.client.GetSuggestions(c.Request().Context(), "")
-	// TODO: add error status code
-	if err != nil {
-		return nil
-	}
-
-	return web.Render(c, http.StatusOK, components.Suggestions(suggestions))
-}

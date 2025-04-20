@@ -6,8 +6,6 @@ import (
 
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
-	"github.com/gorilla/sessions"
-	"github.com/labstack/echo/v4"
 )
 
 type Searcher interface {
@@ -18,11 +16,15 @@ type Suggester interface {
 	GetSuggestions(ctx context.Context, query string) (awskendra.KendraSuggestions, error)
 }
 
-type LoginManager interface {
-	ValidateUser(ctx context.Context, username string) (db.User, error)
-	ValidatePassword(user db.User, password string) error
-	CreateSession(c echo.Context, user db.User) (*sessions.Session, error)
-	Logout(c echo.Context) error
+type UserManager interface {
+	CreateUser(ctx context.Context) (db.User, error)
+	GetUser(ctx context.Context, username string) (db.User, error)
+	UpdateUser(ctx context.Context) (db.User, error)
+	DeleteUser(ctx context.Context) (db.User, error)
+}
+
+type AuthenticationManager interface {
+	ValidateLogin(user db.User, password string) error
 }
 
 type FileManager interface {

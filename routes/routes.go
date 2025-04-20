@@ -7,7 +7,16 @@ import (
 )
 
 // InitRoutes registers all the application routes
-func InitRoutes(e *echo.Echo, homeHandler *HomeHandler, searchHandler *SearchHandler, suggestionsHandler *SuggestionsHandler, loginHandler *LoginHandler, uploadHandler *UploadHandler, h *Handler) {
+func InitRoutes(
+	e *echo.Echo,
+	homeHandler *HomeHandler,
+	searchHandler *SearchHandler,
+	suggestionsHandler *SuggestionsHandler,
+	uploadHandler *UploadHandler,
+	authenticationHandler *AuthenticationHandler,
+	userManagementHandler *UserManagementHandler,
+	databaseHandler *DatabaseHandler,
+) {
 	e.GET("/", homeHandler.Home)
 
 	// --- Search Routes ---
@@ -28,21 +37,21 @@ func InitRoutes(e *echo.Echo, homeHandler *HomeHandler, searchHandler *SearchHan
 	e.POST("/save-metadata", uploadHandler.HandleMetadataSave, middleware.RequireAuth) // <<< ADDED ROUTE
 
 	// Login Route
-	e.GET("/login", loginHandler.LoginPage)
-	e.POST("/login", loginHandler.Login)
+	e.GET("/login", authenticationHandler.LoginPage)
+	e.POST("/login", authenticationHandler.Login)
 
 	// Logout Route
-	e.GET("/logout", loginHandler.Logout) // for dev testing, remove when nav bar added
-	e.POST("/logout", loginHandler.Logout)
+	e.GET("/logout", authenticationHandler.Logout) // for dev testing, remove when nav bar added
+	e.POST("/logout", authenticationHandler.Logout)
 
 	// Admin Routes
-	e.GET("/admin/users", h.ManageUsersPage, middleware.RequireAuth)
-	e.POST("/admin/users", h.CreateNewUser, middleware.RequireAuth)
-	e.POST("/admin/users/delete", h.DeleteUser, middleware.RequireAuth)
+	e.GET("/admin/users", userManagementHandler.ManageUsersPage, middleware.RequireAuth)
+	e.POST("/admin/users", userManagementHandler.CreateNewUser, middleware.RequireAuth)
+	e.POST("/admin/users/delete", userManagementHandler.DeleteUser, middleware.RequireAuth)
 
 	// --- Database Search Routes ---
-	e.GET("/authors", h.DatabaseSearchAuthors, middleware.RequireAuth)
-	e.GET("/keywords", h.DatabaseSearchKeywords, middleware.RequireAuth)
-	e.GET("/regions", h.DatabaseSearchRegions, middleware.RequireAuth)
-	e.GET("/categories", h.DatabaseSearchCategories, middleware.RequireAuth)
+	e.GET("/authors", databaseHandler.DatabaseSearchAuthors, middleware.RequireAuth)
+	e.GET("/keywords", databaseHandler.DatabaseSearchKeywords, middleware.RequireAuth)
+	e.GET("/regions", databaseHandler.DatabaseSearchRegions, middleware.RequireAuth)
+	e.GET("/categories", databaseHandler.DatabaseSearchCategories, middleware.RequireAuth)
 }
