@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/jackc/pgx/v4/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
@@ -19,17 +19,28 @@ import (
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
 	db_util "github.com/DSSD-Madison/gmu/pkg/db/util"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
+	"github.com/DSSD-Madison/gmu/pkg/services"
 	"github.com/DSSD-Madison/gmu/routes"
 )
 
 func main() {
-	var logHandler *slog.Logger
-
+	// --- Configuration ---
 	appConfig, err := config.LoadConfig()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatalf("Error loading app config: %v", err)
+	}
+	dbConfig, err := db_util.LoadConfig()
+	if err != nil {
+		log.Fatalf("Error loading database config: %v", err)
+		os.Exit(1)
+	}
+	awsConfig, err := awskendra.LoadConfig()
+	if err != nil {
+		log.Fatalf("Error loading kendra config: %v", err)
+		os.Exit(1)
 	}
 
+	// --- Logger Initialization ---
 	var level slog.Level
 	switch appConfig.LogLevel {
 	case "debug":
@@ -45,13 +56,82 @@ func main() {
 	}
 
 	loggerOpts := logger.HandlerOptions{
-		Mode:  appConfig.Mode,
-		Level: level,
+		Mode:      appConfig.Mode,
+		Level:     level,
+		AddSource: appConfig.Mode == "dev",
 	}
+	appLogger := logger.New(&loggerOpts)
+	appLogger.Info("Logger initialized", "mode", appConfig.Mode, "level", level.String())
 
-	logHandler = slog.New(logger.NewHandler(&loggerOpts))
+	// --- Database Initialization ---
+	databaseURL := fmt.Sprintf(
+		"postgres://%s:%s@%s/%s?sslmode=disable",
+		dbConfig.DBUser, dbConfig.DBPassword, dbConfig.DBHost, dbConfig.DBName,
+	)
 
+	sqlDB, err := sql.Open("pgx", databaseURL)
+	if err != nil {
+		appLogger.Error("Unable to initialize sql.DB", "error", err)
+		os.Exit(1)
+	}
+	defer func(sqlDB *sql.DB) {
+		if err := sqlDB.Close(); err != nil {
+			appLogger.Error("Failed to close sql.DB", "error", err)
+		}
+	}(sqlDB)
+
+	if err := sqlDB.PingContext(context.Background()); err != nil {
+		appLogger.Error("Unable to ping database", "error", err)
+		os.Exit(1)
+	}
+	appLogger.Info("Database connection established")
+
+	dbQuerier := db.New(sqlDB)
+
+	// --- AWS Kendra Initialization ---
+	kendraClient, err := awskendra.New(*awsConfig, appLogger)
+	if err != nil {
+		appLogger.Error("Could not initialize kendra client", "error", err)
+		os.Exit(1)
+	}
+	appLogger.Info("Kendra client initialized")
+
+	// TODO: Add DI and make an interface
+	bedrockClient, err := awskendra.NewBedrockClient(*awsConfig)
+	if err != nil {
+		appLogger.Error("Could not initialize bedrock client", "error", err)
+		os.Exit(1)
+	}
+	appLogger.Info("Bedrock client initialized")
+
+	appLogger.Info("Initializing services...")
+
+	searchService := services.NewSearchService(appLogger, kendraClient, dbQuerier)
+	suggestionService := services.NewSuggestionService(appLogger, kendraClient)
+	// loginService := services.NewLoginService(appLogger, dbQuerier)
+	authenticationService := services.NewLoginService(appLogger, dbQuerier)
+	bedrockService := services.NewBedrockService(appLogger, *bedrockClient)
+	userService := services.NewUserService(appLogger, dbQuerier)
+
+	appLogger.Info("Services initialized")
+
+	// --- Handler Initialization ---
+	appLogger.Info("Initializing Handlers...")
+
+	homeHandler := routes.NewHomeHandler(appLogger)
+	searchHandler := routes.NewSearchHandler(appLogger, searchService)
+	authHandler := routes.NewAuthenticationHandler(appLogger, userService, authenticationService)
+	suggestionsHandler := routes.NewSuggestionsHandler(appLogger, suggestionService)
+	uploadHandler := routes.NewUploadHandler(appLogger, dbQuerier, bedrockService)
+	userManagementHandler := routes.NewUserManagementHandler(appLogger, dbQuerier)
+	databaseHandler := routes.NewDatabaseHandler(appLogger, dbQuerier)
+
+	appLogger.Info("Handlers initialized")
+
+	// --- Echo Setup ---
 	e := echo.New()
+
+	// --- Middleware ---
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogStatus:   true,
 		LogURI:      true,
@@ -60,13 +140,13 @@ func main() {
 		HandleError: true, // forwards error to the global error handler, so it can decide appropriate status code
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
 			if v.Error == nil {
-				logHandler.LogAttrs(c.Request().Context(), slog.LevelInfo, "REQUEST",
+				appLogger.InfoContext(c.Request().Context(), "REQUEST",
 					slog.String("uri", v.URI),
 					slog.Int("status", v.Status),
 					slog.String("ip", v.RemoteIP),
 				)
 			} else {
-				logHandler.LogAttrs(c.Request().Context(), slog.LevelError, "REQUEST ERROR",
+				appLogger.ErrorContext(c.Request().Context(), "REQUEST ERROR",
 					slog.String("uri", v.URI),
 					slog.Int("status", v.Status),
 					slog.String("err", v.Error.Error()),
@@ -94,65 +174,20 @@ func main() {
 			}
 		},
 	}))
+	// --- Routes Initialization ---
+	routes.InitRoutes(e, homeHandler, searchHandler, suggestionsHandler, uploadHandler, authHandler, userManagementHandler, databaseHandler)
+	appLogger.Info("Routes initialized")
 
-	dbConfig, err := db_util.LoadConfig()
-	if err != nil {
-		logHandler.Error("Unable to load db config", "err", err)
-		os.Exit(1)
-	}
-
-	databaseURL := fmt.Sprintf(
-		"postgres://%s:%s@%s/%s?sslmode=disable",
-		dbConfig.DBUser, dbConfig.DBPassword, dbConfig.DBHost, dbConfig.DBName,
-	)
-
-	// Connect to PostgreSQL using pgxpool
-	dbpool, err := pgxpool.Connect(context.Background(), databaseURL)
-	if err != nil {
-		logHandler.Error("Unable to connect to database", "err", err)
-		os.Exit(1)
-	}
-	defer dbpool.Close()
-
-	// Create a *sql.DB instance using the pgx driver
-	sqlDB, err := sql.Open("pgx", databaseURL)
-	if err != nil {
-		logHandler.Error("Unable to initialize sql.DB", "err", err)
-		os.Exit(1)
-	}
-	defer func(sqlDB *sql.DB) {
-		err := sqlDB.Close()
-		if err != nil {
-			logHandler.Error("Failed to close sql.DB", "err", err)
-		}
-	}(sqlDB)
-
-	dbQuerier := db.New(sqlDB)
-
-	awsConfig, err := awskendra.LoadConfig()
-	if err != nil {
-		logHandler.Error("Could not load AWS Kendra config", "err", err)
-		os.Exit(1)
-	}
-
-	kendraClient, err := awskendra.NewKendraClient(*awsConfig)
-	bedrockClient, err := awskendra.NewBedrockClient(*awsConfig)
-	if err != nil {
-		logHandler.Error("Could not initialize kendra client", "err", err)
-		os.Exit(1)
-	}
-
-	routesHandler := routes.NewHandler(dbQuerier, kendraClient, bedrockClient, logHandler)
-
-	// Static file handlers
 	e.Static("/images", "web/assets/images")
 	e.Static("/css", "web/assets/css")
 	e.Static("/svg", "web/assets/svg")
 	e.Static("/js", "web/assets/js")
 
-	// Routes
-	routes.InitRoutes(e, routesHandler)
-
-	// Start server
-	e.Logger.Fatal(e.Start(":8080"))
+	// --- Start Server ---
+	address := ":8080"
+	appLogger.Info("Starting Server", "address", address)
+	if err := e.Start(address); err != nil && err != http.ErrServerClosed {
+		appLogger.Error("Server failed to start", "error", err)
+		os.Exit(1)
+	}
 }

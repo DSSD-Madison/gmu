@@ -2,14 +2,30 @@ package routes
 
 import (
 	"database/sql"
+	"net/http"
+	"strings"
+
+	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
+	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
 	"github.com/labstack/echo/v4"
-	"net/http"
-	"strings"
 )
 
-func (h *Handler) DatabaseFieldSearch(c echo.Context, fieldName string) error {
+type DatabaseHandler struct {
+	log logger.Logger
+	db  *db.Queries
+}
+
+func NewDatabaseHandler(log logger.Logger, db *db.Queries) *DatabaseHandler {
+	handlerLogger := log.With("handler", "Database")
+	return &DatabaseHandler{
+		log: handlerLogger,
+		db:  db,
+	}
+}
+
+func (dh *DatabaseHandler) DatabaseFieldSearch(c echo.Context, fieldName string) error {
 	var idPrefix string
 
 	switch fieldName {
@@ -22,7 +38,7 @@ func (h *Handler) DatabaseFieldSearch(c echo.Context, fieldName string) error {
 	case "category_names":
 		idPrefix = "categories"
 	default:
-		h.logger.Error("DatabaseFieldSearch called with unsupported fieldName: %s", fieldName)
+		dh.log.Error("DatabaseFieldSearch called with unsupported fieldName", "fieldName", fieldName)
 		return c.String(http.StatusInternalServerError, "Internal server configuration error.")
 	}
 
@@ -49,9 +65,10 @@ func (h *Handler) DatabaseFieldSearch(c echo.Context, fieldName string) error {
 
 	switch fieldName {
 	case "region_names":
-		items, err := h.db.SearchRegionsByNamePrefix(ctx, dbQuery)
+		items, err := dh.db.SearchRegionsByNamePrefix(ctx, dbQuery)
 		if err != nil {
-			h.logger.Error("Error searching regions for '%s': %v", searchQuery, err)
+			dh.log.Error("Error searching regions for '%s': %v", searchQuery, err)
+			dh.log.Error("Error searching regions", "query", searchQuery, "error", err)
 			dbErr = err
 		} else {
 			for _, item := range items {
@@ -62,9 +79,9 @@ func (h *Handler) DatabaseFieldSearch(c echo.Context, fieldName string) error {
 			}
 		}
 	case "keyword_names":
-		items, err := h.db.SearchKeywordsByNamePrefix(ctx, dbQuery)
+		items, err := dh.db.SearchKeywordsByNamePrefix(ctx, dbQuery)
 		if err != nil {
-			h.logger.Error("Error searching keywords for '%s': %v", searchQuery, err)
+			dh.log.Error("Error searching keywords", "query", searchQuery, "error", err)
 			dbErr = err
 		} else {
 			for _, item := range items {
@@ -75,9 +92,9 @@ func (h *Handler) DatabaseFieldSearch(c echo.Context, fieldName string) error {
 			}
 		}
 	case "author_names":
-		items, err := h.db.SearchAuthorsByNamePrefix(ctx, dbQuery)
+		items, err := dh.db.SearchAuthorsByNamePrefix(ctx, dbQuery)
 		if err != nil {
-			h.logger.Error("Error searching authors for '%s': %v", searchQuery, err)
+			dh.log.Error("Error searching authors", "query", searchQuery, "error", err)
 			dbErr = err
 		} else {
 			for _, item := range items {
@@ -88,9 +105,9 @@ func (h *Handler) DatabaseFieldSearch(c echo.Context, fieldName string) error {
 			}
 		}
 	case "category_names":
-		items, err := h.db.SearchCategoriesByNamePrefix(ctx, dbQuery)
+		items, err := dh.db.SearchCategoriesByNamePrefix(ctx, dbQuery)
 		if err != nil {
-			h.logger.Error("Error searching categories for '%s': %v", searchQuery, err)
+			dh.log.Error("Error searching categories", "query", searchQuery, "error", err)
 			dbErr = err
 		} else {
 			for _, item := range items {
@@ -103,26 +120,26 @@ func (h *Handler) DatabaseFieldSearch(c echo.Context, fieldName string) error {
 	}
 
 	if dbErr != nil && len(suggestions) > 0 {
-		h.logger.Warn("Returning %d suggestions for field '%s', query '%s' despite error: %v", len(suggestions), fieldName, searchQuery, dbErr)
+		dh.log.Warn("Issue returning suggestions", "field", fieldName, "count", len(suggestions), "query", searchQuery, "error", dbErr)
 	} else if dbErr != nil {
-		h.logger.Error("No suggestions for field '%s', query '%s': %v", fieldName, searchQuery, dbErr)
+		dh.log.Error("No suggestions for field", "fieldName", fieldName, "query", searchQuery, "error", dbErr)
 	}
 
 	return web.Render(c, http.StatusOK, components.SuggestionList(idPrefix, fieldName, suggestions))
 }
 
-func (h *Handler) DatabaseSearchRegions(c echo.Context) error {
-	return h.DatabaseFieldSearch(c, "region_names")
+func (dh *DatabaseHandler) DatabaseSearchRegions(c echo.Context) error {
+	return dh.DatabaseFieldSearch(c, "region_names")
 }
 
-func (h *Handler) DatabaseSearchKeywords(c echo.Context) error {
-	return h.DatabaseFieldSearch(c, "keyword_names")
+func (dh *DatabaseHandler) DatabaseSearchKeywords(c echo.Context) error {
+	return dh.DatabaseFieldSearch(c, "keyword_names")
 }
 
-func (h *Handler) DatabaseSearchAuthors(c echo.Context) error {
-	return h.DatabaseFieldSearch(c, "author_names")
+func (dh *DatabaseHandler) DatabaseSearchAuthors(c echo.Context) error {
+	return dh.DatabaseFieldSearch(c, "author_names")
 }
 
-func (h *Handler) DatabaseSearchCategories(c echo.Context) error {
-	return h.DatabaseFieldSearch(c, "category_names")
+func (dh *DatabaseHandler) DatabaseSearchCategories(c echo.Context) error {
+	return dh.DatabaseFieldSearch(c, "category_names")
 }

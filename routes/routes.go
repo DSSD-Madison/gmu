@@ -7,44 +7,51 @@ import (
 )
 
 // InitRoutes registers all the application routes
-func InitRoutes(e *echo.Echo, h Handler) {
-	// --- General Routes ---
-	e.GET("/", h.Home)
+func InitRoutes(
+	e *echo.Echo,
+	homeHandler *HomeHandler,
+	searchHandler *SearchHandler,
+	suggestionsHandler *SuggestionsHandler,
+	uploadHandler *UploadHandler,
+	authenticationHandler *AuthenticationHandler,
+	userManagementHandler *UserManagementHandler,
+	databaseHandler *DatabaseHandler,
+) {
+	e.GET("/", homeHandler.Home)
 
 	// --- Search Routes ---
-	e.GET("/search", h.Search)
-	e.POST("/search/suggestions", h.SearchSuggestions)
+	e.GET("/search", searchHandler.Search)
+	e.POST("/search/suggestions", suggestionsHandler.SearchSuggestions)
 
 	// --- PDF Upload and Metadata Routes ---
 	// Page to display the upload form
-	e.GET("/upload", h.PDFUploadPage, middleware.RequireAuth)
+	e.GET("/upload", uploadHandler.PDFUploadPage, middleware.RequireAuth)
 
 	// Action endpoint to handle the actual file upload POST request
-	e.POST("/upload", h.HandlePDFUpload, middleware.RequireAuth) // <<< CORRECTED HANDLER
+	e.POST("/upload", uploadHandler.HandlePDFUpload, middleware.RequireAuth) // <<< CORRECTED HANDLER
 
 	// Page to display the metadata edit form, identified by fileId
-	e.GET("/edit-metadata/:fileId", h.PDFMetadataEditPage, middleware.RequireAuth) // <<< ADDED ROUTE
+	e.GET("/edit-metadata/:fileId", uploadHandler.PDFMetadataEditPage, middleware.RequireAuth) // <<< ADDED ROUTE
 
 	// Action endpoint to handle the saving of edited metadata
-	e.POST("/save-metadata", h.HandleMetadataSave, middleware.RequireAuth) // <<< ADDED ROUTE
+	e.POST("/save-metadata", uploadHandler.HandleMetadataSave, middleware.RequireAuth) // <<< ADDED ROUTE
 
 	// Login Route
-	e.GET("/login", h.LoginPage)
-	e.POST("/login", h.Login)
+	e.GET("/login", authenticationHandler.LoginPage)
+	e.POST("/login", authenticationHandler.Login)
 
 	// Logout Route
-	e.GET("/logout", h.Logout) // for dev testing, remove when nav bar added
-	e.POST("/logout", h.Logout) 
+	e.GET("/logout", authenticationHandler.Logout) // for dev testing, remove when nav bar added
+	e.POST("/logout", authenticationHandler.Logout)
 
 	// Admin Routes
-	e.GET("/admin/users", h.ManageUsersPage, middleware.RequireAuth)
-	e.POST("/admin/users", h.CreateNewUser, middleware.RequireAuth)
-	e.POST("/admin/users/delete", h.DeleteUser, middleware.RequireAuth)
-
+	e.GET("/admin/users", userManagementHandler.ManageUsersPage, middleware.RequireAuth)
+	e.POST("/admin/users", userManagementHandler.CreateNewUser, middleware.RequireAuth)
+	e.POST("/admin/users/delete", userManagementHandler.DeleteUser, middleware.RequireAuth)
 
 	// --- Database Search Routes ---
-	e.GET("/authors", h.DatabaseSearchAuthors, middleware.RequireAuth)
-	e.GET("/keywords", h.DatabaseSearchKeywords, middleware.RequireAuth)
-	e.GET("/regions", h.DatabaseSearchRegions, middleware.RequireAuth)
-	e.GET("/categories", h.DatabaseSearchCategories, middleware.RequireAuth)
+	e.GET("/authors", databaseHandler.DatabaseSearchAuthors, middleware.RequireAuth)
+	e.GET("/keywords", databaseHandler.DatabaseSearchKeywords, middleware.RequireAuth)
+	e.GET("/regions", databaseHandler.DatabaseSearchRegions, middleware.RequireAuth)
+	e.GET("/categories", databaseHandler.DatabaseSearchCategories, middleware.RequireAuth)
 }
