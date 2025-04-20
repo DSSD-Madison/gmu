@@ -14,14 +14,14 @@ if [ ! -f "$UUID_FILE" ]; then
 fi
 
 # Construct SQL query to batch update all UUIDs
-SQL="UPDATE documents SET has_duplicate = true WHERE uuid IN ("
+SQL="UPDATE documents SET has_duplicate = true WHERE id IN ("
 
 while IFS= read -r uuid; do
   SQL+="'$uuid',"
 done < "$UUID_FILE"
 
 # Remove trailing comma and close parentheses
-SQL=${SQL%,})
+SQL=${SQL%,}
 SQL+=");"
 
 # Execute the update query against production database
