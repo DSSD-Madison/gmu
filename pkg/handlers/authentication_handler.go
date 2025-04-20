@@ -1,4 +1,4 @@
-package routes
+package handlers
 
 import (
 	"fmt"
@@ -29,6 +29,16 @@ func NewAuthenticationHandler(log logger.Logger, userManager services.UserManage
 		userManager:           userManager,
 		authenticationManager: authenticationManager,
 	}
+}
+
+func (ah *AuthenticationHandler) RegisterAuthenticationRoutes(e *echo.Echo) {
+	// Login Route
+	e.GET("/login", ah.LoginPage)
+	e.POST("/login", ah.Login)
+
+	// Logout Route
+	e.GET("/logout", ah.Logout) // for dev testing, remove when nav bar added
+	e.POST("/logout", ah.Logout)
 }
 
 func (ah *AuthenticationHandler) CreateSession(c echo.Context, user db.User) (*sessions.Session, error) {

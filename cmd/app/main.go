@@ -18,6 +18,7 @@ import (
 	"github.com/DSSD-Madison/gmu/pkg/config"
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
 	db_util "github.com/DSSD-Madison/gmu/pkg/db/util"
+	"github.com/DSSD-Madison/gmu/pkg/handlers"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/DSSD-Madison/gmu/pkg/services"
 	"github.com/DSSD-Madison/gmu/routes"
@@ -118,13 +119,13 @@ func main() {
 	// --- Handler Initialization ---
 	appLogger.Info("Initializing Handlers...")
 
-	homeHandler := routes.NewHomeHandler(appLogger)
-	searchHandler := routes.NewSearchHandler(appLogger, searchService)
-	authHandler := routes.NewAuthenticationHandler(appLogger, userService, authenticationService)
-	suggestionsHandler := routes.NewSuggestionsHandler(appLogger, suggestionService)
-	uploadHandler := routes.NewUploadHandler(appLogger, dbQuerier, bedrockService)
-	userManagementHandler := routes.NewUserManagementHandler(appLogger, dbQuerier)
-	databaseHandler := routes.NewDatabaseHandler(appLogger, dbQuerier)
+	homeHandler := handlers.NewHomeHandler(appLogger)
+	searchHandler := handlers.NewSearchHandler(appLogger, searchService)
+	authHandler := handlers.NewAuthenticationHandler(appLogger, userService, authenticationService)
+	suggestionsHandler := handlers.NewSuggestionsHandler(appLogger, suggestionService)
+	uploadHandler := handlers.NewUploadHandler(appLogger, dbQuerier, bedrockService)
+	userManagementHandler := handlers.NewUserManagementHandler(appLogger, dbQuerier)
+	databaseHandler := handlers.NewDatabaseHandler(appLogger, dbQuerier)
 
 	appLogger.Info("Handlers initialized")
 
@@ -175,7 +176,13 @@ func main() {
 		},
 	}))
 	// --- Routes Initialization ---
-	routes.InitRoutes(e, homeHandler, searchHandler, suggestionsHandler, uploadHandler, authHandler, userManagementHandler, databaseHandler)
+	routes.RegisterAuthenticationRoutes(e, authHandler)
+	routes.RegisterDatabaseRoutes(e, databaseHandler)
+	routes.RegisterHomeRoutes(e, homeHandler)
+	routes.RegisterSearchRoutes(e, searchHandler)
+	routes.RegisterSuggestionsRoutes(e, suggestionsHandler)
+	routes.RegisterUploadRoutes(e, uploadHandler)
+	routes.RegisterUserManagementRoutes(e, userManagementHandler)
 	appLogger.Info("Routes initialized")
 
 	e.Static("/images", "web/assets/images")

@@ -1,4 +1,4 @@
-package routes
+package handlers
 
 import (
 	"net/http"
@@ -25,6 +25,10 @@ func NewUserManagementHandler(log logger.Logger, db *db.Queries) *UserManagement
 		log: handlerLogger,
 		db:  db,
 	}
+}
+
+func RegisterUserManagementRoutes(e echo.Echo, umh *UserManagementHandler) {
+
 }
 
 func (uh *UserManagementHandler) ManageUsersPage(c echo.Context) error {
