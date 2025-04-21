@@ -58,7 +58,13 @@ def get_unindexed_documents(conn) -> List[Dict[str, Any]]:
                     FROM doc_keywords dk
                     JOIN keywords k ON dk.keyword_id = k.id
                     WHERE dk.doc_id = d.id
-                ) AS keywords
+                ) AS keywords,
+                (
+                    SELECT array_agg(c.name)
+                    FROM doc_categories dc
+                    JOIN categories c ON dc.category_id = c.id
+                    WHERE dc.doc_id = d.id
+                ) AS categories
   
             FROM documents d
             WHERE d.indexed_by_kendra = false
@@ -66,13 +72,7 @@ def get_unindexed_documents(conn) -> List[Dict[str, Any]]:
         """)
         return cur.fetchall()
 
-              ##  ,
-                # (
-                #     SELECT array_agg(c.name)
-                #     FROM doc_categories dc
-                #     JOIN categories c ON dc.category_id = c.id
-                #     WHERE dc.doc_id = d.id
-                # ) AS categories
+  
 
 def convert_s3_uri_to_url(s3_uri: str) -> str:
     if not s3_uri.startswith("s3://"):
@@ -100,28 +100,36 @@ def create_kendra_document(doc: Dict[str, Any]) -> Dict[str, Any]:
     else:
         raise ValueError(f"Unsupported file type: {file_ext}")
 
+    def norm_list(values):
+        return sorted({v.strip().title() for v in values if v and v.strip()})
+
     attributes = [
         {'Key': '_file_type', 'Value': {'StringValue': file_ext[1:].upper()}},
         {'Key': '_source_uri', 'Value': {'StringValue': convert_s3_uri_to_url(s3_uri)}}
     ]
 
     if doc.get('regions'):
-        regions = [r for r in doc['regions'] if r and r.strip()]
+        regions = norm_list(doc['regions'])
         if regions:
             attributes.append({'Key': 'Region', 'Value': {'StringListValue': regions}})
-    
+
     if doc.get('keywords'):
-        keywords = [k for k in doc['keywords'] if k and k.strip()]
+        keywords = norm_list(doc['keywords'])
         if keywords:
-            attributes.append({'Key': 'Subject_Keywords', 'Value': {'StringListValue': keywords}})
-    
+            attributes.append({'Key': 'Keyword', 'Value': {'StringListValue': keywords}})
+
     if doc.get('authors'):
-        authors = [a for a in doc['authors'] if a and a.strip()]
+        authors = norm_list(doc['authors'])
         if authors:
-            attributes.append({'Key': '_authors', 'Value': {'StringListValue': authors}})
+            attributes.append({'Key': 'Author', 'Value': {'StringListValue': authors}})
+
+    if doc.get('categories'):
+        categories = norm_list(doc['categories'])
+        if categories:
+            attributes.append({'Key': 'Category', 'Value': {'StringListValue': categories}})
 
     if doc.get('source') and doc['source'].strip():
-        attributes.append({'Key': 'source', 'Value': {'StringListValue': [truncate(doc['source'])]}})
+        attributes.append({'Key': 'Source', 'Value': {'StringValue': truncate(doc['source'].strip())}})
 
     return {
         'Id': s3_uri,
@@ -131,8 +139,9 @@ def create_kendra_document(doc: Dict[str, Any]) -> Dict[str, Any]:
         },
         'ContentType': content_type,
         'Attributes': attributes,
-        'Title': truncate(doc['title'])
+        'Title': truncate(doc['title'].strip())
     }
+
 
 
 def update_document_indexed_status(conn, doc_id: str):
