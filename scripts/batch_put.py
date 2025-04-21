@@ -96,7 +96,7 @@ def create_kendra_document(doc: Dict[str, Any]) -> Dict[str, Any]:
     if file_ext == '.pdf':
         content_type = 'PDF'
     elif file_ext == '.docx':
-        content_type = 'DOCX'
+        content_type = 'MS_WORD'
     else:
         raise ValueError(f"Unsupported file type: {file_ext}")
 
