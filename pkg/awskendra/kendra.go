@@ -68,13 +68,6 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 
 	kendraResults.Count = int(*out.TotalNumberOfResults)
 
-	// filterNamesMap := map[string]string{
-	// 	"_authors":         "Authors",
-	// 	"_file_type":       "File Type",
-	// 	"source":           "Source",
-	// 	"Subject_Keywords": "Subject Keywords",
-	// }
-
 	filterNamesMap := map[string]string{
 		"Author":   "Authors",
 		"Keyword":  "Keywords",
