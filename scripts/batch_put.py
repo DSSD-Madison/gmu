@@ -92,8 +92,16 @@ def create_kendra_document(doc: Dict[str, Any]) -> Dict[str, Any]:
 
     bucket, key = s3_uri.replace('s3://', '').split('/', 1)
 
+    file_ext = os.path.splitext(key)[1].lower()
+    if file_ext == '.pdf':
+        content_type = 'PDF'
+    elif file_ext == '.docx':
+        content_type = 'PLAIN_TEXT'
+    else:
+        raise ValueError(f"Unsupported file type: {file_ext}")
+
     attributes = [
-        {'Key': '_file_type', 'Value': {'StringValue': 'PDF'}},
+        {'Key': '_file_type', 'Value': {'StringValue': file_ext[1:].upper()}},
         {'Key': '_source_uri', 'Value': {'StringValue': convert_s3_uri_to_url(s3_uri)}}
     ]
 
@@ -111,12 +119,7 @@ def create_kendra_document(doc: Dict[str, Any]) -> Dict[str, Any]:
         authors = [a for a in doc['authors'] if a and a.strip()]
         if authors:
             attributes.append({'Key': '_authors', 'Value': {'StringListValue': authors}})
-            
-    # if doc.get('categories'):
-    #     categories = [a for a in doc['categories'] if a and a.strip()]
-    #     if categories:
-    #         attributes.append({'Key': 'Categories', 'Value': {'StringListValue': categories}})
-    
+
     if doc.get('source') and doc['source'].strip():
         attributes.append({'Key': 'source', 'Value': {'StringListValue': [truncate(doc['source'])]}})
 
@@ -126,10 +129,11 @@ def create_kendra_document(doc: Dict[str, Any]) -> Dict[str, Any]:
             'Bucket': bucket,
             'Key': key
         },
-        'ContentType': 'PDF',
+        'ContentType': content_type,
         'Attributes': attributes,
         'Title': truncate(doc['title'])
     }
+
 
 def update_document_indexed_status(conn, doc_id: str):
     with conn.cursor() as cur:
