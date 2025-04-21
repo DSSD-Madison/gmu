@@ -90,7 +90,7 @@ func main() {
 	dbQuerier := db.New(sqlDB)
 
 	// --- AWS Kendra Initialization ---
-	kendraClient, err := awskendra.New(*awsConfig, appLogger)
+	kendraClient, err := awskendra.NewKendraClient(*awsConfig, appLogger)
 	if err != nil {
 		appLogger.Error("Could not initialize kendra client", "error", err)
 		os.Exit(1)

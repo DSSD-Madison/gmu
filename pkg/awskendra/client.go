@@ -4,9 +4,9 @@ import (
 	"context"
 )
 
-// Client defines the interface for interacting with AWS Kendra.
+// KendraClient defines the interface for interacting with AWS Kendra.
 // It abstracts away the underlying SDK and queuing mechanisms.
-type Client interface {
+type KendraClient interface {
 	// MakeQuery performs a Kendra query, handling potential queuing and result processing.
 	// Filters map key is the Kendra attribute key (e.g., "_authors"),
 	// value is a slice of strings to filter by for that attribute.
