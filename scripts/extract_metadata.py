@@ -288,85 +288,86 @@ def insert_doc_metadata(doc_id, metadata):
 
 
 # === MAIN ===
-print("⚙️ Starting metadata enrichment...")
-output_log_path = Path("scripts/successful_metadata_updates.txt")
-output_log_path.touch(exist_ok=True)
-with output_log_path.open() as f:
-    processed_uuids = {line.strip() for line in f if line.strip()}
+if __name__ == "__main__":
+    print("⚙️ Starting metadata enrichment...")
+    output_log_path = Path("scripts/successful_metadata_updates.txt")
+    output_log_path.touch(exist_ok=True)
+    with output_log_path.open() as f:
+        processed_uuids = {line.strip() for line in f if line.strip()}
 
 
-buckets = s3.list_buckets()["Buckets"]
-total_cost = 0.0
-for bucket in buckets:
-    bucket_name = bucket["Name"]
-    if bucket_name not in include_buckets:
-        print(f"⏭️ Skipping bucket: {bucket_name}")
-        continue
-    print(f"🪣 Checking bucket: {bucket_name}")
-    try:
-        paginator = s3.get_paginator('list_objects_v2')
-        page_iterator = paginator.paginate(Bucket=bucket_name)
-
-        file_keys = []
-        for page in page_iterator:
-            if "Contents" in page:
-                for obj in page["Contents"]:
-                    key = obj["Key"]
-                    if key.lower().endswith(".pdf") or key.lower().endswith(".docx"):
-                        file_keys.append(key)
-
-
-        if not file_keys:
-            print("📭 No supported files found in this bucket.")
+    buckets = s3.list_buckets()["Buckets"]
+    total_cost = 0.0
+    for bucket in buckets:
+        bucket_name = bucket["Name"]
+        if bucket_name not in include_buckets:
+            print(f"⏭️ Skipping bucket: {bucket_name}")
             continue
+        print(f"🪣 Checking bucket: {bucket_name}")
+        try:
+            paginator = s3.get_paginator('list_objects_v2')
+            page_iterator = paginator.paginate(Bucket=bucket_name)
 
-        for key in file_keys:
-            try:
-                cursor.execute("SELECT id FROM documents WHERE s3_file = %s", (f"s3://{bucket_name}/{key}",))
-                doc_row = cursor.fetchone()
-                if not doc_row:
-                    print(f"❌ No matching document in DB for this file: {key}")
-                    continue
-                doc_id = doc_row[0]
-                if str(doc_id) in processed_uuids:
-                    # print(f"⏭️ Skipping already-processed document: {doc_id}")
-                    continue
-                print(f"📄 Processing {key}...")
-                print(f"🧾 Matched DB document UUID: {doc_id}")
+            file_keys = []
+            for page in page_iterator:
+                if "Contents" in page:
+                    for obj in page["Contents"]:
+                        key = obj["Key"]
+                        if key.lower().endswith(".pdf") or key.lower().endswith(".docx"):
+                            file_keys.append(key)
 
 
-                obj = s3.get_object(Bucket=bucket_name, Key=key)
-                file_bytes = obj["Body"].read()
+            if not file_keys:
+                print("📭 No supported files found in this bucket.")
+                continue
 
-                if key.lower().endswith(".pdf"):
-                    text = extract_text_first_n_pages_cleaned(file_bytes, max_pages=10, key=key)
-                else:
-                    text = extract_text_from_docx(file_bytes, key=key)
-                if text is None:
-                    continue
+            for key in file_keys:
+                try:
+                    cursor.execute("SELECT id FROM documents WHERE s3_file = %s", (f"s3://{bucket_name}/{key}",))
+                    doc_row = cursor.fetchone()
+                    if not doc_row:
+                        print(f"❌ No matching document in DB for this file: {key}")
+                        continue
+                    doc_id = doc_row[0]
+                    if str(doc_id) in processed_uuids:
+                        # print(f"⏭️ Skipping already-processed document: {doc_id}")
+                        continue
+                    print(f"📄 Processing {key}...")
+                    print(f"🧾 Matched DB document UUID: {doc_id}")
 
-                prompt = build_prompt(text)
-                response, input_tokens, output_tokens = call_claude(prompt)
-                doc_cost = estimate_cost(input_tokens, output_tokens)
-                total_cost += doc_cost
-                metadata = extract_first_json(response, key)
 
-                if metadata:
-                    insert_doc_metadata(doc_id, metadata)
-                    print("✅ Metadata updated.")
-                    with output_log_path.open("a") as f:
-                        f.write(f"{doc_id}\n")
-                else:
-                    print("❌ Failed to parse Claude response.")
-                    # debug_path = Path("scripts/debug_claude_responses.txt")
-                    # with debug_path.open("a") as debug_f:
-                    #     debug_f.write(f"\n--- FAILED {doc_id} ({key}) ---\n{response}\n")
-            except Exception as doc_err:
-                print(f"❗ Error processing document {key}: {doc_err}")
+                    obj = s3.get_object(Bucket=bucket_name, Key=key)
+                    file_bytes = obj["Body"].read()
 
-    except Exception as e:
-        print(f"⚠️ Error accessing bucket {bucket_name}: {e}")
-print(f"\n💰 Total Claude usage cost: ${total_cost:.6f}")
-conn.close()
+                    if key.lower().endswith(".pdf"):
+                        text = extract_text_first_n_pages_cleaned(file_bytes, max_pages=10, key=key)
+                    else:
+                        text = extract_text_from_docx(file_bytes, key=key)
+                    if text is None:
+                        continue
 
-print("\n✅ Done.")
+                    prompt = build_prompt(text)
+                    response, input_tokens, output_tokens = call_claude(prompt)
+                    doc_cost = estimate_cost(input_tokens, output_tokens)
+                    total_cost += doc_cost
+                    metadata = extract_first_json(response, key)
+
+                    if metadata:
+                        insert_doc_metadata(doc_id, metadata)
+                        print("✅ Metadata updated.")
+                        with output_log_path.open("a") as f:
+                            f.write(f"{doc_id}\n")
+                    else:
+                        print("❌ Failed to parse Claude response.")
+                        # debug_path = Path("scripts/debug_claude_responses.txt")
+                        # with debug_path.open("a") as debug_f:
+                        #     debug_f.write(f"\n--- FAILED {doc_id} ({key}) ---\n{response}\n")
+                except Exception as doc_err:
+                    print(f"❗ Error processing document {key}: {doc_err}")
+
+        except Exception as e:
+            print(f"⚠️ Error accessing bucket {bucket_name}: {e}")
+    print(f"\n💰 Total Claude usage cost: ${total_cost:.6f}")
+    conn.close()
+
+    print("\n✅ Done.")
