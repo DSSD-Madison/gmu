@@ -1,5 +1,11 @@
 package awskendra
 
+type Query struct {
+	query   string
+	pageNum int
+	filters map[string][]string
+}
+
 type Excerpt struct {
 	Text    string
 	PageNum int

@@ -3,8 +3,11 @@ package awskendra
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/DSSD-Madison/gmu/pkg/cache"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
+	"github.com/DSSD-Madison/gmu/pkg/queue"
 	"github.com/aws/aws-sdk-go-v2/service/kendra"
 )
 
@@ -19,12 +22,14 @@ type QueryResult struct {
 }
 
 type kendraQueryExecutor struct {
-	queue Queue[kendra.QueryInput, QueryResult]
+	queue queue.Queue[kendra.QueryInput, QueryResult]
+	cache cache.Cache[KendraResults]
 	log   logger.Logger
 }
 
 func NewKendraQueryQueue(
 	awsClient *kendra.Client,
+	c cache.Cache[KendraResults],
 	log logger.Logger,
 	workerCount int,
 	bufferSize int,
@@ -33,6 +38,12 @@ func NewKendraQueryQueue(
 
 	processorFunc := func(ctx context.Context, query kendra.QueryInput) QueryResult {
 		executorLogger.DebugContext(ctx, "Processing Kendra query job", "query", *query.QueryText)
+		pageNum := int(*query.PageNumber)
+
+		cachedResults, exists := c.Get(*query.QueryText)
+		if exists {
+			return QueryResult{Results: cachedResults, Error: nil}
+		}
 
 		output, err := awsClient.Query(ctx, &query)
 		if err != nil {
@@ -41,11 +52,29 @@ func NewKendraQueryQueue(
 		}
 
 		results := queryOutputToResults(*output)
+
+		calculatedPages := (results.Count + 9) / 10
+		totalPages := min(calculatedPages, 10)
+
+		results.PageStatus = PageStatus{
+			CurrentPage: pageNum,
+			PrevPage:    pageNum - 1,
+			NextPage:    pageNum + 1,
+			HasPrev:     pageNum > 1,
+			HasNext:     pageNum < totalPages,
+			TotalPages:  totalPages,
+		}
+
+		results.Query = *query.QueryText
+
 		executorLogger.DebugContext(ctx, "Finished processing Kendra query job", "result_count", results.Count)
+		if !exists {
+			c.Set(*query.QueryText, results, time.Hour)
+		}
 		return QueryResult{Results: results, Error: nil}
 	}
 
-	genericQueue := NewGenericQueue(
+	genericQueue := queue.NewGenericQueue(
 		workerCount,
 		bufferSize,
 		executorLogger,
@@ -63,11 +92,7 @@ func NewKendraQueryQueue(
 func (q *kendraQueryExecutor) EnqueueQuery(ctx context.Context, query kendra.QueryInput) QueryResult {
 	resultChan := make(chan QueryResult, 1)
 
-	job := Job[kendra.QueryInput, QueryResult]{
-		Payload:    query,
-		ResultChan: resultChan,
-		ctx:        ctx,
-	}
+	job := queue.NewJob(ctx, query, resultChan)
 
 	q.log.DebugContext(ctx, "Attempting to enqueue Kendra query job", "query", *query.QueryText)
 

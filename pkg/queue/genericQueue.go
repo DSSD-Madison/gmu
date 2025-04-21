@@ -1,4 +1,4 @@
-package awskendra
+package queue
 
 import (
 	"context"

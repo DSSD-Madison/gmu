@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/DSSD-Madison/gmu/pkg/cache"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/aws/aws-sdk-go-v2/service/kendra"
 	"github.com/aws/aws-sdk-go-v2/service/kendra/types"
@@ -13,11 +14,12 @@ import (
 type kendraClientImpl struct {
 	awsClient  *kendra.Client
 	queryQueue QueryExecutor
+	cache      cache.Cache[KendraResults]
 	config     Config
 	log        logger.Logger
 }
 
-func New(config Config, log logger.Logger) (Client, error) {
+func NewKendraClient(config Config, log logger.Logger) (KendraClient, error) {
 	pkgLogger := log.With("package", "awskendra")
 
 	opts := kendra.Options{
@@ -33,14 +35,18 @@ func New(config Config, log logger.Logger) (Client, error) {
 	}
 	pkgLogger.Info("AWS Kendra SDK Client initialized")
 
+	queryCache := cache.NewGeneric[KendraResults](pkgLogger)
+	pkgLogger.Info("Kendra query cache initialized")
+
 	workers := 2
 	buffer := 5
-	queryQueue := NewKendraQueryQueue(awsClient, pkgLogger, workers, buffer)
+	queryQueue := NewKendraQueryQueue(awsClient, queryCache, pkgLogger, workers, buffer)
 	pkgLogger.Info("Kendra query queue initialized", "workers", workers, "buffer", buffer)
 
 	return &kendraClientImpl{
 		awsClient:  awsClient,
 		queryQueue: queryQueue,
+		cache:      queryCache,
 		config:     config,
 		log:        pkgLogger,
 	}, nil
@@ -51,6 +57,9 @@ func (c *kendraClientImpl) GetSuggestions(ctx context.Context, query string) (Ke
 	kendraQuery := kendra.GetQuerySuggestionsInput{
 		IndexId:   &c.config.IndexID,
 		QueryText: &query,
+	}
+
+	if true {
 	}
 
 	out, err := c.awsClient.GetQuerySuggestions(ctx, &kendraQuery)
@@ -183,9 +192,14 @@ func (c *kendraClientImpl) MakeQuery(ctx context.Context, query string, filters 
 		kendraQueryInput.AttributeFilter = &kendraFilters
 	}
 
+	cacheResult, exist := c.cache.Get(query)
+	if exist {
+		c.log.Info("Query found in cache", "query", query, "page", pageNum)
+		return cacheResult, nil
+	}
+
 	c.log.DebugContext(ctx, "Enqueuing Kendra query")
 	queryResult := c.queryQueue.EnqueueQuery(ctx, kendraQueryInput)
-
 	if queryResult.Error != nil {
 		c.log.ErrorContext(ctx, "Kendra query failed during execution", "error", queryResult.Error)
 		return KendraResults{}, queryResult.Error
@@ -194,19 +208,6 @@ func (c *kendraClientImpl) MakeQuery(ctx context.Context, query string, filters 
 	c.log.DebugContext(ctx, "Kendra query executed successfully", "result_count", queryResult.Results.Count)
 
 	results := queryResult.Results
-	calculatedPages := (results.Count + 9) / 10
-	totalPages := min(calculatedPages, 10)
-
-	results.PageStatus = PageStatus{
-		CurrentPage: pageNum,
-		PrevPage:    pageNum - 1,
-		NextPage:    pageNum + 1,
-		HasPrev:     pageNum > 1,
-		HasNext:     pageNum < totalPages,
-		TotalPages:  totalPages,
-	}
-
-	results.Query = query
 	// results.UrlData.Query = results.Query
 	return results, nil
 }
