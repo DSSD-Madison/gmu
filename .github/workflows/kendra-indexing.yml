@@ -3,9 +3,6 @@ name: Kendra Indexing
 on:
   schedule:
     - cron: '0 0 * * *'  # Run daily at midnight UTC
-  push:
-    branches:
-      - batch-put
 
 jobs:
   index-and-generate-previews:
