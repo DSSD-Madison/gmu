@@ -24,6 +24,7 @@ type KendraResult struct {
 	Abstract    string
 	Source      string
 	UUID        string
+	Filters     []FilterCategory
 }
 
 type PageStatus struct {

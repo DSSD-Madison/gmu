@@ -73,6 +73,60 @@ func (c *kendraClientImpl) GetSuggestions(ctx context.Context, query string) (Ke
 	return suggestions, nil
 }
 
+var filterCategoriesMap = map[string]string{
+	"_file_type": "File Type",
+	"Category":   "Category",
+	"Author":     "Author",
+	"Source":     "Source",
+	"Region":     "Region",
+	"Keyword":    "Keyword",
+}
+
+func documentAttributesToFilterCategories(attrs []types.DocumentAttribute) []FilterCategory {
+	filters := make([]FilterCategory, 0)
+
+	for _, attr := range attrs {
+		if attr.Key != nil {
+			if key, ok := filterCategoriesMap[*attr.Key]; ok {
+
+				if attr.Value != nil {
+					filter := FilterCategory{
+						Category: key,
+						Options:  []FilterOption{},
+						Name:     key,
+					}
+					if attr.Value.StringValue != nil { // single item only
+						filter.Options = append(filter.Options, FilterOption{
+							Label:    *attr.Value.StringValue,
+							Selected: false,
+							Count:    0,
+						})
+					} else { // list of options
+						for _, strListVal := range attr.Value.StringListValue {
+							filter.Options = append(filter.Options, FilterOption{
+								Label:    strListVal,
+								Selected: false,
+								Count:    0,
+							})
+						}
+					}
+					filters = append(filters, filter)
+				}
+			}
+		}
+	}
+
+	// for _, filter := range filters {
+	// 	fmt.Printf("name: %s\n", filter.Name)
+	// 	for _, option := range filter.Options {
+	// 		fmt.Printf("	->%s\n", option.Label)
+	// 	}
+	// 	fmt.Println()
+	// }
+
+	return filters
+}
+
 func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	kendraResults := KendraResults{
 		Results: make(map[string]KendraResult),
@@ -80,6 +134,22 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	}
 
 	for _, item := range out.ResultItems {
+		// for _, attr := range item.DocumentAttributes {
+		// 	fmt.Printf("attributes ")
+		// 	if attr.Key != nil {
+		// 		fmt.Printf("key %s ", *attr.Key)
+		// 	}
+		// 	if attr.Value != nil {
+		// 		fmt.Printf("strs: ")
+		// 		for _, str := range attr.Value.StringListValue {
+		// 			fmt.Printf("%s ", str)
+		// 		}
+		// 	}
+		// 	if attr.Value.StringValue != nil {
+		// 		fmt.Printf("stringvalue: %s", *attr.Value.StringValue)
+		// 	}
+		// 	fmt.Println()
+		// }
 		title := TrimExtension(*item.DocumentTitle.Text)
 
 		var res KendraResult
@@ -89,6 +159,7 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 				Title:    title,
 				Excerpts: make([]Excerpt, 0),
 				Link:     *item.DocumentURI,
+				Filters:  documentAttributesToFilterCategories(item.DocumentAttributes),
 			}
 		} else {
 			res = result
@@ -189,12 +260,11 @@ func (c *kendraClientImpl) MakeQuery(ctx context.Context, query string, filters 
 	if len(kendraFilters.AndAllFilters) > 0 {
 		kendraQueryInput.AttributeFilter = &kendraFilters
 	}
-
-	cacheResult, exist := c.cache.Get(query)
-	if exist {
-		c.log.Info("Query found in cache", "query", query, "page", pageNum)
-		return cacheResult, nil
-	}
+	// cacheResult, exist := c.cache.Get(query)
+	// if exist {
+	// 	c.log.Info("Query found in cache", "query", query, "page", pageNum)
+	// return cacheResult, nil
+	// }
 
 	c.log.DebugContext(ctx, "Enqueuing Kendra query")
 	queryResult := c.queryQueue.EnqueueQuery(ctx, kendraQueryInput)
@@ -206,8 +276,37 @@ func (c *kendraClientImpl) MakeQuery(ctx context.Context, query string, filters 
 	c.log.DebugContext(ctx, "Kendra query executed successfully", "result_count", queryResult.Results.Count)
 
 	results := queryResult.Results
+	applyFilters(results, filters)
 	// results.UrlData.Query = results.Query
 	return results, nil
+}
+
+func applyFilters(results KendraResults, filtersMap map[string][]string) KendraResults {
+	// iterate over each item in the filters map
+	// iterate over each item returned from the results
+	// find which
+	removed := 0
+	for key, result := range results.Results {
+		r := result
+		for _, resFilterCat := range result.Filters {
+			fmt.Println(resFilterCat.Name)
+			if filters, ok := filtersMap[resFilterCat.Name]; ok { // if user selected filters category contains the result's filterCategory
+				fmt.Println(resFilterCat.Name)
+				for _, selectedFilter := range filters {
+					fmt.Println("->", selectedFilter)
+				}
+			} else {
+				delete(results.Results, key)
+				removed++
+				break
+			}
+		}
+		results.Results[key] = r
+	}
+
+	fmt.Printf("len of results after applying Filters: %d, removed %d\n", len(results.Results), removed)
+
+	return results
 }
 
 func querySuggestionsOutputToSuggestions(out kendra.GetQuerySuggestionsOutput) KendraSuggestions {

@@ -3,7 +3,6 @@ package awskendra
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/DSSD-Madison/gmu/pkg/cache"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
@@ -40,10 +39,10 @@ func NewKendraQueryQueue(
 		executorLogger.DebugContext(ctx, "Processing Kendra query job", "query", *query.QueryText)
 		pageNum := int(*query.PageNumber)
 
-		cachedResults, exists := c.Get(*query.QueryText)
-		if exists {
-			return QueryResult{Results: cachedResults, Error: nil}
-		}
+		// cachedResults, exists := c.Get(*query.QueryText)
+		// if exists {
+		// 	return QueryResult{Results: cachedResults, Error: nil}
+		// }
 
 		output, err := awsClient.Query(ctx, &query)
 		if err != nil {
@@ -68,9 +67,9 @@ func NewKendraQueryQueue(
 		results.Query = *query.QueryText
 
 		executorLogger.DebugContext(ctx, "Finished processing Kendra query job", "result_count", results.Count)
-		if !exists {
-			c.Set(*query.QueryText, results, time.Hour)
-		}
+		// if !exists {
+		// 	c.Set(*query.QueryText, results, time.Hour)
+		// }
 		return QueryResult{Results: results, Error: nil}
 	}
 
