@@ -69,14 +69,13 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	kendraResults.Count = int(*out.TotalNumberOfResults)
 
 	filterNamesMap := map[string]string{
-		"Author":   "Authors",
-		"Keyword":  "Keywords",
-		"Region":   "Regions",
-		"Category": "Categories",
-		"Source":   "Source",
-		"_file_type": "File Type", // still valid
+		"Author":     "Authors",
+		"Keyword":    "Keywords",
+		"Region":     "Regions",
+		"Category":   "Categories",
+		"Source":     "Source",
+		"_file_type": "File Type",
 	}
-	
 
 	for i, facetRes := range out.FacetResults {
 		Name, ok := filterNamesMap[*facetRes.DocumentAttributeKey]
@@ -107,7 +106,7 @@ func (c KendraClient) MakeQuery(query string, filters map[string][]string, pageN
 	andAllIndex := 0
 	for k, filterCategory := range filters {
 		// _file_type is a string so we can't use ContainsAny
-		if k == "_file_type" {
+		if k == "_file_type" || k == "Source" {
 			kendraFilters.AndAllFilters[andAllIndex] = types.AttributeFilter{
 				OrAllFilters: make([]types.AttributeFilter, len(filterCategory)),
 			}
@@ -201,4 +200,3 @@ func TrimExtension(s string) string {
 	}
 	return s
 }
-
