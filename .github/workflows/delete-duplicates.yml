@@ -5,7 +5,7 @@ on:
       - cron: '0 0 * * *' 
   push:
     branches:
-      - delete-duplicates
+      - actions-work
 
 jobs:
   delete-duplicates:
