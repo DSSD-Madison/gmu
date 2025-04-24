@@ -27,6 +27,7 @@ func LoadConfig() (*Config, error) {
 		IndexID:          os.Getenv("INDEX_ID"),
 		ModelID:          os.Getenv("MODEL_ID"),
 		KeywordsFilePath: os.Getenv("KEYWORDS_FILE_PATH"),
+		RetryMaxAttempts: 10,
 	}, nil
 }
 
