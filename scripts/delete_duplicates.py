@@ -63,9 +63,6 @@ def approx_equal(a, b, tolerance=3000):
         return False
     return abs(a - b) <= tolerance
 
-def encode_kendra_doc_id(s3_uri):
-    bucket, key = s3_uri.replace('s3://', '').split('/', 1)
-    return f"s3://{bucket}/{quote(key)}"
 
 def process_duplicates():
     s3 = boto3.client(
@@ -124,7 +121,7 @@ def delete_duplicates_from_kendra():
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("SELECT s3_file FROM documents WHERE has_duplicate = TRUE AND s3_file IS NOT NULL")
             raw_doc_ids = [row["s3_file"] for row in cur.fetchall()]
-            doc_ids = [encode_kendra_doc_id(uri) for uri in raw_doc_ids]
+            doc_ids = [uri for uri in raw_doc_ids]
 
         if not doc_ids:
             print("No duplicates found for Kendra deletion.")
