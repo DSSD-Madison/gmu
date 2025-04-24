@@ -152,9 +152,8 @@ def delete_duplicates_from_kendra():
 def delete_from_s3(s3, s3_uri):
     bucket, key = parse_s3_uri(s3_uri)
     try:
-        # s3.delete_object(Bucket=bucket, Key=key)
-        # logger.info(f"Deleted from S3: {s3_uri}")
-        logger.info(f"Would have deleted from S3: {bucket, key}")
+        s3.delete_object(Bucket=bucket, Key=key)
+        logger.info(f"Deleted from S3: {s3_uri}")
     except Exception as e:
         logger.warning(f"Failed to delete {s3_uri} from S3: {e}")
 
