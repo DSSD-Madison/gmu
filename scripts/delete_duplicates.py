@@ -64,9 +64,7 @@ def approx_equal(a, b, tolerance=3000):
     return abs(a - b) <= tolerance
 
 def encode_kendra_doc_id(s3_uri):
-    if not s3_uri.startswith("s3://"):
-        return s3_uri
-    bucket, key = s3_uri[len("s3://"):].split("/", 1)
+    bucket, key = s3_uri.replace('s3://', '').split('/', 1)
     return f"s3://{bucket}/{quote(key)}"
 
 def process_duplicates():
@@ -152,6 +150,30 @@ def delete_duplicates_from_kendra():
             )
 
         print("Finished deleting marked duplicates from Kendra.")
+        print("\nVerifying deletion status with Kendra...")
+        for i in range(0, len(doc_ids), 10):
+            batch = doc_ids[i:i + 10]
+            document_info_list = [{"DocumentId": doc_id} for doc_id in batch]
+            response = kendra_client.batch_get_document_status(
+                IndexId=index_id,
+                DocumentInfoList=document_info_list
+            )
+            for doc in response.get("DocumentStatusList", []):
+                print(f"Document ID: {doc.get('DocumentId')}")
+                print(f"Status: {doc.get('Status', 'UNKNOWN / NOT FOUND')}")
+                if 'FailureCode' in doc:
+                    print(f"Failure Code: {doc['FailureCode']}")
+                if 'FailureReason' in doc:
+                    print(f"Failure Reason: {doc['FailureReason']}")
+                print("-" * 60)
+
+            if response.get("Errors"):
+                print("Errors returned from Kendra:")
+                for error in response["Errors"]:
+                    print(f"Document ID: {error.get('DocumentId')}")
+                    print(f"Error Code: {error.get('ErrorCode')}")
+                    print(f"Error Message: {error.get('ErrorMessage')}")
+                    print("-" * 60)
 
     finally:
         conn.close()
