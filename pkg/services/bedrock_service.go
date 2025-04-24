@@ -21,7 +21,7 @@ func NewBedrockService(log logger.Logger, client awskendra.BedrockClient) *Bedro
 }
 
 func (b *BedrockService) ExtractPDFMetadata(ctx context.Context, pdfBytes []byte) (*awskendra.ExtractedMetadata, error) {
-	metadata, err := b.bedrockClient.ProcessPdfAndExtractMetadata(ctx, pdfBytes)
+	metadata, err := b.bedrockClient.ProcessDocAndExtractMetadata(ctx, pdfBytes)
 	if err != nil {
 		b.log.ErrorContext(ctx, "failed to extract metadata from pdf", "error", err)
 		return nil, err

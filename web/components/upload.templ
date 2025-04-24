@@ -18,7 +18,7 @@ templ PDFUpload(csrf string, isAuthorized bool, isMaster bool) {
 					<span id="upload-status-text" class="text-gray-600 dark:text-gray-300">Click anywhere or drag & drop a PDF</span>
 				</div>
 
-				<input type="file" id="pdf-upload-input" name="pdf" accept="application/pdf" class="hidden" required/>
+				<input type="file" id="pdf-upload-input" name="pdf" accept=".pdf, .docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="hidden" required/>
 
 				<button type="submit" class="w-full px-4 py-2 font-bold text-white bg-blue-500 rounded cursor-pointer hover:bg-blue-700 focus:outline-none focus:shadow-outline">
 					Upload Selected File

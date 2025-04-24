@@ -81,20 +81,27 @@ func (uh *UploadHandler) HandlePDFUpload(c echo.Context) error {
 	}
 
 	metadata, err := uh.bedrockManager.ExtractPDFMetadata(ctx, fileBytes)
+
 	if err != nil {
+		uh.log.ErrorContext(ctx, "Error extracting metadata: %v", err)
+	}
+
+	if metadata == nil {
 		return web.Render(c, http.StatusOK, components.ErrorMessage(err.Error()))
 	}
 
 	format := "2006-01-02"
 
-	parse, err := time.Parse(format, metadata.PublishDate)
-	if err != nil {
-		parse = time.Now()
-		fmt.Println(err)
-	}
-	sqlTime := sql.NullTime{
-		Time:  parse,
-		Valid: true,
+	var parse time.Time
+	sqlTime := sql.NullTime{}
+	if metadata.PublishDate != "" {
+		parse, err = time.Parse(format, metadata.PublishDate)
+		if err != nil {
+			uh.log.ErrorContext(ctx, err.Error())
+		} else {
+			sqlTime.Time = parse
+			sqlTime.Valid = true
+		}
 	}
 
 	prettyJSON, err := json.MarshalIndent(metadata, "", "  ")

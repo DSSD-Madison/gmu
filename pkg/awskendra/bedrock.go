@@ -1,27 +1,34 @@
 package awskendra
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
-	"github.com/ledongthuc/pdf"
+	"io/ioutil"
 	"math"
 	"os"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
+	"github.com/ledongthuc/pdf"
+	"github.com/nguyenthenguyen/docx"
 )
 
 var (
-	digitLineRegex     = regexp.MustCompile(`^\s*\d+\s*$`)
-	jsonRegex          = regexp.MustCompile(`(?s)\{.*}`)
-	maxPdfPagesToParse = 10
-	maxTokens          = 512 // Max output tokens for Claude
-	temperature        = 0.3
-	topP               = 1.0
+	digitLineRegex      = regexp.MustCompile(`^\s*\d+\s*$`)
+	jsonRegex           = regexp.MustCompile(`(?s)\{.*}`)
+	yearPattern         = regexp.MustCompile(`^\d{4}$`)
+	yearMonthPattern    = regexp.MustCompile(`^\d{4}-\d{2}$`)
+	yearMonthDayPattern = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
+	maxPagesToParse     = 10
+	maxTokens           = 512 // Max output tokens for Claude
+	temperature         = 0.3
+	topP                = 1.0
 )
 
 // BedrockClient provides methods to interact with the AWS Bedrock Runtime service.
@@ -200,6 +207,37 @@ func extractTextFromPdf(pdfBytes []byte, maxPages int) (string, error) {
 	return textBuilder.String(), nil
 }
 
+func ExtractTextFromDocxBytes(data []byte) (string, error) {
+	tmp, err := ioutil.TempFile("", "docx-*.docx")
+	if err != nil {
+		return "", fmt.Errorf("creating temp file: %w", err)
+	}
+	defer os.Remove(tmp.Name())
+
+	if _, err := tmp.Write(data); err != nil {
+		tmp.Close()
+		return "", fmt.Errorf("writing temp docx: %w", err)
+	}
+	tmp.Close()
+
+	doc, err := docx.ReadDocxFile(tmp.Name())
+	if err != nil {
+		return "", fmt.Errorf("reading temp docx: %w", err)
+	}
+	defer doc.Close()
+
+	content := doc.Editable().GetContent()
+
+	parts := strings.Split(content, "\f")
+	if len(parts) > maxPagesToParse {
+		parts = parts[:maxPagesToParse]
+	}
+
+	text := strings.Join(parts, "\f")
+
+	return text, nil
+}
+
 // callClaudeHaiku sends the prompt to Bedrock and gets the response.
 func (c BedrockClient) callClaudeHaiku(prompt string) (string, int, int, error) {
 	requestBody := ClaudeRequestBody{
@@ -255,6 +293,29 @@ func (c BedrockClient) callClaudeHaiku(prompt string) (string, int, int, error) 
 	return outputText, inputTokens, outputTokens, nil
 }
 
+// DetectFormat inspects the leading bytes to determine if the data is a PDF or DOCX.
+func DetectFormat(data []byte) (string, error) {
+	// PDF files start with "%PDF"
+	if len(data) >= 4 && string(data[:4]) == "%PDF" {
+		return "pdf", nil
+	}
+	// DOCX files are ZIP archives containing "word/document.xml"
+	if len(data) >= 4 && data[0] == 0x50 && data[1] == 0x4B && data[2] == 0x03 && data[3] == 0x04 {
+		r := bytes.NewReader(data)
+		zr, err := zip.NewReader(r, int64(len(data)))
+		if err != nil {
+			return "", fmt.Errorf("failed to open zip: %w", err)
+		}
+		for _, f := range zr.File {
+			if f.Name == "word/document.xml" {
+				return "docx", nil
+			}
+		}
+		return "", fmt.Errorf("zip archive missing word/document.xml, not a DOCX")
+	}
+	return "", fmt.Errorf("unrecognized file signature")
+}
+
 // extractFirstJson tries to find and parse the first JSON object in a string.
 func extractFirstJson(text string) (*ExtractedMetadata, error) {
 	match := jsonRegex.FindString(text)
@@ -270,7 +331,56 @@ func extractFirstJson(text string) (*ExtractedMetadata, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode JSON object: %w. Text was: %s", err, match)
 	}
+
+	metadata.PublishDate, err = NormalizeDate(metadata.PublishDate)
+	if err != nil {
+		return &metadata, fmt.Errorf("failed to decode date string: %w. Date was: %s", err, metadata.PublishDate)
+	}
+
+	metadata.RegionName = ClipList(metadata.RegionName, 10)
+	metadata.CategoryName = ClipList(metadata.CategoryName, 10)
+	metadata.AuthorName = ClipList(metadata.AuthorName, 10)
+	metadata.KeywordName = ClipList(metadata.KeywordName, 10)
+
 	return &metadata, nil
+}
+
+func NormalizeDate(input string) (string, error) {
+	input = strings.TrimSpace(input)
+	switch {
+	case yearPattern.MatchString(input):
+		// Year only
+		return input + "-01-01", nil
+	case yearMonthPattern.MatchString(input):
+		// Year and month
+		return input + "-01", nil
+	case yearMonthDayPattern.MatchString(input):
+		// Full date; validate by parsing
+		if _, err := time.Parse("2006-01-02", input); err != nil {
+			return "", fmt.Errorf("invalid date '%s': %w", input, err)
+		}
+		return input, nil
+	default:
+		return "", fmt.Errorf("invalid date format '%s'", input)
+	}
+}
+
+// ClipList deduplicates a slice of strings (preserving order) and limits it to maxItems.
+func ClipList(items []string, maxItems int) []string {
+	seen := make(map[string]struct{}, len(items))
+	out := make([]string, 0, maxItems)
+	for _, v := range items {
+		lower := strings.ToLower(v)
+		if _, exists := seen[lower]; exists {
+			continue
+		}
+		seen[lower] = struct{}{}
+		out = append(out, v)
+		if len(out) >= maxItems {
+			break
+		}
+	}
+	return out
 }
 
 // buildPrompt constructs the prompt for Claude.
@@ -290,6 +400,15 @@ REGIONS:
 KEYWORDS:
 %s
 
+Normalize all values by removing dashes and replacing them with spaces. For example, "conflict-resolution" becomes "conflict resolution".
+All string fields must be enclosed in double quotes.
+Double quotes inside any string **must** be escaped using a backslash: use \", never ” or “. Do not escape any characters that are not quotes.
+Do not include any preamble, explanation, commentary, or non-JSON output — just return the JSON.
+Only generate regions that are widely known and well-represented in global datasets and literature.
+Focus on fully recognized countries or broad, commonly referenced geographic areas (e.g., Central America, Southeast Asia).
+Avoid small, obscure, or low-data regions (e.g., Kurdistan, Upper Nile, Northern Ireland), as these are less likely to be relevant or supported by sufficient context.
+
+
 Return only a valid JSON object with the following fields:
 - "title" (string, required)
 - "abstract" (string)
@@ -307,14 +426,27 @@ TEXT:
 `, strings.Join(c.categories, ", "), strings.Join(c.regions, ", "), strings.Join(c.keywords, ", "), text)
 }
 
-// ProcessPdfAndExtractMetadata fetches PDF from S3, extracts text, calls LLM, and parses metadata.
-func (c BedrockClient) ProcessPdfAndExtractMetadata(ctx context.Context, pdfBytes []byte) (*ExtractedMetadata, error) {
-	rawText, err := extractTextFromPdf(pdfBytes, maxPdfPagesToParse)
+// ProcessDocAndExtractMetadata fetches PDF from S3, extracts text, calls LLM, and parses metadata.
+func (c BedrockClient) ProcessDocAndExtractMetadata(ctx context.Context, docBytes []byte) (*ExtractedMetadata, error) {
+	f, err := DetectFormat(docBytes)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var rawText string
+
+	if f == "pdf" {
+		rawText, err = extractTextFromPdf(docBytes, maxPagesToParse)
+	} else {
+		rawText, err = ExtractTextFromDocxBytes(docBytes)
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract text from PDF: %w", err)
 	}
 	if rawText == "" {
-		return nil, fmt.Errorf("no text could be extracted from the first %d pages", maxPdfPagesToParse)
+		return nil, fmt.Errorf("no text could be extracted from the first %d pages", maxPagesToParse)
 	}
 
 	cleanedText := cleanText(rawText)
@@ -331,7 +463,7 @@ func (c BedrockClient) ProcessPdfAndExtractMetadata(ctx context.Context, pdfByte
 	metadata, err := extractFirstJson(claudeResponseText)
 	if err != nil {
 		fmt.Printf("Raw Claude response on JSON parse failure:\n%s", claudeResponseText)
-		return nil, fmt.Errorf("failed to extract JSON from Claude response: %w", err)
+		return metadata, fmt.Errorf("error extracting JSON from Claude response: %w", err)
 	}
 
 	return metadata, nil
