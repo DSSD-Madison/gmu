@@ -146,35 +146,46 @@ def delete_duplicates_from_kendra():
             )
 
         print("Finished deleting marked duplicates from Kendra.")
-        print("\nVerifying deletion status with Kendra...")
-        for i in range(0, len(doc_ids), 10):
-            batch = doc_ids[i:i + 10]
-            document_info_list = [{"DocumentId": doc_id} for doc_id in batch]
-            response = kendra_client.batch_get_document_status(
-                IndexId=index_id,
-                DocumentInfoList=document_info_list
-            )
-
-            # Process the response
-            for doc_status in response.get('DocumentStatusList', []):
-                print(f"Document ID: {doc_status['DocumentId']}")
-                print(f"Status: {doc_status['DocumentStatus']}")
-                if 'FailureCode' in doc_status:
-                    print(f"Failure Code: {doc_status['FailureCode']}")
-                if 'FailureReason' in doc_status:
-                    print(f"Failure Reason: {doc_status['FailureReason']}")
-                print("-" * 60)
-
-            # Handle any errors
-            for error in response.get('Errors', []):
-                print(f"Error retrieving status for Document ID: {error['DocumentId']}")
-                print(f"Error Code: {error['ErrorCode']}")
-                print(f"Error Message: {error['ErrorMessage']}")
-                print("-" * 60)
-
     finally:
         conn.close()
+
+def delete_from_s3(s3, s3_uri):
+    bucket, key = parse_s3_uri(s3_uri)
+    try:
+        # s3.delete_object(Bucket=bucket, Key=key)
+        # logger.info(f"Deleted from S3: {s3_uri}")
+        logger.info(f"Would have deleted from S3: {bucket, key}")
+    except Exception as e:
+        logger.warning(f"Failed to delete {s3_uri} from S3: {e}")
+
+def delete_duplicates_from_s3():
+    logger.info("Starting S3 cleanup of duplicate documents and previews...")
+    s3 = boto3.client(
+        's3',
+        region_name='us-east-1',
+        aws_access_key_id=aws_access_key_id,
+        aws_secret_access_key=aws_secret_access_key,
+        aws_session_token=aws_session_token
+    )
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute("SELECT s3_file, s3_file_preview FROM documents WHERE has_duplicate = TRUE")
+            rows = cur.fetchall()
+
+            for row in rows:
+                if row["s3_file"]:
+                    delete_from_s3(s3, row["s3_file"])
+                if row["s3_file_preview"]:
+                    delete_from_s3(s3, row["s3_file_preview"])
+
+        logger.info("S3 cleanup complete.")
+    finally:
+        conn.close()
+
 
 if __name__ == "__main__":
     process_duplicates()
     delete_duplicates_from_kendra()
+    delete_duplicates_from_s3()
