@@ -76,7 +76,7 @@ def process_duplicates():
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    cur.execute("SELECT id, s3_file, title FROM documents WHERE has_duplicate = false")
+    cur.execute("SELECT id, s3_file, title FROM documents WHERE to_delete = false")
     docs = cur.fetchall()
 
     basename_groups = group_by(docs, lambda d: os.path.basename(d['s3_file']))
@@ -104,7 +104,7 @@ def process_duplicates():
             for doc in group:
                 if doc['id'] != keep['id']:
                     logger.info(f"MARKING AS DUPLICATE: {doc['s3_file']}")
-                    cur.execute("UPDATE documents SET has_duplicate = true WHERE id = %s", (doc['id'],))
+                    cur.execute("UPDATE documents SET to_delete = true WHERE id = %s", (doc['id'],))
         cur.execute("COMMIT")
         logger.info("Done marking to_index.")
     except Exception as e:
@@ -119,7 +119,7 @@ def delete_duplicates_from_kendra():
     conn = get_db_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute("SELECT s3_file FROM documents WHERE has_duplicate = TRUE AND s3_file IS NOT NULL")
+            cur.execute("SELECT s3_file FROM documents WHERE to_delete = TRUE AND s3_file IS NOT NULL")
             doc_ids = [row["s3_file"] for row in cur.fetchall()]
             
         if not doc_ids:
@@ -170,7 +170,7 @@ def delete_duplicates_from_s3():
     conn = get_db_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute("SELECT s3_file, s3_file_preview FROM documents WHERE has_duplicate = TRUE")
+            cur.execute("SELECT s3_file, s3_file_preview FROM documents WHERE to_delete = TRUE")
             rows = cur.fetchall()
 
             for row in rows:
