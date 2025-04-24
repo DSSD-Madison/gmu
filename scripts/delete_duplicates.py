@@ -164,13 +164,22 @@ def delete_duplicates_from_kendra():
                         DocumentInfoList=document_info_list
                     )
                     for doc in response.get("DocumentStatusList", []):
-                        print(f"Document ID: {doc['DocumentId']}")
-                        print(f"Status: {doc['Status']}")
+                        print(f"Document ID: {doc.get('DocumentId')}")
+                        print(f"Status: {doc.get('Status', 'UNKNOWN / NOT FOUND')}")
                         if 'FailureCode' in doc:
                             print(f"Failure Code: {doc['FailureCode']}")
                         if 'FailureReason' in doc:
                             print(f"Failure Reason: {doc['FailureReason']}")
                         print("-" * 60)
+
+                    if response.get("Errors"):
+                        print("Errors returned from Kendra:")
+                        for error in response["Errors"]:
+                            print(f"Document ID: {error.get('DocumentId')}")
+                            print(f"Error Code: {error.get('ErrorCode')}")
+                            print(f"Error Message: {error.get('ErrorMessage')}")
+                            print("-" * 60)
+
             except Exception as e:
                 print(f"Error while verifying deletion status: {e}")
 
