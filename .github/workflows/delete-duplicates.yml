@@ -2,11 +2,10 @@ name: Delete Duplicates
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Run daily at midnight UTC
-# on:
-#   push:
-#     branches:
-#       - delete-duplicates
+      - cron: '0 0 * * *' 
+  push:
+    branches:
+      - delete-duplicates
 
 jobs:
   delete-duplicates:
