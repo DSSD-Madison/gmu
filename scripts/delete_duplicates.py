@@ -171,7 +171,7 @@ def delete_duplicates_from_s3():
     conn = get_db_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute("SELECT s3_file, s3_file_preview FROM documents WHERE has_duplicate = TRUE")
+            cur.execute("SELECT s3_file, s3_file_preview FROM documents WHERE to_delete = TRUE")
             rows = cur.fetchall()
 
             for row in rows:
