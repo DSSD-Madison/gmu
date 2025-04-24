@@ -158,9 +158,10 @@ def delete_duplicates_from_kendra():
             try:
                 for i in range(0, len(doc_ids), 10):
                     batch = doc_ids[i:i + 10]
+                    document_info_list = [{"DocumentId": doc_id} for doc_id in batch]
                     response = kendra_client.batch_get_document_status(
                         IndexId=index_id,
-                        DocumentIdList=batch
+                        DocumentInfoList=document_info_list
                     )
                     for doc in response.get("DocumentStatusList", []):
                         print(f"Document ID: {doc['DocumentId']}")
@@ -172,6 +173,7 @@ def delete_duplicates_from_kendra():
                         print("-" * 60)
             except Exception as e:
                 print(f"Error while verifying deletion status: {e}")
+
 
 
 
