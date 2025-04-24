@@ -103,10 +103,12 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	kendraResults.Count = int(*out.TotalNumberOfResults)
 
 	filterNamesMap := map[string]string{
-		"_authors":         "Authors",
-		"_file_type":       "File Type",
-		"source":           "Source",
-		"Subject_Keywords": "Subject Keywords",
+		"Author":     "Authors",
+		"Keyword":    "Keywords",
+		"Region":     "Regions",
+		"Category":   "Categories",
+		"Source":     "Source",
+		"_file_type": "File Type",
 	}
 
 	for i, facetRes := range out.FacetResults {
@@ -145,7 +147,7 @@ func (c *kendraClientImpl) MakeQuery(ctx context.Context, query string, filters 
 
 			var subFilter types.AttributeFilter
 
-			if key == "_file_type" {
+			if key == "_file_type" || k == "Source" {
 				subFilter.OrAllFilters = make([]types.AttributeFilter, len(filterCategory))
 				for i, strVal := range filterCategory {
 					val := strVal
@@ -222,12 +224,11 @@ func querySuggestionsOutputToSuggestions(out kendra.GetQuerySuggestionsOutput) K
 }
 
 func TrimExtension(s string) string {
-	idx := strings.LastIndex(s, ".pdf")
-
-	// No such file extension exists
-	if idx == -1 {
-		return s
+	if strings.HasSuffix(s, ".pdf") {
+		return strings.TrimSuffix(s, ".pdf")
 	}
-
-	return s[:idx]
+	if strings.HasSuffix(s, ".docx") {
+		return strings.TrimSuffix(s, ".docx")
+	}
+	return s
 }
