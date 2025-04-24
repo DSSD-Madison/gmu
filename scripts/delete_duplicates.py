@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 from collections import defaultdict
 import boto3
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote
 import logging
 
 load_dotenv()
@@ -59,10 +59,15 @@ def group_by(docs, key_func):
     return [group for group in groups.values() if len(group) > 1]
 
 def approx_equal(a, b, tolerance=3000):
-    """Return True if a and b are within `tolerance` bytes of each other."""
     if a is None or b is None:
         return False
     return abs(a - b) <= tolerance
+
+def encode_kendra_doc_id(s3_uri):
+    if not s3_uri.startswith("s3://"):
+        return s3_uri
+    bucket, key = s3_uri[len("s3://"):].split("/", 1)
+    return f"s3://{bucket}/{quote(key)}"
 
 def process_duplicates():
     s3 = boto3.client(
@@ -90,18 +95,14 @@ def process_duplicates():
             metas = [(doc, *get_s3_metadata(s3, doc['s3_file'])) for doc in group]
 
             valid = all(m[1] is not None and m[2] is not None for m in metas)
-            
             base_size, base_type = metas[0][1], metas[0][2]
             if not valid or not all(approx_equal(m[1], base_size) and m[2] == base_type for m in metas):
-
                 logger.info("SKIPPING GROUP due to mismatch or missing metadata:")
-                base_size, base_type = metas[0][1], metas[0][2]
                 for doc, size, ctype in metas:
                     size_note = "MATCH" if size == base_size else f"DIFF (expected {base_size})"
                     type_note = "MATCH" if ctype == base_type else f"DIFF (expected {base_type})"
                     logger.info(f"  - {doc['s3_file']}\n    → size: {size} [{size_note}], type: {ctype} [{type_note}]")
                 continue
-
 
             keep = prefer_foreign(group)
             logger.info(f"KEEPING: {keep['s3_file']}")
@@ -118,20 +119,19 @@ def process_duplicates():
         cur.close()
         conn.close()
 
-
 def delete_duplicates_from_kendra():
     print("Starting Kendra cleanup...")
     conn = get_db_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("SELECT s3_file FROM documents WHERE has_duplicate = TRUE AND s3_file IS NOT NULL")
-            doc_ids = [row["s3_file"] for row in cur.fetchall()]
-        
+            raw_doc_ids = [row["s3_file"] for row in cur.fetchall()]
+            doc_ids = [encode_kendra_doc_id(uri) for uri in raw_doc_ids]
+
         if not doc_ids:
             print("No duplicates found for Kendra deletion.")
             return
 
-        # Assume AWS role
         sts = boto3.client("sts", region_name="us-east-1")
         creds = sts.assume_role(RoleArn=role_arn, RoleSessionName=role_session_name)["Credentials"]
 
@@ -150,42 +150,8 @@ def delete_duplicates_from_kendra():
                 IndexId=index_id,
                 DocumentIdList=batch
             )
+
         print("Finished deleting marked duplicates from Kendra.")
-        
-        # Verify deletions with BatchGetDocumentStatus
-        if doc_ids:
-            print("\nVerifying deletion status with Kendra...")
-            try:
-                for i in range(0, len(doc_ids), 10):
-                    batch = doc_ids[i:i + 10]
-                    document_info_list = [{"DocumentId": doc_id} for doc_id in batch]
-                    response = kendra_client.batch_get_document_status(
-                        IndexId=index_id,
-                        DocumentInfoList=document_info_list
-                    )
-                    for doc in response.get("DocumentStatusList", []):
-                        print(f"Document ID: {doc.get('DocumentId')}")
-                        print(f"Status: {doc.get('Status', 'UNKNOWN / NOT FOUND')}")
-                        if 'FailureCode' in doc:
-                            print(f"Failure Code: {doc['FailureCode']}")
-                        if 'FailureReason' in doc:
-                            print(f"Failure Reason: {doc['FailureReason']}")
-                        print("-" * 60)
-
-                    if response.get("Errors"):
-                        print("Errors returned from Kendra:")
-                        for error in response["Errors"]:
-                            print(f"Document ID: {error.get('DocumentId')}")
-                            print(f"Error Code: {error.get('ErrorCode')}")
-                            print(f"Error Message: {error.get('ErrorMessage')}")
-                            print("-" * 60)
-
-            except Exception as e:
-                print(f"Error while verifying deletion status: {e}")
-
-
-
-
 
     finally:
         conn.close()
@@ -193,5 +159,3 @@ def delete_duplicates_from_kendra():
 if __name__ == "__main__":
     process_duplicates()
     delete_duplicates_from_kendra()
-    
-
