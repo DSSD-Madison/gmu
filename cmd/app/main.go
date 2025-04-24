@@ -189,6 +189,7 @@ func main() {
 	e.Static("/css", "web/assets/css")
 	e.Static("/svg", "web/assets/svg")
 	e.Static("/js", "web/assets/js")
+	e.Static("/favicon", "web/assets/favicon")
 
 	// --- Start Server ---
 	address := ":8080"
