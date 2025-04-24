@@ -3,9 +3,6 @@ name: Delete Duplicates
 on:
   schedule:
       - cron: '0 0 * * *' 
-  push:
-    branches:
-      - actions-work
 
 jobs:
   delete-duplicates:
