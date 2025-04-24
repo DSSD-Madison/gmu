@@ -106,7 +106,7 @@ def process_duplicates():
                     logger.info(f"MARKING AS DUPLICATE: {doc['s3_file']}")
                     cur.execute("UPDATE documents SET has_duplicate = true WHERE id = %s", (doc['id'],))
         cur.execute("COMMIT")
-        logger.info("Done marking has_duplicate.")
+        logger.info("Done marking to_index.")
     except Exception as e:
         logger.error(f"Error: {e}")
         conn.rollback()
@@ -170,7 +170,7 @@ def delete_duplicates_from_s3():
     conn = get_db_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute("SELECT s3_file, s3_file_preview FROM documents WHERE to_delete = TRUE")
+            cur.execute("SELECT s3_file, s3_file_preview FROM documents WHERE has_duplicate = TRUE")
             rows = cur.fetchall()
 
             for row in rows:
