@@ -85,7 +85,14 @@ def process_duplicates():
 
             valid = all(m[1] is not None and m[2] is not None for m in metas)
             if not valid or not all((m[1], m[2]) == (metas[0][1], metas[0][2]) for m in metas):
-                continue  # Skip if mismatch or missing metadata
+                logger.info("SKIPPING GROUP due to mismatch or missing metadata:")
+                base_size, base_type = metas[0][1], metas[0][2]
+                for doc, size, ctype in metas:
+                    size_note = "MATCH" if size == base_size else f"DIFF (expected {base_size})"
+                    type_note = "MATCH" if ctype == base_type else f"DIFF (expected {base_type})"
+                    logger.info(f"  - {doc['s3_file']}\n    → size: {size} [{size_note}], type: {ctype} [{type_note}]")
+                continue
+
 
             keep = prefer_foreign(group)
             logger.info(f"KEEPING: {keep['s3_file']}")
