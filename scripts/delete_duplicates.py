@@ -120,9 +120,8 @@ def delete_duplicates_from_kendra():
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("SELECT s3_file FROM documents WHERE has_duplicate = TRUE AND s3_file IS NOT NULL")
-            raw_doc_ids = [row["s3_file"] for row in cur.fetchall()]
-            doc_ids = [uri for uri in raw_doc_ids]
-
+            doc_ids = [row["s3_file"] for row in cur.fetchall()]
+            
         if not doc_ids:
             print("No duplicates found for Kendra deletion.")
             return
@@ -155,22 +154,23 @@ def delete_duplicates_from_kendra():
                 IndexId=index_id,
                 DocumentInfoList=document_info_list
             )
-            for doc in response.get("DocumentStatusList", []):
-                print(f"Document ID: {doc.get('DocumentId')}")
-                print(f"Status: {doc.get('Status', 'UNKNOWN / NOT FOUND')}")
-                if 'FailureCode' in doc:
-                    print(f"Failure Code: {doc['FailureCode']}")
-                if 'FailureReason' in doc:
-                    print(f"Failure Reason: {doc['FailureReason']}")
+
+            # Process the response
+            for doc_status in response.get('DocumentStatusList', []):
+                print(f"Document ID: {doc_status['DocumentId']}")
+                print(f"Status: {doc_status['DocumentStatus']}")
+                if 'FailureCode' in doc_status:
+                    print(f"Failure Code: {doc_status['FailureCode']}")
+                if 'FailureReason' in doc_status:
+                    print(f"Failure Reason: {doc_status['FailureReason']}")
                 print("-" * 60)
 
-            if response.get("Errors"):
-                print("Errors returned from Kendra:")
-                for error in response["Errors"]:
-                    print(f"Document ID: {error.get('DocumentId')}")
-                    print(f"Error Code: {error.get('ErrorCode')}")
-                    print(f"Error Message: {error.get('ErrorMessage')}")
-                    print("-" * 60)
+            # Handle any errors
+            for error in response.get('Errors', []):
+                print(f"Error retrieving status for Document ID: {error['DocumentId']}")
+                print(f"Error Code: {error['ErrorCode']}")
+                print(f"Error Message: {error['ErrorMessage']}")
+                print("-" * 60)
 
     finally:
         conn.close()
