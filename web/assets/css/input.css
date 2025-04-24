@@ -5,3 +5,11 @@
 @utility not-has-* {
 	not-has: [&:not(:has(*))]
 }
+
+div:empty {
+	height: 0;
+	padding: 0;
+	border: none;
+	box-shadow: none;
+	overflow: hidden;
+}

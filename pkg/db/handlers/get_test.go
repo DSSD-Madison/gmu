@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/DSSD-Madison/gmu/pkg/db"
+	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
 )
 
 // Create a testable version of the handler function that accepts an interface
@@ -23,6 +23,7 @@ type DBQuerier interface {
 	GetDocumentsByURIs(ctx context.Context, uris []string) ([]db.Document, error)
 }
 
+// TODO: change to context.Context
 // GetDocumentsTest wraps the actual handler for testing
 func GetDocumentsTest(c echo.Context, querier DBQuerier, uris []string) (map[string]db.Document, error) {
 	documents, err := querier.GetDocumentsByURIs(c.Request().Context(), uris)
@@ -106,22 +107,22 @@ func (suite *HandlersTestSuite) SetupTest() {
 func (suite *HandlersTestSuite) TestGetDocumentsSuccessful() {
 	// Test data
 	uris := []string{"doc1.pdf", "doc2.pdf"}
-	
+
 	// Setup expectations
 	suite.mockQuery.GetDocumentsByURIsFunc = func(ctx context.Context, u []string) ([]db.Document, error) {
 		assert.Equal(suite.T(), uris, u, "URIs should match")
 		return suite.sampleDocs, nil
 	}
-	
+
 	// Expected result
 	expected := map[string]db.Document{
 		"doc1.pdf": suite.sampleDocs[0],
 		"doc2.pdf": suite.sampleDocs[1],
 	}
-	
+
 	// Call the function
 	result, err := GetDocumentsTest(suite.ctx, suite.mockQuery, uris)
-	
+
 	// Assert results
 	suite.NoError(err)
 	suite.Equal(expected, result)
@@ -132,16 +133,16 @@ func (suite *HandlersTestSuite) TestGetDocumentsDatabaseError() {
 	// Test data
 	uris := []string{"doc1.pdf", "doc2.pdf"}
 	expectedErr := errors.New("database error")
-	
+
 	// Setup expectations
 	suite.mockQuery.GetDocumentsByURIsFunc = func(ctx context.Context, u []string) ([]db.Document, error) {
 		assert.Equal(suite.T(), uris, u, "URIs should match")
 		return nil, expectedErr
 	}
-	
+
 	// Call the function
 	result, err := GetDocumentsTest(suite.ctx, suite.mockQuery, uris)
-	
+
 	// Assert results
 	suite.Error(err)
 	suite.Equal(expectedErr.Error(), err.Error())
@@ -152,16 +153,16 @@ func (suite *HandlersTestSuite) TestGetDocumentsDatabaseError() {
 func (suite *HandlersTestSuite) TestGetDocumentsEmptyURIs() {
 	// Test data
 	uris := []string{}
-	
+
 	// Setup expectations
 	suite.mockQuery.GetDocumentsByURIsFunc = func(ctx context.Context, u []string) ([]db.Document, error) {
 		assert.Equal(suite.T(), uris, u, "URIs should match")
 		return []db.Document{}, nil
 	}
-	
+
 	// Call the function
 	result, err := GetDocumentsTest(suite.ctx, suite.mockQuery, uris)
-	
+
 	// Assert results
 	suite.NoError(err)
 	suite.Equal(map[string]db.Document{}, result)
@@ -184,22 +185,22 @@ func (suite *HandlersTestSuite) TestGetDocumentsMappingLogic() {
 			S3File:   "same-key.pdf",
 		},
 	}
-	
+
 	uris := []string{"same-key.pdf"}
-	
+
 	// Setup expectations
 	suite.mockQuery.GetDocumentsByURIsFunc = func(ctx context.Context, u []string) ([]db.Document, error) {
 		assert.Equal(suite.T(), uris, u, "URIs should match")
 		return docs, nil
 	}
-	
+
 	// Call the function
 	result, err := GetDocumentsTest(suite.ctx, suite.mockQuery, uris)
-	
+
 	// Assert results
 	suite.NoError(err)
 	suite.Len(result, 1)
-	
+
 	// The last document should win in case of duplicate keys
 	suite.Equal("Overwriting Document", result["same-key.pdf"].Title)
 }

@@ -14,7 +14,7 @@ import (
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 )
 
-func Home() templ.Component {
+func Home(isAuthorized bool, isMaster bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -47,7 +47,7 @@ func Home() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col items-center justify-start min-h-screen pt-80\"><h2 class=\"text-xl font-semibold text-gray-700 py-3 dark:text-white\">Better Evidence Project</h2><form hx-get=\"/search\" hx-swap=\"innerHTML\" hx-target=\"#root\" hx-push-url=\"true\" class=\"flex flex-row w-3/8\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex flex-col items-center justify-start min-h-screen pt-80\"><h2 class=\"py-3 text-xl font-semibold text-gray-700 dark:text-white\">Better Evidence Project</h2><form hx-get=\"/search\" hx-swap=\"innerHTML\" hx-target=\"#root\" hx-push-url=\"true\" class=\"flex flex-row w-3/8\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -61,7 +61,7 @@ func Home() templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Base("").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Base("", isAuthorized, isMaster).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -96,7 +96,7 @@ func Search(results awskendra.KendraResults) templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"grid place-items-center relative\"><img src=\"images/Banner.jpeg\" class=\"col-start-1 row-start-1 object-cover top-0 z-1 w-full h-auto\"><div id=\"formwrapper\" class=\"col-start-1 row-start-1 z-2 flex justify-center items-center w-full\" hx-indicator=\"#indicator\"><form hx-get=\"/search\" hx-target=\"#results-container\" hx-swap=\"innerHTML\" hx-trigger=\"load, submit\" class=\"w-3/8\" hx-headers=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"relative grid place-items-center\"><img src=\"images/Banner.jpeg\" class=\"top-0 object-cover w-full h-auto col-start-1 row-start-1 z-1\"><div id=\"formwrapper\" class=\"flex items-center justify-center w-full col-start-1 row-start-1 z-2\" hx-indicator=\"#indicator\"><form hx-get=\"/search\" hx-target=\"#results-container\" hx-swap=\"innerHTML\" hx-trigger=\"load, submit\" class=\"w-3/8\" hx-headers=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -117,7 +117,7 @@ func Search(results awskendra.KendraResults) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</form></div><div id=\"results-container\" class=\"min-h-screen w-full px-4\"><div id=\"grid-container\" class=\"pt-10 pr-10 grid grid-cols-[1fr_3fr] w-full\"><aside id=\"sidecolmn\" class=\"mx-10 w-64\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</form></div><div id=\"results-container\" class=\"w-full min-h-screen px-4\"><div id=\"grid-container\" class=\"pt-10 pr-10 grid grid-cols-[1fr_3fr] w-full\"><aside id=\"sidecolmn\" class=\"w-64 mx-10\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -145,7 +145,7 @@ func Search(results awskendra.KendraResults) templ.Component {
 	})
 }
 
-func SearchHome(results awskendra.KendraResults) templ.Component {
+func SearchHome(results awskendra.KendraResults, isAuthorized bool, isMaster bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -184,7 +184,7 @@ func SearchHome(results awskendra.KendraResults) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = Base("").Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Base("", isAuthorized, isMaster).Render(templ.WithChildren(ctx, templ_7745c5c3_Var6), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

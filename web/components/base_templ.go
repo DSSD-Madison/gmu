@@ -8,7 +8,7 @@ package components
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-func Base(title string) templ.Component {
+func Base(title string, isAuthenticated bool, isMaster bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -57,11 +57,11 @@ func Base(title string) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"icon\" href=\"/images/logo.ico\" type=\"image/x-icon\"><script src=\"https://unpkg.com/htmx.org/dist/htmx.min.js\"></script><script src=\"/js/theme.js\"></script><link href=\"/css/output.css\" rel=\"stylesheet\"><style>\n\t\t\t\tsummary::-webkit-details-marker {\n\t\t\t\t\tdisplay: none;\n\t\t\t\t}\n\t\t\t</style></head>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"icon\" type=\"image/png\" sizes=\"16x16\" href=\"/favicon/favicon-16x16.png\"><link rel=\"icon\" type=\"image/png\" sizes=\"32x32\" href=\"/favicon/favicon-32x32.png\"><link rel=\"icon\" type=\"image/png\" sizes=\"192x192\" href=\"/favicon/android-chrome-192x192.png\"><link rel=\"icon\" type=\"image/png\" sizes=\"512x512\" href=\"/favicon/android-chrome-512x512.png\"><link rel=\"apple-touch-icon\" sizes=\"180x180\" href=\"/favicon/apple-touch-icon.png\"><link rel=\"manifest\" href=\"/favicon/site.webmanifest\"><script src=\"https://unpkg.com/htmx.org/dist/htmx.min.js\"></script><script src=\"/js/theme.js\"></script><link href=\"/css/output.css\" rel=\"stylesheet\"><style>\n\t\t\t\tsummary::-webkit-details-marker {\n\t\t\t\t\tdisplay: none;\n\t\t\t\t}\n\t\t\t</style></head>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = Navbar().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Navbar(isAuthenticated, isMaster).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

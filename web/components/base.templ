@@ -1,6 +1,6 @@
 package components
 
-templ Base(title string) {
+templ Base(title string, isAuthenticated bool, isMaster bool) {
 	<!DOCTYPE html>
 	<html lang="en" class="overscroll-none">
 		<head>
@@ -11,8 +11,13 @@ templ Base(title string) {
 			}
 			<meta charset="UTF-8" />
 			<meta name="viewport" content="width=device-width, initial-scale=1" />
-			<link rel="icon" href="/images/logo.ico" type="image/x-icon">
-			<script src="https://unpkg.com/htmx.org/dist/htmx.min.js"></script>
+            <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
+            <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
+            <link rel="icon" type="image/png" sizes="192x192" href="/favicon/android-chrome-192x192.png">
+            <link rel="icon" type="image/png" sizes="512x512" href="/favicon/android-chrome-512x512.png">
+            <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
+            <link rel="manifest" href="/favicon/site.webmanifest">
+            <script src="https://unpkg.com/htmx.org/dist/htmx.min.js"></script>
 			<script src="/js/theme.js"></script>
 			<link href="/css/output.css" rel="stylesheet" />
 			<style>
@@ -21,7 +26,7 @@ templ Base(title string) {
 				}
 			</style>
 		</head>
-		@Navbar()
+		@Navbar(isAuthenticated, isMaster)
 		<body class="m-0 dark:bg-gray-900">
 			<div id="root">
 				{children...}
