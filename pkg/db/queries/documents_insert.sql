@@ -7,7 +7,7 @@ INSERT INTO documents (
   abstract,
   publish_date,
   created_at,
-  has_duplicate
+  to_delete
 ) VALUES ($1, $2, $3, $4, $5, $6,NOW(), false);
 
 -- name: InsertDocAuthor :exec

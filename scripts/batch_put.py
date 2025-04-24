@@ -67,8 +67,8 @@ def get_unindexed_documents(conn) -> List[Dict[str, Any]]:
                 ) AS categories
   
             FROM documents d
-            WHERE d.indexed_by_kendra = false
-              AND d.has_duplicate = false
+            WHERE d.to_index = true
+              AND d.to_delete = false
         """)
         return cur.fetchall()
 
@@ -148,7 +148,7 @@ def update_document_indexed_status(conn, doc_id: str):
     with conn.cursor() as cur:
         cur.execute("""
             UPDATE documents
-            SET indexed_by_kendra = true
+            SET to_index = false
             WHERE id = %s
         """, (doc_id,))
     conn.commit()

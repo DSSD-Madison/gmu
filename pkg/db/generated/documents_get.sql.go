@@ -16,7 +16,7 @@ import (
 const findDocumentByID = `-- name: FindDocumentByID :one
 
 SELECT
-    d.id, d.file_name, d.title, d.abstract, d.publish_date, d.source, d.indexed_by_kendra, d.s3_file, d.s3_file_preview, d.pdf_link, d.created_at, d.deleted_at, d.has_duplicate,
+    d.id, d.file_name, d.title, d.abstract, d.publish_date, d.source, d.to_index, d.s3_file, d.s3_file_preview, d.pdf_link, d.created_at, d.deleted_at, d.to_delete, d.to_generate_preview,
     ARRAY_REMOVE(ARRAY_AGG(DISTINCT a.name), NULL)::text[] AS author_names,
     ARRAY_REMOVE(ARRAY_AGG(DISTINCT r.name), NULL)::text[] AS region_names,
     ARRAY_REMOVE(ARRAY_AGG(DISTINCT k.name), NULL)::text[] AS keyword_names,
@@ -35,23 +35,24 @@ GROUP BY d.id
 `
 
 type FindDocumentByIDRow struct {
-	ID              uuid.UUID
-	FileName        string
-	Title           string
-	Abstract        sql.NullString
-	PublishDate     sql.NullTime
-	Source          sql.NullString
-	IndexedByKendra sql.NullBool
-	S3File          string
-	S3FilePreview   sql.NullString
-	PdfLink         sql.NullString
-	CreatedAt       sql.NullTime
-	DeletedAt       sql.NullTime
-	HasDuplicate    bool
-	AuthorNames     []string
-	RegionNames     []string
-	KeywordNames    []string
-	CategoryNames   []string
+	ID                uuid.UUID
+	FileName          string
+	Title             string
+	Abstract          sql.NullString
+	PublishDate       sql.NullTime
+	Source            sql.NullString
+	ToIndex           sql.NullBool
+	S3File            string
+	S3FilePreview     sql.NullString
+	PdfLink           sql.NullString
+	CreatedAt         sql.NullTime
+	DeletedAt         sql.NullTime
+	ToDelete          bool
+	ToGeneratePreview sql.NullBool
+	AuthorNames       []string
+	RegionNames       []string
+	KeywordNames      []string
+	CategoryNames     []string
 }
 
 // Optional: Add an order clause if needed
@@ -65,13 +66,14 @@ func (q *Queries) FindDocumentByID(ctx context.Context, id uuid.UUID) (FindDocum
 		&i.Abstract,
 		&i.PublishDate,
 		&i.Source,
-		&i.IndexedByKendra,
+		&i.ToIndex,
 		&i.S3File,
 		&i.S3FilePreview,
 		&i.PdfLink,
 		&i.CreatedAt,
 		&i.DeletedAt,
-		&i.HasDuplicate,
+		&i.ToDelete,
+		&i.ToGeneratePreview,
 		pq.Array(&i.AuthorNames),
 		pq.Array(&i.RegionNames),
 		pq.Array(&i.KeywordNames),
@@ -81,7 +83,7 @@ func (q *Queries) FindDocumentByID(ctx context.Context, id uuid.UUID) (FindDocum
 }
 
 const findDocumentByS3Path = `-- name: FindDocumentByS3Path :one
-SELECT id, file_name, title, abstract, publish_date, source, indexed_by_kendra, s3_file, s3_file_preview, pdf_link, created_at, deleted_at, has_duplicate
+SELECT id, file_name, title, abstract, publish_date, source, to_index, s3_file, s3_file_preview, pdf_link, created_at, deleted_at, to_delete, to_generate_preview
 FROM documents
 WHERE s3_file = $1
 `
@@ -96,20 +98,21 @@ func (q *Queries) FindDocumentByS3Path(ctx context.Context, s3File string) (Docu
 		&i.Abstract,
 		&i.PublishDate,
 		&i.Source,
-		&i.IndexedByKendra,
+		&i.ToIndex,
 		&i.S3File,
 		&i.S3FilePreview,
 		&i.PdfLink,
 		&i.CreatedAt,
 		&i.DeletedAt,
-		&i.HasDuplicate,
+		&i.ToDelete,
+		&i.ToGeneratePreview,
 	)
 	return i, err
 }
 
 const getDocumentsByURIs = `-- name: GetDocumentsByURIs :many
 SELECT
-    d.id, d.file_name, d.title, d.abstract, d.publish_date, d.source, d.indexed_by_kendra, d.s3_file, d.s3_file_preview, d.pdf_link, d.created_at, d.deleted_at, d.has_duplicate,  -- Select all columns from the documents table
+    d.id, d.file_name, d.title, d.abstract, d.publish_date, d.source, d.to_index, d.s3_file, d.s3_file_preview, d.pdf_link, d.created_at, d.deleted_at, d.to_delete, d.to_generate_preview,  -- Select all columns from the documents table
     -- Aggregate author names into a text array
     COALESCE(ARRAY_AGG(DISTINCT a.name) FILTER (WHERE a.id IS NOT NULL), '{}'::text[]) AS author_names,
     -- Aggregate region names into a text array
@@ -145,23 +148,24 @@ ORDER BY
 `
 
 type GetDocumentsByURIsRow struct {
-	ID              uuid.UUID
-	FileName        string
-	Title           string
-	Abstract        sql.NullString
-	PublishDate     sql.NullTime
-	Source          sql.NullString
-	IndexedByKendra sql.NullBool
-	S3File          string
-	S3FilePreview   sql.NullString
-	PdfLink         sql.NullString
-	CreatedAt       sql.NullTime
-	DeletedAt       sql.NullTime
-	HasDuplicate    bool
-	AuthorNames     interface{}
-	RegionNames     interface{}
-	KeywordNames    interface{}
-	CategoryNames   interface{}
+	ID                uuid.UUID
+	FileName          string
+	Title             string
+	Abstract          sql.NullString
+	PublishDate       sql.NullTime
+	Source            sql.NullString
+	ToIndex           sql.NullBool
+	S3File            string
+	S3FilePreview     sql.NullString
+	PdfLink           sql.NullString
+	CreatedAt         sql.NullTime
+	DeletedAt         sql.NullTime
+	ToDelete          bool
+	ToGeneratePreview sql.NullBool
+	AuthorNames       interface{}
+	RegionNames       interface{}
+	KeywordNames      interface{}
+	CategoryNames     interface{}
 }
 
 func (q *Queries) GetDocumentsByURIs(ctx context.Context, dollar_1 []string) ([]GetDocumentsByURIsRow, error) {
@@ -180,13 +184,14 @@ func (q *Queries) GetDocumentsByURIs(ctx context.Context, dollar_1 []string) ([]
 			&i.Abstract,
 			&i.PublishDate,
 			&i.Source,
-			&i.IndexedByKendra,
+			&i.ToIndex,
 			&i.S3File,
 			&i.S3FilePreview,
 			&i.PdfLink,
 			&i.CreatedAt,
 			&i.DeletedAt,
-			&i.HasDuplicate,
+			&i.ToDelete,
+			&i.ToGeneratePreview,
 			&i.AuthorNames,
 			&i.RegionNames,
 			&i.KeywordNames,
