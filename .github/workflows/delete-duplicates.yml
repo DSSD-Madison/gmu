@@ -1,0 +1,60 @@
+name: Delete Duplicates
+
+# on:
+#   schedule:
+#     - cron: '0 0 * * *'  # Run daily at midnight UTC
+on:
+  push:
+    branches:
+      - delete-duplicates
+
+jobs:
+  delete-duplicates:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r scripts/requirements.txt
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Verify environment variables
+        run: |
+          echo "Checking if required environment variables are set..."
+          if [ -n "${{ secrets.DB_HOST }}" ]; then echo "DB_HOST is set"; else echo "DB_HOST is not set"; fi
+          if [ -n "${{ secrets.DB_USER }}" ]; then echo "DB_USER is set"; else echo "DB_USER is not set"; fi
+          if [ -n "${{ secrets.DB_NAME }}" ]; then echo "DB_NAME is set"; else echo "DB_NAME is not set"; fi
+          if [ -n "${{ secrets.DB_PASSWORD }}" ]; then echo "DB_PASSWORD is set"; else echo "DB_PASSWORD is not set"; fi
+          if [ -n "${{ secrets.AWS_INDEX_ID }}" ]; then echo "AWS_INDEX_ID is set"; else echo "AWS_INDEX_ID is not set"; fi
+          if [ -n "${{ secrets.AWS_ROLE_ARN }}" ]; then echo "AWS_ROLE_ARN is set"; else echo "AWS_ROLE_ARN is not set"; fi
+
+      - name: Run duplicate deletion script
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          INDEX_ID: ${{ secrets.AWS_INDEX_ID }}
+          ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+        run: |
+          echo "=== Running delete_duplicates.py ==="
+          python scripts/delete_duplicates.py
+
+
