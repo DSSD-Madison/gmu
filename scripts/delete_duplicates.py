@@ -58,6 +58,12 @@ def group_by(docs, key_func):
         groups[key_func(doc)].append(doc)
     return [group for group in groups.values() if len(group) > 1]
 
+def approx_equal(a, b, tolerance=3000):
+    """Return True if a and b are within `tolerance` bytes of each other."""
+    if a is None or b is None:
+        return False
+    return abs(a - b) <= tolerance
+
 def process_duplicates():
     s3 = boto3.client(
         's3',
@@ -84,7 +90,10 @@ def process_duplicates():
             metas = [(doc, *get_s3_metadata(s3, doc['s3_file'])) for doc in group]
 
             valid = all(m[1] is not None and m[2] is not None for m in metas)
-            if not valid or not all((m[1], m[2]) == (metas[0][1], metas[0][2]) for m in metas):
+            
+            base_size, base_type = metas[0][1], metas[0][2]
+            if not valid or not all(approx_equal(m[1], base_size) and m[2] == base_type for m in metas):
+
                 logger.info("SKIPPING GROUP due to mismatch or missing metadata:")
                 base_size, base_type = metas[0][1], metas[0][2]
                 for doc, size, ctype in metas:
@@ -108,7 +117,8 @@ def process_duplicates():
     finally:
         cur.close()
         conn.close()
-        
+
+
 def delete_duplicates_from_kendra():
     print("Starting Kendra cleanup...")
     conn = get_db_connection()
