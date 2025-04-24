@@ -151,6 +151,30 @@ def delete_duplicates_from_kendra():
                 DocumentIdList=batch
             )
         print("Finished deleting marked duplicates from Kendra.")
+        
+        # Verify deletions with BatchGetDocumentStatus
+        if doc_ids:
+            print("\nVerifying deletion status with Kendra...")
+            try:
+                for i in range(0, len(doc_ids), 10):
+                    batch = doc_ids[i:i + 10]
+                    response = kendra_client.batch_get_document_status(
+                        IndexId=index_id,
+                        DocumentIdList=batch
+                    )
+                    for doc in response.get("DocumentStatusList", []):
+                        print(f"Document ID: {doc['DocumentId']}")
+                        print(f"Status: {doc['Status']}")
+                        if 'FailureCode' in doc:
+                            print(f"Failure Code: {doc['FailureCode']}")
+                        if 'FailureReason' in doc:
+                            print(f"Failure Reason: {doc['FailureReason']}")
+                        print("-" * 60)
+            except Exception as e:
+                print(f"Error while verifying deletion status: {e}")
+
+
+
 
     finally:
         conn.close()
