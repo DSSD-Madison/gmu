@@ -16,11 +16,12 @@ type Client interface {
 	GetSuggestions(ctx context.Context, query string) (KendraSuggestions, error)
 }
 
+// Config holds specific settings for the AWS Clients.
 type Config struct {
-	Credentials      Provider
-	Region           string
-	IndexID          string
-	ModelID          string
-	RetryMaxAttempts int
-	KeywordsFilePath string
+	Credentials      Provider // Credentials is the provider for retrieving AWS credentials.
+	Region           string   // Region provides the AWS region of the Client.
+	IndexID          string   // IndexID provides the ID of the Kendra Index.
+	ModelID          string   // ModelID provides the ModelID of the BedrockClient.
+	RetryMaxAttempts int      // RetryMaxAttempts provides the number of attempts a client should make to AWS before giving up.
+	KeywordsFilePath string   // The path to the Keywords file for AWS Bedrock.
 }

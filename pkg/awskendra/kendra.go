@@ -10,13 +10,17 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/kendra/types"
 )
 
+// kendraClientImpl provides an implementation of the Client interface.
+// It wraps the base AWS kendra.Client, incorporating request handling via
+// a QueryExecutor, specific configuration settings, and dedicated logging.
 type kendraClientImpl struct {
-	awsClient  *kendra.Client
-	queryQueue QueryExecutor
-	config     Config
-	log        logger.Logger
+	awsClient  *kendra.Client // awsClient is the underlying AWS Kendra SDK client.
+	queryQueue QueryExecutor  // queryQueue handles the execution and queuing of queries.
+	config     Config         // config holds specific settings for this client's behavior.
+	log        logger.Logger  // log provides dedicated logging for this client's logging.
 }
 
+// New initializes a New Kendra Client using the provided config and logger.
 func New(config Config, log logger.Logger) (Client, error) {
 	pkgLogger := log.With("package", "awskendra")
 
@@ -46,6 +50,7 @@ func New(config Config, log logger.Logger) (Client, error) {
 	}, nil
 }
 
+// GetSuggestions initiates a request to Kendra for suggestions using the provided query.
 func (c *kendraClientImpl) GetSuggestions(ctx context.Context, query string) (KendraSuggestions, error) {
 	c.log.DebugContext(ctx, "Requesting Kendra suggestions", "query", query)
 	kendraQuery := kendra.GetQuerySuggestionsInput{
@@ -64,6 +69,7 @@ func (c *kendraClientImpl) GetSuggestions(ctx context.Context, query string) (Ke
 	return suggestions, nil
 }
 
+// queryOutputToResults converts a Kendra query output to KendraResults.
 func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	kendraResults := KendraResults{
 		Results: make(map[string]KendraResult),
@@ -133,6 +139,8 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	return kendraResults
 }
 
+// MakeQuery takes a query, filter map, page number, and request context and initiates a request to AWS Kendra,
+// returning KendraResults.
 func (c *kendraClientImpl) MakeQuery(ctx context.Context, query string, filters map[string][]string, pageNum int) (KendraResults, error) {
 	c.log.DebugContext(ctx, "Building kendra query", "query", query, "page", pageNum, "filter_count", len(filters))
 
@@ -211,6 +219,8 @@ func (c *kendraClientImpl) MakeQuery(ctx context.Context, query string, filters 
 	return results, nil
 }
 
+// querySuggestionsOutputToSuggestions converts the suggestions output returned
+// by a Kendra query for suggestions into KendraSuggestions.
 func querySuggestionsOutputToSuggestions(out kendra.GetQuerySuggestionsOutput) KendraSuggestions {
 	suggestions := KendraSuggestions{
 		Suggestions: make([]string, 0),
@@ -223,6 +233,8 @@ func querySuggestionsOutputToSuggestions(out kendra.GetQuerySuggestionsOutput) K
 	return suggestions
 }
 
+// TrimExtension trims defined extensions from a string,
+// returning the trimmed string.
 func TrimExtension(s string) string {
 	if strings.HasSuffix(s, ".pdf") {
 		return strings.TrimSuffix(s, ".pdf")

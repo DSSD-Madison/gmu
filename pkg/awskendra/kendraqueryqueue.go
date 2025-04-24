@@ -8,21 +8,31 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/kendra"
 )
 
+// QueryExecutor defines the interface used for submitting and managing
+// asynchronous query execution to AWS Kendra.
 type QueryExecutor interface {
+	// EnqueueQuery submits a kendra.QueryInput to the executor for asynchronous
+	// processing. It returns a QueryResult after the query has finished.
 	EnqueueQuery(ctx context.Context, query kendra.QueryInput) QueryResult
+
+	// Shutdown initiates a graceful shutdown of the QueryExecutor.
 	Shutdown(ctx context.Context) error
 }
 
+// QueryResult holds the Results of a query and an error, if one occurs.
 type QueryResult struct {
 	Results KendraResults
 	Error   error
 }
 
+// kendraQueryExecutor implements the QueryExecutor interface to be used for queuing
+// search requests to AWS Kendra.
 type kendraQueryExecutor struct {
 	queue Queue[kendra.QueryInput, QueryResult]
 	log   logger.Logger
 }
 
+// NewKendraQueryQueue instantiates a KendraQueryExecutor with given parameters.
 func NewKendraQueryQueue(
 	awsClient *kendra.Client,
 	log logger.Logger,
@@ -60,6 +70,8 @@ func NewKendraQueryQueue(
 	}
 }
 
+// EnqueueQuery handles the asynchronous execution of a Kendra Query.
+// The query will be stopped early if the given context is finished.
 func (q *kendraQueryExecutor) EnqueueQuery(ctx context.Context, query kendra.QueryInput) QueryResult {
 	resultChan := make(chan QueryResult, 1)
 
@@ -93,6 +105,7 @@ func (q *kendraQueryExecutor) EnqueueQuery(ctx context.Context, query kendra.Que
 	}
 }
 
+// Shutdown initiates graceful shutdown for the Queue.
 func (q *kendraQueryExecutor) Shutdown(ctx context.Context) error {
 	q.log.Info("Shutting down Kendra query executor...")
 	return q.queue.Shutdown(ctx)
