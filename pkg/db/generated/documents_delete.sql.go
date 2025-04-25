@@ -46,3 +46,12 @@ func (q *Queries) DeleteDocRegionsByDocID(ctx context.Context, docID uuid.NullUU
 	_, err := q.db.ExecContext(ctx, deleteDocRegionsByDocID, docID)
 	return err
 }
+
+const deleteDocumentByID = `-- name: DeleteDocumentByID :exec
+DELETE from documents WHERE id = $1
+`
+
+func (q *Queries) DeleteDocumentByID(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteDocumentByID, id)
+	return err
+}

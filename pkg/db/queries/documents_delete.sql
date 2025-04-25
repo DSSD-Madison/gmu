@@ -9,3 +9,6 @@ DELETE FROM doc_categories WHERE doc_id = $1;
 
 -- name: DeleteDocRegionsByDocID :exec
 DELETE FROM doc_regions WHERE doc_id = $1;
+
+-- name: DeleteDocumentByID :exec
+DELETE from documents WHERE id = $1;

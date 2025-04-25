@@ -39,3 +39,11 @@ func (s *S3Client) Upload(ctx context.Context, key string, body []byte) error {
 	})
 	return err
 }
+
+func (s *S3Client) Delete(ctx context.Context, bucket string, key string) error {
+	_, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: &bucket,
+		Key:    &key,
+	})
+	return err
+}

@@ -19,3 +19,7 @@ func NewFilemanagerService(log logger.Logger, s3Client *awskendra.S3Client) *Fil
 func (fs *FilemanagerService) UploadFile(ctx context.Context, key string, data []byte) error {
 	return fs.s3Client.Upload(ctx, key, data)
 }
+
+func (fs *FilemanagerService) DeleteFile(ctx context.Context, key string, bucket string) error {
+	return fs.s3Client.Delete(ctx, bucket, key)
+}

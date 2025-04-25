@@ -1,13 +1,5 @@
 package components
 
-templ UploadResponse(success bool, message string) {
-	if success {
-		@SuccessMessage(message)
-	} else {
-		@ErrorMessage(message)
-	}
-}
-
 templ DuplicateUploadResponse(docID string) {
 	<div class="p-2 font-semibold text-yellow-600">
 		Error: A file with this name has already been uploaded. You can either rename your file or
