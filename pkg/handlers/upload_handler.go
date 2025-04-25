@@ -25,15 +25,17 @@ import (
 type UploadHandler struct {
 	log            logger.Logger
 	bedrockManager services.BedrockManager
+	fileManager    *services.FilemanagerService
 	db             *db.Queries
 }
 
-func NewUploadHandler(log logger.Logger, db *db.Queries, bedrockManager services.BedrockManager) *UploadHandler {
+func NewUploadHandler(log logger.Logger, db *db.Queries, bedrockManager services.BedrockManager, fms *services.FilemanagerService) *UploadHandler {
 	handlerLogger := log.With("Handler", "Upload")
 	return &UploadHandler{
 		log:            handlerLogger,
 		bedrockManager: bedrockManager,
 		db:             db,
+		fileManager:    fms,
 	}
 }
 
@@ -56,7 +58,7 @@ func (uh *UploadHandler) HandlePDFUpload(c echo.Context) error {
 
 	originalFilename := fileHeader.Filename
 	fileID := uuid.New()
-	s3Path := fmt.Sprintf("s3://your-bucket-name/documents/%s", originalFilename)
+	s3Path := fmt.Sprintf("s3://manually-uploaded-bep/%s", originalFilename)
 
 	// 🧠 Check if document already exists in DB by S3 path
 	existingDoc, err := uh.db.FindDocumentByS3Path(ctx, s3Path)
@@ -78,6 +80,11 @@ func (uh *UploadHandler) HandlePDFUpload(c echo.Context) error {
 	fileBytes, err := io.ReadAll(file)
 	if err != nil {
 		return web.Render(c, http.StatusOK, components.ErrorMessage(fmt.Sprintf("Error reading file: %v", err)))
+	}
+
+	err = uh.fileManager.UploadFile(ctx, originalFilename, fileBytes)
+	if err != nil {
+		return web.Render(c, http.StatusOK, components.ErrorMessage(fmt.Sprintf("Error uploading file: %v", err)))
 	}
 
 	metadata, err := uh.bedrockManager.ExtractPDFMetadata(ctx, fileBytes)

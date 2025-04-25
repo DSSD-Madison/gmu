@@ -103,6 +103,8 @@ func main() {
 		appLogger.Error("Could not initialize bedrock client", "error", err)
 		os.Exit(1)
 	}
+
+	s3Client, err := awskendra.NewS3Client(*awsConfig)
 	appLogger.Info("Bedrock client initialized")
 
 	appLogger.Info("Initializing services...")
@@ -113,6 +115,7 @@ func main() {
 	authenticationService := services.NewLoginService(appLogger, dbQuerier)
 	bedrockService := services.NewBedrockService(appLogger, *bedrockClient)
 	userService := services.NewUserService(appLogger, dbQuerier)
+	fileManagerService := services.NewFilemanagerService(appLogger, s3Client)
 
 	appLogger.Info("Services initialized")
 
@@ -123,7 +126,7 @@ func main() {
 	searchHandler := handlers.NewSearchHandler(appLogger, searchService)
 	authHandler := handlers.NewAuthenticationHandler(appLogger, userService, authenticationService)
 	suggestionsHandler := handlers.NewSuggestionsHandler(appLogger, suggestionService)
-	uploadHandler := handlers.NewUploadHandler(appLogger, dbQuerier, bedrockService)
+	uploadHandler := handlers.NewUploadHandler(appLogger, dbQuerier, bedrockService, fileManagerService)
 	userManagementHandler := handlers.NewUserManagementHandler(appLogger, dbQuerier)
 	databaseHandler := handlers.NewDatabaseHandler(appLogger, dbQuerier)
 
