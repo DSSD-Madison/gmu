@@ -9,33 +9,33 @@ import (
 
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
-	"github.com/DSSD-Madison/gmu/pkg/middleware"
+	"github.com/DSSD-Madison/gmu/pkg/services"
 	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
 )
 
 type UserManagementHandler struct {
-	log logger.Logger
-	db  *db.Queries
+	log            logger.Logger
+	sessionManager services.SessionManager
+	db             *db.Queries
 }
 
-func NewUserManagementHandler(log logger.Logger, db *db.Queries) *UserManagementHandler {
+func NewUserManagementHandler(log logger.Logger, db *db.Queries, sessionManager services.SessionManager) *UserManagementHandler {
 	handlerLogger := log.With("handler", "UserManagement")
 	return &UserManagementHandler{
-		log: handlerLogger,
-		db:  db,
+		log:            handlerLogger,
+		sessionManager: sessionManager,
+		db:             db,
 	}
-}
-
-func RegisterUserManagementRoutes(e echo.Echo, umh *UserManagementHandler) {
-
 }
 
 func (uh *UserManagementHandler) ManageUsersPage(c echo.Context) error {
 	csrf := c.Get("csrf").(string)
-	isAuthorized, isMaster := middleware.GetSessionFlags(c)
+	isAuthorized := uh.sessionManager.IsAuthenticated(c)
+	isMaster := uh.sessionManager.IsMaster(c)
 
 	if !isMaster {
+		uh.log.WarnContext(c.Request().Context(), "access denied")
 		return c.String(http.StatusForbidden, "Access denied")
 	}
 
@@ -49,7 +49,9 @@ func (uh *UserManagementHandler) ManageUsersPage(c echo.Context) error {
 
 func (uh *UserManagementHandler) CreateNewUser(c echo.Context) error {
 	csrf := c.Get("csrf").(string)
-	isAuthorized, isMaster := middleware.GetSessionFlags(c)
+	isAuthorized := uh.sessionManager.IsAuthenticated(c)
+	isMaster := uh.sessionManager.IsMaster(c)
+
 	if !isMaster {
 		return c.String(http.StatusForbidden, "Access denied")
 	}
@@ -88,7 +90,7 @@ func (uh *UserManagementHandler) CreateNewUser(c echo.Context) error {
 }
 
 func (uh *UserManagementHandler) DeleteUser(c echo.Context) error {
-	_, isMaster := middleware.GetSessionFlags(c)
+	isMaster := uh.sessionManager.IsMaster(c)
 	if !isMaster {
 		return c.String(http.StatusForbidden, "Access denied")
 	}

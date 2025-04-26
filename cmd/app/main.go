@@ -8,7 +8,9 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
+	"github.com/gorilla/sessions"
 	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/labstack/echo/v4"
@@ -20,8 +22,21 @@ import (
 	db_util "github.com/DSSD-Madison/gmu/pkg/db/util"
 	"github.com/DSSD-Madison/gmu/pkg/handlers"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
+	"github.com/DSSD-Madison/gmu/pkg/ratelimiter"
 	"github.com/DSSD-Madison/gmu/pkg/services"
 	"github.com/DSSD-Madison/gmu/routes"
+)
+
+const (
+	sessionCookieName = "gmu_session"
+
+	ipMaxAttempts   = 10
+	ipBlockDuration = 5 * time.Minute
+	ipWindow        = 1 * time.Minute
+
+	userMaxAttempts   = 5
+	userBlockDuration = 15 * time.Minute
+	userWindow        = 5 * time.Minute
 )
 
 func main() {
@@ -107,14 +122,47 @@ func main() {
 	s3Client, err := awskendra.NewS3Client(*awsConfig)
 	appLogger.Info("Bedrock client initialized")
 
+	appLogger.Info("Initializing Session Store...")
+	sessionSecretKey := os.Getenv("SESSION_SECRET_KEY")
+	if sessionSecretKey == "" {
+		if appConfig.Mode == "prod" {
+			appLogger.Error("SESSION_SECRET_KEY environment variable not set in prod. Exiting now.")
+			os.Exit(1)
+		}
+		appLogger.Warn("SESSION_SECRET_KEY environment variable not set. Using insecure default (dev only).")
+		sessionSecretKey = "insecure-default-key-for-dev-only-change-me"
+	}
+	cookieStore := sessions.NewCookieStore([]byte(sessionSecretKey))
+	cookieStore.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   86400 * 7, // 7 days
+		HttpOnly: true,
+		Secure:   appConfig.Mode == "prod",
+		SameSite: http.SameSiteLaxMode,
+	}
+	appLogger.Info("Session Store initialized", "name", sessionCookieName, "secure", cookieStore.Options.Secure)
+
+	// --- Service Initialization ---
 	appLogger.Info("Initializing services...")
+
+	// Rate Limiters
+	ipRateLimiter := ratelimiter.NewInMemoryRateLimiter(context.Background(), appLogger, ipMaxAttempts, ipBlockDuration, ipWindow)
+	userRateLimiter := ratelimiter.NewInMemoryRateLimiter(context.Background(), appLogger, userMaxAttempts, userBlockDuration, userWindow)
+	appLogger.Debug("Rate Limiters initialized")
+
+	sessionManager, err := services.NewGorillaSessionManager(cookieStore, sessionCookieName, appLogger)
+	if err != nil {
+		appLogger.Error("Failed to create session manager", "error", err)
+		os.Exit(1)
+	}
+
+	userService := services.NewUserService(appLogger, dbQuerier)
+
+	authenticationService := services.NewLoginService(appLogger, ipRateLimiter, userRateLimiter, userService)
 
 	searchService := services.NewSearchService(appLogger, kendraClient, dbQuerier)
 	suggestionService := services.NewSuggestionService(appLogger, kendraClient)
-	// loginService := services.NewLoginService(appLogger, dbQuerier)
-	authenticationService := services.NewLoginService(appLogger, dbQuerier)
 	bedrockService := services.NewBedrockService(appLogger, *bedrockClient)
-	userService := services.NewUserService(appLogger, dbQuerier)
 	fileManagerService := services.NewFilemanagerService(appLogger, s3Client)
 
 	appLogger.Info("Services initialized")
@@ -122,12 +170,13 @@ func main() {
 	// --- Handler Initialization ---
 	appLogger.Info("Initializing Handlers...")
 
-	homeHandler := handlers.NewHomeHandler(appLogger)
+	homeHandler := handlers.NewHomeHandler(appLogger, sessionManager)
 	searchHandler := handlers.NewSearchHandler(appLogger, searchService)
-	authHandler := handlers.NewAuthenticationHandler(appLogger, userService, authenticationService)
+
+	authHandler := handlers.NewAuthenticationHandler(appLogger, sessionManager, authenticationService)
 	suggestionsHandler := handlers.NewSuggestionsHandler(appLogger, suggestionService)
-	uploadHandler := handlers.NewUploadHandler(appLogger, dbQuerier, bedrockService, fileManagerService)
-	userManagementHandler := handlers.NewUserManagementHandler(appLogger, dbQuerier)
+	uploadHandler := handlers.NewUploadHandler(appLogger, dbQuerier, bedrockService, fileManagerService, sessionManager)
+	userManagementHandler := handlers.NewUserManagementHandler(appLogger, dbQuerier, sessionManager)
 	databaseHandler := handlers.NewDatabaseHandler(appLogger, dbQuerier)
 
 	appLogger.Info("Handlers initialized")
@@ -167,25 +216,21 @@ func main() {
 		CookiePath:     "/",
 		CookieDomain:   "",
 		ContextKey:     "csrf",
-		CookieSameSite: http.SameSiteStrictMode,
+		CookieSameSite: http.SameSiteLaxMode,
 		CookieSecure:   appConfig.Mode == "prod", // Only set secure cookies in prod
 		Skipper: func(c echo.Context) bool {
-			switch c.Path() {
-			case "/", "/search", "/search/suggestions", "/login", "/logout":
-				return true
-			default:
-				return false
-			}
+			return false
 		},
 	}))
+
 	// --- Routes Initialization ---
 	routes.RegisterAuthenticationRoutes(e, authHandler)
-	routes.RegisterDatabaseRoutes(e, databaseHandler)
+	routes.RegisterDatabaseRoutes(e, databaseHandler, sessionManager)
 	routes.RegisterHomeRoutes(e, homeHandler)
 	routes.RegisterSearchRoutes(e, searchHandler)
 	routes.RegisterSuggestionsRoutes(e, suggestionsHandler)
-	routes.RegisterUploadRoutes(e, uploadHandler)
-	routes.RegisterUserManagementRoutes(e, userManagementHandler)
+	routes.RegisterUploadRoutes(e, uploadHandler, sessionManager)
+	routes.RegisterUserManagementRoutes(e, userManagementHandler, sessionManager)
 	appLogger.Info("Routes initialized")
 
 	e.Static("/images", "web/assets/images")

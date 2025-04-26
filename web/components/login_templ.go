@@ -41,7 +41,11 @@ func LoginPage(err string, csrf string, redirect string, isAuthorized bool, isMa
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"login-form-container\" class=\"max-w-md p-6 mx-auto mt-20 bg-white shadow-md dark:bg-gray-800 rounded-xl\"><h2 class=\"mb-4 text-2xl font-semibold text-center dark:text-white\">Login</h2><div id=\"login-form-message\">")
+			templ_7745c5c3_Err = listenForErrors().Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, " <div id=\"login-form-container\" class=\"max-w-md p-6 mx-auto mt-20 bg-white shadow-md dark:bg-gray-800 rounded-xl\"><h2 class=\"mb-4 text-2xl font-semibold text-center dark:text-white\">Login</h2><div id=\"login-form-message\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -58,7 +62,7 @@ func LoginPage(err string, csrf string, redirect string, isAuthorized bool, isMa
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(csrf)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/login.templ`, Line: 15, Col: 50}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/login.templ`, Line: 16, Col: 50}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -71,7 +75,7 @@ func LoginPage(err string, csrf string, redirect string, isAuthorized bool, isMa
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(redirect)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/login.templ`, Line: 16, Col: 57}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/login.templ`, Line: 17, Col: 57}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -84,6 +88,35 @@ func LoginPage(err string, csrf string, redirect string, isAuthorized bool, isMa
 			return nil
 		})
 		templ_7745c5c3_Err = Base("Login", isAuthorized, isMaster).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func listenForErrors() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var5 == nil {
+			templ_7745c5c3_Var5 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<script>\n\t\tdocument.body.addEventListener('htmx:beforeSwap', function(evt) {\n\t\t\tif (evt.detail.isError) {\n\t\t\t\tconsole.warn(\"HTMX response error detected. Status:\", evt.detail.xhr.status);\n\n\t\t\t\tswitch (evt.detail.xhr.status) {\n\t\t\t\t\tcase 401: // Unauthorized (e.g., invalid credentials)\n\t\t\t\t\tcase 400: // Bad Request (e.g., validation errors)\n\t\t\t\t\tcase 403: // Forbidden\n\t\t\t\t\tcase 422: // Unprocessable Entity (often used for validation errors)\n\t\t\t\t\tcase 429: // Too Many Requests (rate limiting)\n\n\t\t\t\t\t// Allow HTMX to swap the response content (which should be your error component)\n\t\t\t\t\t// into the target element.\n\t\t\t\t\tevt.detail.shouldSwap = true;\n\t\t\t\t\tbreak;\n\n\t\t\t\tdefault:\n\t\t\t\t\t// For other errors (like 500 Internal Server Error), you might *not* want\n\t\t\t\t\t// to swap the content, or you might want different handling.\n\t\t\t\t\t// Default behavior (shouldSwap = false) will prevent swapping for unhandled errors.\n\t\t\t\t\tconsole.log(`Status ${evt.detail.xhr.status}: Preventing swap (default error behavior).`);\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\t}\n\t\t});\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

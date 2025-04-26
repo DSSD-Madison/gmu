@@ -18,7 +18,6 @@ import (
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
 	"github.com/DSSD-Madison/gmu/pkg/db/util"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
-	"github.com/DSSD-Madison/gmu/pkg/middleware"
 	"github.com/DSSD-Madison/gmu/pkg/services"
 	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
@@ -29,14 +28,16 @@ type UploadHandler struct {
 	log            logger.Logger
 	bedrockManager services.BedrockManager
 	fileManager    *services.FilemanagerService
+	sessionManager services.SessionManager
 	db             *db.Queries
 }
 
-func NewUploadHandler(log logger.Logger, db *db.Queries, bedrockManager services.BedrockManager, fms *services.FilemanagerService) *UploadHandler {
+func NewUploadHandler(log logger.Logger, db *db.Queries, bedrockManager services.BedrockManager, fms *services.FilemanagerService, sessionManager services.SessionManager) *UploadHandler {
 	handlerLogger := log.With("Handler", "Upload")
 	return &UploadHandler{
 		log:            handlerLogger,
 		bedrockManager: bedrockManager,
+		sessionManager: sessionManager,
 		db:             db,
 		fileManager:    fms,
 	}
@@ -44,7 +45,8 @@ func NewUploadHandler(log logger.Logger, db *db.Queries, bedrockManager services
 
 func (uh *UploadHandler) PDFUploadPage(c echo.Context) error {
 	csrf := c.Get("csrf").(string)
-	isAuthorized, isMaster := middleware.GetSessionFlags(c)
+	isAuthorized := uh.sessionManager.IsAuthenticated(c)
+	isMaster := uh.sessionManager.IsMaster(c)
 	return web.Render(c, http.StatusOK, components.PDFUpload(csrf, isAuthorized, isMaster))
 }
 
@@ -200,7 +202,8 @@ func (uh *UploadHandler) PDFMetadataEditPage(c echo.Context) error {
 	if !ok {
 		uh.log.WarnContext(c.Request().Context(), "CSRF token not found in context")
 	}
-	isAuthorized, isMaster := middleware.GetSessionFlags(c)
+	isAuthorized := uh.sessionManager.IsAuthenticated(c)
+	isMaster := uh.sessionManager.IsMaster(c)
 
 	s3Link := util.ConvertS3URIToURL(doc.S3File)
 	return web.Render(c, http.StatusOK, components.PDFMetadataEditForm(
@@ -365,7 +368,7 @@ func (uh *UploadHandler) updateManyToManyFieldsMetadata(
 			AuthorID: uuid.NullUUID{UUID: authorID, Valid: true},
 		})
 		if err != nil {
-			fmt.Println("[ERROR] Failed to insert into doc_authors: %v", err)
+			fmt.Printf("[ERROR] Failed to insert into doc_authors: %v\n", err)
 			return err
 		}
 	}

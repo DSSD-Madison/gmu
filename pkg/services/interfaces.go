@@ -6,6 +6,7 @@ import (
 
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
+	"github.com/labstack/echo/v4"
 )
 
 type Searcher interface {
@@ -24,7 +25,7 @@ type UserManager interface {
 }
 
 type AuthenticationManager interface {
-	ValidateLogin(user db.User, password string) error
+	HandleLogin(ctx context.Context, ip string, username string, password string) (db.User, error)
 }
 
 type FileManager interface {
@@ -35,4 +36,13 @@ type FileManager interface {
 
 type BedrockManager interface {
 	ExtractPDFMetadata(ctx context.Context, pdfBytes []byte) (*awskendra.ExtractedMetadata, error)
+}
+
+type SessionManager interface {
+	Create(c echo.Context, user db.User) error
+	Destroy(c echo.Context) error
+	GetUserID(c echo.Context) (string, bool)
+	IsAuthenticated(c echo.Context) bool
+	IsMaster(c echo.Context) bool
+	RequireAuth(next echo.HandlerFunc) echo.HandlerFunc
 }
