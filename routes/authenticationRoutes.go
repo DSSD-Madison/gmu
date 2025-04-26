@@ -11,5 +11,5 @@ func RegisterAuthenticationRoutes(e *echo.Echo, authenticationHandler *handlers.
 	e.POST("/login", authenticationHandler.Login)
 
 	// Logout Route
-	e.POST("/logout", authenticationHandler.Logout)
+	e.GET("/logout", authenticationHandler.Logout)
 }
