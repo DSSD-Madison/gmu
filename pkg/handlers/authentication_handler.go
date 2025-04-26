@@ -1,16 +1,13 @@
 package handlers
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"strings"
 
-	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 
-	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
-	"github.com/DSSD-Madison/gmu/pkg/middleware"
 	"github.com/DSSD-Madison/gmu/pkg/services"
 	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
@@ -18,15 +15,15 @@ import (
 
 type AuthenticationHandler struct {
 	log                   logger.Logger
-	userManager           services.UserManager
 	authenticationManager services.AuthenticationManager
+	sessionManager        services.SessionManager
 }
 
-func NewAuthenticationHandler(log logger.Logger, userManager services.UserManager, authenticationManager services.AuthenticationManager) *AuthenticationHandler {
+func NewAuthenticationHandler(log logger.Logger, sessionManager services.SessionManager, authenticationManager services.AuthenticationManager) *AuthenticationHandler {
 	handlerLogger := log.With("Handler", "Authentication")
 	return &AuthenticationHandler{
 		log:                   handlerLogger,
-		userManager:           userManager,
+		sessionManager:        sessionManager,
 		authenticationManager: authenticationManager,
 	}
 }
@@ -36,78 +33,54 @@ func (ah *AuthenticationHandler) RegisterAuthenticationRoutes(e *echo.Echo) {
 	e.GET("/login", ah.LoginPage)
 	e.POST("/login", ah.Login)
 
-	// Logout Route
-	e.GET("/logout", ah.Logout) // for dev testing, remove when nav bar added
 	e.POST("/logout", ah.Logout)
-}
-
-func (ah *AuthenticationHandler) CreateSession(c echo.Context, user db.User) (*sessions.Session, error) {
-	session, err := middleware.Store.Get(c.Request(), "session")
-	if err != nil {
-		ah.log.Error("Failed to get session info", "user", user.Username)
-		return nil, err
-	}
-	session.Values["authenticated"] = true
-	session.Values["username"] = user.Username
-	session.Values["is_master"] = user.IsMaster
-	if err := session.Save(c.Request(), c.Response()); err != nil {
-		ah.log.ErrorContext(c.Request().Context(), "Failed to save session", "error", err)
-	}
-	return session, nil
-}
-
-func (ah *AuthenticationHandler) LogoutSession(c echo.Context) error {
-	session, err := middleware.Store.Get(c.Request(), "session")
-	if err != nil {
-		ah.log.ErrorContext(c.Request().Context(), "Failed to log out", "error", err)
-		return err
-	}
-	session.Values["authenticated"] = false
-	session.Values["is_master"] = false
-	session.Options.MaxAge = -1
-	err = session.Save(c.Request(), c.Response())
-	if err != nil {
-		ah.log.ErrorContext(c.Request().Context(), "Failed to save session", "error", err)
-		return err
-	}
-	return nil
 }
 
 func (ah *AuthenticationHandler) Login(c echo.Context) error {
 	username := c.FormValue("username")
 	password := c.FormValue("password")
 	redirect := c.FormValue("redirect")
+	ctx := c.Request().Context()
+	ip := c.RealIP()
 
-	csrf, ok := c.Get("csrf").(string)
-	if !ok {
-		csrf = ""
-	}
+	csrf, _ := c.Get("csrf").(string)
 
-	isAuthorized, isMaster := middleware.GetSessionFlags(c)
-
-	user, err := ah.userManager.GetUser(c.Request().Context(), username)
+	user, err := ah.authenticationManager.HandleLogin(ctx, ip, username, password)
 	if err != nil {
-		fmt.Println("Login error: user not found:", err)
-		if c.Request().Header.Get("HX-Request") == "true" {
-			return web.Render(c, http.StatusOK, components.ErrorMessage("Invalid credentials"))
+		ah.log.WarnContext(ctx, "Login failed", "error", err, "username", username, "ip", ip)
+
+		userMessage := "Invalid Credentials"
+		httpStatus := http.StatusUnauthorized
+
+		if errors.Is(err, services.ErrRateLimited) {
+			userMessage = "Too many attempts. Please try again later."
+			httpStatus = http.StatusTooManyRequests
+		} else if !errors.Is(err, services.ErrInvalidCredentials) {
+			ah.log.ErrorContext(ctx, "Unexpected login error", "error", err, "user", username, "ip", ip)
+			userMessage = "An unexpected error occurred."
+			httpStatus = http.StatusInternalServerError
 		}
-		return web.Render(c, http.StatusOK, components.LoginPage("Invalid credentials", csrf, redirect, isAuthorized, isMaster))
+
+		if c.Request().Header.Get("HX-Request") == "true" {
+			c.Response().WriteHeader(httpStatus)
+			ah.log.Info("HX-Request is true")
+			return web.Render(c, httpStatus, components.ErrorMessage(userMessage))
+		}
+
+		isAuthorized := ah.sessionManager.IsAuthenticated(c)
+		isMaster := ah.sessionManager.IsMaster(c)
+
+		ah.log.Info("Rendering login page")
+		return web.Render(c, http.StatusOK, components.LoginPage(userMessage, csrf, redirect, isAuthorized, isMaster))
 	}
 
-	err = ah.authenticationManager.ValidateLogin(user, password)
-	if err != nil {
-		fmt.Println("Login error: incorrect password:", err)
-		if c.Request().Header.Get("HX-Request") == "true" {
-			return web.Render(c, http.StatusOK, components.ErrorMessage("Invalid credentials"))
-		}
-		return web.Render(c, http.StatusOK, components.LoginPage("Invalid credentials", csrf, redirect, isAuthorized, isMaster))
-	}
+	ah.log.InfoContext(ctx, "Login successful, creating session", "username", user.Username)
 
 	// Success: create session
-	_, err = ah.CreateSession(c, user)
+	err = ah.sessionManager.Create(c, user)
 	if err != nil {
 		ah.log.ErrorContext(c.Request().Context(), "Failed to create session", "error", err)
-		return err
+		return web.Render(c, http.StatusInternalServerError, components.ErrorMessage("Login succeeded but failed to create session. Please try again."))
 	}
 
 	// Secure redirect
@@ -123,20 +96,25 @@ func (ah *AuthenticationHandler) Login(c echo.Context) error {
 }
 
 func (ah *AuthenticationHandler) LoginPage(c echo.Context) error {
-	csrf, ok := c.Get("csrf").(string)
-	if !ok {
-		csrf = ""
-	}
+	csrf, _ := c.Get("csrf").(string)
 	redirect := c.QueryParam("redirect")
-	isAuthorized, isMaster := middleware.GetSessionFlags(c)
+
+	isAuthorized := ah.sessionManager.IsAuthenticated(c)
+	isMaster := ah.sessionManager.IsMaster(c)
 	return web.Render(c, http.StatusOK, components.LoginPage("", csrf, redirect, isAuthorized, isMaster))
 }
 
 func (ah *AuthenticationHandler) Logout(c echo.Context) error {
-	err := ah.LogoutSession(c)
+	ctx := c.Request().Context()
+	err := ah.sessionManager.Destroy(c)
 	if err != nil {
-		ah.log.ErrorContext(c.Request().Context(), "Failed to log out", "error", err)
-		return err
+		ah.log.ErrorContext(ctx, "Error destroying session via manager", "error", err)
 	}
-	return c.Redirect(http.StatusSeeOther, "/")
+
+	if c.Request().Header.Get("HX-Request") == "true" {
+		c.Response().Header().Set("HX-Redirect", "/login")
+		return c.NoContent(http.StatusOK)
+	}
+
+	return c.Redirect(http.StatusSeeOther, "/login")
 }

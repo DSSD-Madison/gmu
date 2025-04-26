@@ -6,22 +6,27 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/DSSD-Madison/gmu/pkg/logger"
-	"github.com/DSSD-Madison/gmu/pkg/middleware"
+	"github.com/DSSD-Madison/gmu/pkg/services"
 	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
 )
 
 type HomeHandler struct {
-	log logger.Logger
+	log            logger.Logger
+	sessionManager services.SessionManager
 }
 
-func NewHomeHandler(log logger.Logger) *HomeHandler {
+func NewHomeHandler(log logger.Logger, sessionManager services.SessionManager) *HomeHandler {
 	handlerLogger := log.With("handler", "Home")
-	return &HomeHandler{log: handlerLogger}
+	return &HomeHandler{
+		log:            handlerLogger,
+		sessionManager: sessionManager,
+	}
 }
 
 func (h *HomeHandler) Home(c echo.Context) error {
 	h.log.InfoContext(c.Request().Context(), "Rendering home page")
-	isAuthorized, isMaster := middleware.GetSessionFlags(c)
+	isAuthorized := h.sessionManager.IsAuthenticated(c)
+	isMaster := h.sessionManager.IsMaster(c)
 	return web.Render(c, http.StatusOK, components.Home(isAuthorized, isMaster))
 }

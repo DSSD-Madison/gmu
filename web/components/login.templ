@@ -2,6 +2,7 @@ package components
 
 templ LoginPage(err string, csrf string, redirect string, isAuthorized bool, isMaster bool) {
 	@Base("Login", isAuthorized, isMaster) {
+		@listenForErrors()
 		<div id="login-form-container" class="max-w-md p-6 mx-auto mt-20 bg-white shadow-md dark:bg-gray-800 rounded-xl">
 			<h2 class="mb-4 text-2xl font-semibold text-center dark:text-white">Login</h2>
 
@@ -32,4 +33,34 @@ templ LoginPage(err string, csrf string, redirect string, isAuthorized bool, isM
 			</form>
 		</div>
 	}
+}
+
+templ listenForErrors() {
+	<script>
+		document.body.addEventListener('htmx:beforeSwap', function(evt) {
+			if (evt.detail.isError) {
+				console.warn("HTMX response error detected. Status:", evt.detail.xhr.status);
+
+				switch (evt.detail.xhr.status) {
+					case 401: // Unauthorized (e.g., invalid credentials)
+					case 400: // Bad Request (e.g., validation errors)
+					case 403: // Forbidden
+					case 422: // Unprocessable Entity (often used for validation errors)
+					case 429: // Too Many Requests (rate limiting)
+
+					// Allow HTMX to swap the response content (which should be your error component)
+					// into the target element.
+					evt.detail.shouldSwap = true;
+					break;
+
+				default:
+					// For other errors (like 500 Internal Server Error), you might *not* want
+					// to swap the content, or you might want different handling.
+					// Default behavior (shouldSwap = false) will prevent swapping for unhandled errors.
+					console.log(`Status ${evt.detail.xhr.status}: Preventing swap (default error behavior).`);
+					break;
+				}
+			}
+		});
+	</script>
 }
