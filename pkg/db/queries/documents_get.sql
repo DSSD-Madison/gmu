@@ -58,3 +58,9 @@ SELECT *
 FROM documents
 WHERE s3_file = $1;
 
+-- name: GetLatestDocuments :many
+SELECT *
+FROM documents
+ORDER BY created_at DESC
+    LIMIT 25;
+

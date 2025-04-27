@@ -209,3 +209,48 @@ func (q *Queries) GetDocumentsByURIs(ctx context.Context, dollar_1 []string) ([]
 	}
 	return items, nil
 }
+
+const getLatestDocuments = `-- name: GetLatestDocuments :many
+SELECT id, file_name, title, abstract, publish_date, source, to_index, s3_file, s3_file_preview, pdf_link, created_at, deleted_at, to_delete, to_generate_preview
+FROM documents
+ORDER BY created_at DESC
+    LIMIT 25
+`
+
+func (q *Queries) GetLatestDocuments(ctx context.Context) ([]Document, error) {
+	rows, err := q.db.QueryContext(ctx, getLatestDocuments)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Document
+	for rows.Next() {
+		var i Document
+		if err := rows.Scan(
+			&i.ID,
+			&i.FileName,
+			&i.Title,
+			&i.Abstract,
+			&i.PublishDate,
+			&i.Source,
+			&i.ToIndex,
+			&i.S3File,
+			&i.S3FilePreview,
+			&i.PdfLink,
+			&i.CreatedAt,
+			&i.DeletedAt,
+			&i.ToDelete,
+			&i.ToGeneratePreview,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

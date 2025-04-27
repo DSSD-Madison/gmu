@@ -446,3 +446,15 @@ func (uh *UploadHandler) ToggleDelete(c echo.Context) error {
 	)
 
 }
+
+func (uh *UploadHandler) LatestDocumentsPage(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	isAuthorized, isMaster := middleware.GetSessionFlags(c)
+
+	documents, err := uh.db.GetLatestDocuments(ctx)
+	if err != nil {
+		return err
+	}
+	return web.Render(c, 200, components.RecentDocumentsTable(documents, isAuthorized, isMaster))
+}
