@@ -4,10 +4,6 @@ on:
   schedule:
     - cron: '0 8 * * *'  # 3 AM Eastern = 8 AM UTC
   workflow_dispatch: # Allow manual runs
-  push:
-    branches:
-      actions-work
-
 
 jobs:
   index-and-generate-previews:
@@ -60,12 +56,6 @@ jobs:
           INDEX_ID: ${{ secrets.AWS_INDEX_ID }}
           ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
         run: |
-          echo "=== TEST running remove untitleds to see if it still looks fine"
-          python scripts/remove_untitled.py
-          echo "=== TEST running process documents"
-          python scripts/process_duplicates.py
-          echo "=== TEST running delete marked documents"
-          python scripts/delete_marked_documents.py
           echo "=== Running batch_put.py (Kendra Indexing) ==="
           python scripts/batch_put.py
 
