@@ -100,15 +100,17 @@ def process_document(doc, conn):
 
         s3_resource.Object(bucket, webp_key).put(
             Body=output_buffer.getvalue(),
-            ACL='public-read'  # 👈 ensures it's viewable in browser
+            ACL='public-read',
+            ContentType='image/webp'
         )
 
         with conn.cursor() as cur:
             cur.execute("""
                 UPDATE documents
-                SET s3_file_preview = %s
+                SET s3_file_preview = %s, to_generate_preview = FALSE
                 WHERE id = %s
             """, (webp_uri, doc_id))
+
         conn.commit()
         print(f"✅ Generated preview for {file_name} → {webp_uri}")
 
@@ -122,7 +124,7 @@ def main():
             cur.execute("""
                 SELECT id, s3_file
                 FROM documents
-                WHERE s3_file_preview IS NULL
+                WHERE to_generate_preview = true
             """)
             docs = cur.fetchall()
             print(f"Found {len(docs)} unprocessed documents")

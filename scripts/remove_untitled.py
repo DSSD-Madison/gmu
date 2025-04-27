@@ -47,7 +47,7 @@ def mark_as_unindexed(conn, s3_files: List[str]):
         cur.execute(
             """
             UPDATE documents
-            SET indexed_by_kendra = FALSE
+            SET to_index = false
             WHERE s3_file = ANY(%s)
             """,
             (s3_files,)
