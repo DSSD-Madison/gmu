@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"net/http"
+	"strconv"
 	"strings"
 
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
@@ -26,6 +27,19 @@ func NewDatabaseHandler(log logger.Logger, db *db.Queries) *DatabaseHandler {
 }
 
 func (dh *DatabaseHandler) DatabaseFieldSearch(c echo.Context, fieldName string) error {
+	ctx := c.Request().Context()
+
+	tagCountStr := c.QueryParam("tagCount")
+	count, err := strconv.Atoi(tagCountStr)
+
+	if err != nil {
+		dh.log.ErrorContext(ctx, "Error converting tagCount param to int: %v", err)
+		return echo.NewHTTPError(http.StatusBadRequest)
+	}
+
+	if count >= 10 {
+		return web.Render(c, 200, components.TooManySuggestions())
+	}
 	var idPrefix string
 
 	switch fieldName {
@@ -48,8 +62,6 @@ func (dh *DatabaseHandler) DatabaseFieldSearch(c echo.Context, fieldName string)
 	if searchQuery == "" {
 		return web.Render(c, http.StatusOK, components.SuggestionList(idPrefix, fieldName, []components.Pair{}))
 	}
-
-	ctx := c.Request().Context()
 
 	var suggestions []components.Pair
 

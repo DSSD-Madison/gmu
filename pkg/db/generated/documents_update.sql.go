@@ -12,13 +12,31 @@ import (
 	"github.com/google/uuid"
 )
 
+const updateDocumentDeletionStatus = `-- name: UpdateDocumentDeletionStatus :exec
+UPDATE documents
+SET
+    to_delete = $2
+WHERE id = $1
+`
+
+type UpdateDocumentDeletionStatusParams struct {
+	ID       uuid.UUID
+	ToDelete bool
+}
+
+func (q *Queries) UpdateDocumentDeletionStatus(ctx context.Context, arg UpdateDocumentDeletionStatusParams) error {
+	_, err := q.db.ExecContext(ctx, updateDocumentDeletionStatus, arg.ID, arg.ToDelete)
+	return err
+}
+
 const updateDocumentMetadata = `-- name: UpdateDocumentMetadata :exec
 UPDATE documents
 SET
   title = $2,
   abstract = $3,
   publish_date = $4,
-  source = $5
+  source = $5,
+  to_index = $6
 WHERE id = $1
 `
 
@@ -28,6 +46,7 @@ type UpdateDocumentMetadataParams struct {
 	Abstract    sql.NullString
 	PublishDate sql.NullTime
 	Source      sql.NullString
+	ToIndex     sql.NullBool
 }
 
 func (q *Queries) UpdateDocumentMetadata(ctx context.Context, arg UpdateDocumentMetadataParams) error {
@@ -37,6 +56,7 @@ func (q *Queries) UpdateDocumentMetadata(ctx context.Context, arg UpdateDocument
 		arg.Abstract,
 		arg.PublishDate,
 		arg.Source,
+		arg.ToIndex,
 	)
 	return err
 }

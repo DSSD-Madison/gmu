@@ -41,14 +41,14 @@ func PDFUpload(csrf string, isAuthorized bool, isMaster bool) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"upload-container\" class=\"relative flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900\"><form id=\"pdf-upload-form\" action=\"/upload\" method=\"post\" enctype=\"multipart/form-data\" class=\"z-10 w-full max-w-md p-6 bg-white rounded-lg shadow-md dark:bg-gray-800\" hx-encoding=\"multipart/form-data\" hx-post=\"/upload\" hx-target=\"#upload-response\" hx-swap=\"innerHTML\" hx-indicator=\"#upload-indicator\"><input type=\"hidden\" name=\"_csrf\" value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"upload-container\" class=\"relative flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900\"><form id=\"pdf-upload-form\" action=\"/upload\" method=\"post\" enctype=\"multipart/form-data\" class=\"z-10 w-full max-w-md p-6 bg-white rounded-lg shadow-md dark:bg-gray-800\" hx-encoding=\"multipart/form-data\" hx-post=\"/upload\" hx-target=\"#upload-response\" hx-swap=\"innerHTML\" hx-indicator=\"#upload-indicator\" hx-on=\"\n                    htmx:beforeRequest: document.getElementById(&#39;upload-response&#39;).classList.add(&#39;invisible&#39;);\n                    htmx:afterSwap:   document.getElementById(&#39;upload-response&#39;).classList.remove(&#39;invisible&#39;);\n                \"><input type=\"hidden\" name=\"_csrf\" value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(csrf)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/upload.templ`, Line: 18, Col: 50}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/upload.templ`, Line: 22, Col: 50}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {

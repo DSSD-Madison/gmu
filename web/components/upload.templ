@@ -14,6 +14,10 @@ templ PDFUpload(csrf string, isAuthorized bool, isMaster bool) {
 				hx-target="#upload-response"
 				hx-swap="innerHTML"
 				hx-indicator="#upload-indicator"
+				hx-on="
+                    htmx:beforeRequest: document.getElementById('upload-response').classList.add('invisible');
+                    htmx:afterSwap:   document.getElementById('upload-response').classList.remove('invisible');
+                "
 			>
 				<input type="hidden" name="_csrf" value={ csrf }/>
 

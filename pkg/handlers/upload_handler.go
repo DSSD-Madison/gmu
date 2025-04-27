@@ -9,6 +9,7 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+	"strconv"
 	"time"
 
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
@@ -219,6 +220,7 @@ func (uh *UploadHandler) PDFMetadataEditPage(c echo.Context) error {
 		isAuthorized,
 		isMaster,
 		s3Link,
+		doc.ToDelete,
 	))
 
 }
@@ -262,6 +264,7 @@ func (uh *UploadHandler) HandleMetadataSave(c echo.Context) error {
 		Abstract:    sql.NullString{String: abstract, Valid: abstract != ""},
 		PublishDate: parsedDate,
 		Source:      sql.NullString{String: source, Valid: source != ""},
+		ToIndex:     sql.NullBool{Bool: true, Valid: true},
 	})
 	if err != nil {
 		uh.log.ErrorContext(c.Request().Context(), "Error updating document metadata", "error", err)
@@ -401,4 +404,45 @@ func (uh *UploadHandler) updateManyToManyFieldsMetadata(
 		}
 	}
 	return nil
+}
+
+func (uh *UploadHandler) ToggleDelete(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	documentID := c.FormValue("fileId")
+	markStr := c.FormValue("mark")
+
+	toDelete, err := strconv.ParseBool(markStr)
+	if err != nil {
+		return web.Render(c, 200, components.ErrorMessage(err.Error()))
+	}
+
+	id, err := uuid.Parse(documentID)
+	if err != nil {
+		return web.Render(c, 200, components.ErrorMessage(err.Error()))
+	}
+
+	if err := uh.db.UpdateDocumentDeletionStatus(ctx, db.UpdateDocumentDeletionStatusParams{
+		ID:       id,
+		ToDelete: toDelete,
+	}); err != nil {
+		return web.Render(c, 200, components.ErrorMessage(err.Error()))
+	}
+
+	buttonText := "Delete"
+	if toDelete {
+		buttonText = "Undo Delete"
+	}
+	successMessage := "Unmarked for Deletion"
+	if toDelete {
+		successMessage = "Marked for Deletion"
+	}
+
+	return web.Render(
+		c,
+		200,
+		components.ToggleDeleteButton(id.String(), !toDelete, buttonText),
+		components.SuccessMessage(successMessage),
+	)
+
 }
