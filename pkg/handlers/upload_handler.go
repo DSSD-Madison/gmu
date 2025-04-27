@@ -50,11 +50,11 @@ const dateFormat = "2006-01-02"
 func (uh *UploadHandler) HandlePDFUpload(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	// Receive file
 	fileHeader, err := c.FormFile("pdf")
 	if err != nil {
-		return uh.renderError(c, http.StatusBadRequest, "Failed to get file: %v", err)
+		return uh.renderError(c, http.StatusOK, "Failed to get file: %v", err)
 	}
+	clientMime := fileHeader.Header.Get("Content-Type")
 	filename := fileHeader.Filename
 	fileID := uuid.New()
 	s3Key := filename
@@ -68,18 +68,18 @@ func (uh *UploadHandler) HandlePDFUpload(c echo.Context) error {
 	// Read file bytes
 	fileBytes, err := uh.readMultipartFile(fileHeader)
 	if err != nil {
-		return uh.renderError(c, http.StatusBadRequest, "Error reading file: %v", err)
+		return uh.renderError(c, http.StatusOK, "Error reading file: %v", err)
 	}
 
 	// Upload to S3
-	if err := uh.fileManager.UploadFile(ctx, s3Key, fileBytes); err != nil {
-		return uh.renderError(c, http.StatusInternalServerError, "Error uploading file: %v", err)
+	if err := uh.fileManager.UploadFile(ctx, s3Key, fileBytes, clientMime); err != nil {
+		return uh.renderError(c, http.StatusOK, "Error uploading file: %v", err)
 	}
 
 	// Extract metadata
 	metadata, err := uh.bedrockManager.ExtractPDFMetadata(ctx, fileBytes)
 	if err != nil || metadata == nil {
-		uh.cleanupOnError(ctx, s3Key)
+		uh.cleanupOnError(ctx, filename)
 		return uh.renderError(c, http.StatusOK, "Error extracting metadata: %v", err)
 	}
 
@@ -96,7 +96,7 @@ func (uh *UploadHandler) HandlePDFUpload(c echo.Context) error {
 		PublishDate: publishDate,
 	}); err != nil {
 		uh.cleanupOnError(ctx, s3Key)
-		return uh.renderError(c, http.StatusInternalServerError, "Could not save file metadata to database")
+		return uh.renderError(c, 200, "Could not save file metadata to database")
 	}
 
 	// Update many-to-many joins
@@ -106,7 +106,7 @@ func (uh *UploadHandler) HandlePDFUpload(c echo.Context) error {
 		if err != nil {
 			uh.log.ErrorContext(ctx, "Error deleting document from db: %v", err)
 		}
-		return uh.renderError(c, http.StatusInternalServerError, "Could not save associated metadata")
+		return uh.renderError(c, http.StatusOK, "Could not save associated metadata")
 	}
 
 	// Redirect to metadata editor
@@ -151,7 +151,7 @@ func (uh *UploadHandler) addAndSaveAssociations(ctx context.Context, docID uuid.
 }
 
 func (uh *UploadHandler) cleanupOnError(ctx context.Context, key string) {
-	if err := uh.fileManager.DeleteFile(ctx, "manually-uploaded-bep", key); err != nil {
+	if err := uh.fileManager.DeleteFile(ctx, key, "manually-uploaded-bep"); err != nil {
 		uh.log.ErrorContext(ctx, "Failed to delete S3 file during cleanup", "error", err)
 	}
 }
