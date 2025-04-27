@@ -1,51 +1,19 @@
 import os
 import io
-import boto3
-import psycopg2
 import subprocess
-from io import BytesIO
-from PIL import Image
 import pymupdf
-from dotenv import load_dotenv
 from urllib.parse import urlparse
 from psycopg2.extras import RealDictCursor
+from utils import get_db_connection, get_s3_client, get_s3_resource
+from io import BytesIO
+from PIL import Image
 
-# Load environment variables
-load_dotenv()
-
-# AWS role config
-role_arn = os.getenv('ROLE_ARN')
-role_session_name = 'preview-generation-session'
-
-# DB config
-DB_HOST = os.getenv('DB_HOST')
-DB_USER = os.getenv('DB_USER')
-DB_NAME = os.getenv('DB_NAME')
-DB_PASSWORD = os.getenv('DB_PASSWORD')
-
-# Assume AWS role
-sts = boto3.client('sts', region_name='us-east-1')
-creds = sts.assume_role(RoleArn=role_arn, RoleSessionName=role_session_name)['Credentials']
-
-session = boto3.Session(
-    aws_access_key_id=creds['AccessKeyId'],
-    aws_secret_access_key=creds['SecretAccessKey'],
-    aws_session_token=creds['SessionToken']
-)
-
-s3_client = session.client("s3")
-s3_resource = session.resource("s3")
+role_session_name = 'preview-generation'
+s3_client = get_s3_client(role_session_name)
+s3_resource = get_s3_resource(role_session_name)
 
 TEMP_DIR = "/tmp/doc_preview"
 os.makedirs(TEMP_DIR, exist_ok=True)
-
-def get_db_connection():
-    return psycopg2.connect(
-        host=DB_HOST,
-        database=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD
-    )
 
 def docx_to_pdf(docx_path, output_dir):
     subprocess.run([
@@ -117,7 +85,7 @@ def process_document(doc, conn):
     except Exception as e:
         print(f"::error::Failed to process {file_name}: {e}")
 
-def main():
+def generate_preview_images():
     conn = get_db_connection()
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -135,4 +103,4 @@ def main():
         conn.close()
 
 if __name__ == "__main__":
-    main()
+    generate_preview_images()

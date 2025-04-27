@@ -103,7 +103,7 @@ CREATE TABLE public.documents (
     abstract text,
     publish_date date,
     source character varying(255),
-    to_index boolean DEFAULT false,
+    to_index boolean DEFAULT true,
     s3_file character varying(1024) NOT NULL,
     s3_file_preview character varying(1024),
     pdf_link character varying(1024),

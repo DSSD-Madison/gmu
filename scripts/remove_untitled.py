@@ -1,10 +1,10 @@
 import boto3
 import os
-import psycopg2
-from psycopg2.extras import RealDictCursor
-from dotenv import load_dotenv
 import logging
 from typing import List
+from utils import get_db_connection, get_kendra_client
+from psycopg2.extras import RealDictCursor
+from dotenv import load_dotenv
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -15,22 +15,10 @@ load_dotenv()
 
 # AWS Configuration
 role_arn = os.getenv('ROLE_ARN')
-role_session_name = 'kendra-delete-untitled-session'
+role_session_name = 'delete-untitled'
 index_id = os.getenv('INDEX_ID')
 
-# Database Configuration
-DB_HOST = os.getenv('DB_HOST')
-DB_USER = os.getenv('DB_USER')
-DB_NAME = os.getenv('DB_NAME')
-DB_PASSWORD = os.getenv('DB_PASSWORD')
-
-def get_db_connection():
-    return psycopg2.connect(
-        host=DB_HOST,
-        database=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD
-    )
+kendra = get_kendra_client(role_session_name)
 
 def get_untitled_document_ids(conn) -> List[str]:
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -54,22 +42,11 @@ def mark_as_unindexed(conn, s3_files: List[str]):
         )
     conn.commit()
 
-def main():
+def remove_untitled_documents():
     if not role_arn:
         raise ValueError("ROLE_ARN environment variable is not set")
     if not index_id:
         raise ValueError("INDEX_ID environment variable is not set")
-
-    sts = boto3.client('sts', region_name='us-east-1')
-    creds = sts.assume_role(RoleArn=role_arn, RoleSessionName=role_session_name)['Credentials']
-
-    kendra = boto3.client(
-        'kendra',
-        region_name='us-east-1',
-        aws_access_key_id=creds['AccessKeyId'],
-        aws_secret_access_key=creds['SecretAccessKey'],
-        aws_session_token=creds['SessionToken']
-    )
 
     conn = get_db_connection()
 
@@ -102,4 +79,4 @@ def main():
         conn.close()
 
 if __name__ == "__main__":
-    main()
+    remove_untitled_documents()
