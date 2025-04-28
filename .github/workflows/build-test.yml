@@ -24,9 +24,9 @@ jobs:
       - name: Add Go bin to PATH
         run: echo "$HOME/go/bin" >> $GITHUB_PATH
       
-      - name: Vet and Test Go Code
+      - name: Lint and Unit Test Go Code
         run: |
-          go vet ./...
+          golangci-lint run ./...
           go test -v ./pkg/db/handlers/...
 
       - name: Build Binary

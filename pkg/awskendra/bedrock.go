@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"os"
 	"regexp"
@@ -208,23 +207,34 @@ func extractTextFromPdf(pdfBytes []byte, maxPages int) (string, error) {
 }
 
 func ExtractTextFromDocxBytes(data []byte) (string, error) {
-	tmp, err := ioutil.TempFile("", "docx-*.docx")
+	tmp, err := os.CreateTemp("", "docx-*.docx")
 	if err != nil {
 		return "", fmt.Errorf("creating temp file: %w", err)
 	}
-	defer os.Remove(tmp.Name())
-
+	defer func() {
+		_ = os.Remove(tmp.Name())
+	}()
+	
 	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
+		cerr := tmp.Close()
+		if cerr != nil {
+			return "", fmt.Errorf("writing temp docx: %w (also failed to close: %v)", err, cerr)
+		}
 		return "", fmt.Errorf("writing temp docx: %w", err)
 	}
-	tmp.Close()
+	
+	if err := tmp.Close(); err != nil {
+		return "", fmt.Errorf("closing temp docx: %w", err)
+	}
 
 	doc, err := docx.ReadDocxFile(tmp.Name())
 	if err != nil {
 		return "", fmt.Errorf("reading temp docx: %w", err)
 	}
-	defer doc.Close()
+	defer func() {
+		_ = doc.Close()
+	}()
+	
 
 	content := doc.Editable().GetContent()
 
