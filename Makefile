@@ -1,6 +1,6 @@
 SQLC_VERSION = v1.24.0
 TAILWIND_VERSION = v4.0.6
-GOLANGCI_LINT_VERSION = v1.57.2
+GOLANGCI_LINT_VERSION = v1.64.8
 TAILWIND_BASE_URL = https://github.com/tailwindlabs/tailwindcss/releases/download/$(TAILWIND_VERSION)/
 
 install-all-arm64: install-air install-templ install-sqlc-arm64 install-golangci-lint

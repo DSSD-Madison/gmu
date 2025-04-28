@@ -105,6 +105,11 @@ func main() {
 	}
 
 	s3Client, err := awskendra.NewS3Client(*awsConfig)
+	if err != nil {
+		log.Fatalf("failed to create S3 client: %v", err)
+		os.Exit(1)
+	}
+	
 	appLogger.Info("Bedrock client initialized")
 
 	appLogger.Info("Initializing services...")
