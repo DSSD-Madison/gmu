@@ -40,9 +40,9 @@ func NewKendraClient(config Config, log logger.Logger) (KendraClient, error) {
 	}
 	pkgLogger.Info("AWS Kendra SDK Client initialized")
 
-	queryCache := cache.NewGeneric[KendraResults](pkgLogger)
+	queryCache := cache.NewGenericCache[KendraResults](pkgLogger)
 	pkgLogger.Info("Kendra query cache initialized")
-	suggestionsCache := cache.NewGeneric[KendraSuggestions](pkgLogger)
+	suggestionsCache := cache.NewGenericCache[KendraSuggestions](pkgLogger)
 	pkgLogger.Info("Kendra query cache initialized")
 
 	workers := 2

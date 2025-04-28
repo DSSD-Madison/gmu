@@ -15,7 +15,7 @@ type GenericCache[T any] struct {
 	mu    sync.RWMutex
 }
 
-func NewGeneric[T any](log logger.Logger) *GenericCache[T] {
+func NewGenericCache[T any](log logger.Logger) *GenericCache[T] {
 	cacheLogger := log.With("cache", fmt.Sprintf("%T", *new(T)))
 	return &GenericCache[T]{
 		items: make(map[string]CacheItem[T]),
