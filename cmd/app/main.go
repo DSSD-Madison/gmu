@@ -12,7 +12,6 @@ import (
 
 	"github.com/gorilla/sessions"
 	_ "github.com/jackc/pgx/v5/stdlib"
-
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
@@ -102,7 +101,7 @@ func main() {
 	}
 	appLogger.Info("Database connection established")
 
-	dbQuerier := db.New(sqlDB)
+	dbClient := db.New(sqlDB)
 
 	// --- AWS Kendra Initialization ---
 	kendraClient, err := awskendra.New(*awsConfig, appLogger)
@@ -132,6 +131,7 @@ func main() {
 		appLogger.Warn("SESSION_SECRET_KEY environment variable not set. Using insecure default (dev only).")
 		sessionSecretKey = "insecure-default-key-for-dev-only-change-me"
 	}
+
 	cookieStore := sessions.NewCookieStore([]byte(sessionSecretKey))
 	cookieStore.Options = &sessions.Options{
 		Path:     "/",
@@ -150,17 +150,17 @@ func main() {
 	userRateLimiter := ratelimiter.NewInMemoryRateLimiter(context.Background(), appLogger, userMaxAttempts, userBlockDuration, userWindow)
 	appLogger.Debug("Rate Limiters initialized")
 
-	sessionManager, err := services.NewGorillaSessionManager(cookieStore, sessionCookieName, appLogger)
+	sessionManager, err := services.NewGorillaSessionManager(cookieStore, sessionCookieName, appLogger, dbClient)
 	if err != nil {
 		appLogger.Error("Failed to create session manager", "error", err)
 		os.Exit(1)
 	}
 
-	userService := services.NewUserService(appLogger, dbQuerier)
+	userService := services.NewUserService(appLogger, dbClient)
 
 	authenticationService := services.NewLoginService(appLogger, ipRateLimiter, userRateLimiter, userService)
 
-	searchService := services.NewSearchService(appLogger, kendraClient, dbQuerier)
+	searchService := services.NewSearchService(appLogger, kendraClient, dbClient)
 	suggestionService := services.NewSuggestionService(appLogger, kendraClient)
 	bedrockService := services.NewBedrockService(appLogger, *bedrockClient)
 	fileManagerService := services.NewFilemanagerService(appLogger, s3Client)
@@ -175,9 +175,9 @@ func main() {
 
 	authHandler := handlers.NewAuthenticationHandler(appLogger, sessionManager, authenticationService)
 	suggestionsHandler := handlers.NewSuggestionsHandler(appLogger, suggestionService)
-	uploadHandler := handlers.NewUploadHandler(appLogger, dbQuerier, bedrockService, fileManagerService, sessionManager)
-	userManagementHandler := handlers.NewUserManagementHandler(appLogger, dbQuerier, sessionManager)
-	databaseHandler := handlers.NewDatabaseHandler(appLogger, dbQuerier)
+	uploadHandler := handlers.NewUploadHandler(appLogger, dbClient, bedrockService, fileManagerService, sessionManager)
+	userManagementHandler := handlers.NewUserManagementHandler(appLogger, dbClient, sessionManager)
+	databaseHandler := handlers.NewDatabaseHandler(appLogger, dbClient)
 
 	appLogger.Info("Handlers initialized")
 

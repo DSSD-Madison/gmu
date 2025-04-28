@@ -86,9 +86,9 @@ type Region struct {
 }
 
 type User struct {
-	ID           int32
 	Username     string
 	PasswordHash string
 	IsMaster     bool
 	CreatedAt    time.Time
+	ID           uuid.UUID
 }

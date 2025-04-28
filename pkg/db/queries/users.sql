@@ -11,6 +11,11 @@ SELECT username, is_master FROM users ORDER BY username;
 -- name: DeleteUserByUsername :exec
 DELETE FROM users WHERE username = $1;
 
+-- name: GetUserByID :one
+SELECT id, username, password_hash, is_master, created_at
+FROM users
+WHERE id = $1;
+
 
 
 
