@@ -49,7 +49,7 @@ func NewKendraClient(config Config, log logger.Logger) (KendraClient, error) {
 	buffer := 5
 	queryQueue := NewKendraQueryQueue(awsClient, queryCache, pkgLogger, workers, buffer)
 	pkgLogger.Info("Kendra query queue initialized", "workers", workers, "buffer", buffer)
-	suggestionsQueue := NewKendraSuggestionsQueue(awsClient, pkgLogger, workers, buffer)
+	suggestionsQueue := NewKendraSuggestionsQueue(awsClient, suggestionsCache, pkgLogger, workers, buffer)
 	pkgLogger.Info("Kendra suggestion queue initialized", "workers", workers, "buffer", buffer)
 
 	return &kendraClientImpl{
