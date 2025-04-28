@@ -1,14 +1,18 @@
 package services
 
 import (
+	"context"
+	"database/sql"
 	"errors"
 	"net/http"
 	"net/url"
 
-	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
-	"github.com/DSSD-Madison/gmu/pkg/logger"
+	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
+
+	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
+	"github.com/DSSD-Madison/gmu/pkg/logger"
 )
 
 const (
@@ -21,9 +25,10 @@ type GorillaSessionManager struct {
 	store       sessions.Store
 	sessionName string
 	log         logger.Logger
+	db          *db.Queries
 }
 
-func NewGorillaSessionManager(store sessions.Store, sessionName string, log logger.Logger) (*GorillaSessionManager, error) {
+func NewGorillaSessionManager(store sessions.Store, sessionName string, log logger.Logger, dbClient *db.Queries) (*GorillaSessionManager, error) {
 	if store == nil {
 		return nil, errors.New("session store cannot be nil")
 	}
@@ -35,6 +40,7 @@ func NewGorillaSessionManager(store sessions.Store, sessionName string, log logg
 		store:       store,
 		sessionName: sessionName,
 		log:         serviceLogger,
+		db:          dbClient,
 	}, nil
 }
 
@@ -54,7 +60,7 @@ func (sm *GorillaSessionManager) Create(c echo.Context, user db.User) error {
 	}
 
 	session.Values[sessionKeyAuthenticated] = true
-	session.Values[sessionKeyUserID] = user.ID
+	session.Values[sessionKeyUserID] = user.ID.String()
 	session.Values[sessionKeyIsMaster] = user.IsMaster
 
 	err := session.Save(c.Request(), c.Response())
@@ -125,6 +131,50 @@ func (sm *GorillaSessionManager) IsMaster(c echo.Context) bool {
 	return ok && isMaster
 }
 
+func (sm *GorillaSessionManager) redirectToLogin(c echo.Context) error {
+	redirectTo := url.QueryEscape(c.Request().RequestURI)
+
+	if c.Request().Header.Get("HX-Request") == "true" {
+		c.Response().Header().Set("HX-Redirect", "/login?redirect="+redirectTo)
+		return c.NoContent(http.StatusUnauthorized)
+	}
+
+	return c.Redirect(http.StatusSeeOther, "/login?redirect="+redirectTo)
+}
+
+// forceLogoutAndRedirect destroys the session and redirects the user to login.
+func (sm *GorillaSessionManager) forceLogoutAndRedirect(c echo.Context) error {
+	_ = sm.Destroy(c) 
+	return sm.redirectToLogin(c)
+}
+
+func (sm *GorillaSessionManager) fetchUserByID(ctx context.Context, userID string) (*db.User, error) {
+	parsedID, err := uuid.Parse(userID)
+	if err != nil {
+		sm.log.WarnContext(ctx, "Invalid UUID format for userID", "userID", userID)
+		return nil, nil
+	}
+
+	row, err := sm.db.GetUserByID(ctx, parsedID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	// Manual conversion
+	user := &db.User{
+		ID:           row.ID,
+		Username:     row.Username,
+		PasswordHash: row.PasswordHash,
+		IsMaster:     row.IsMaster,
+		CreatedAt:    row.CreatedAt,
+	}
+
+	return user, nil
+}
+
 func (sm *GorillaSessionManager) RequireAuth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		session, _ := sm.getSession(c.Request())
@@ -132,18 +182,30 @@ func (sm *GorillaSessionManager) RequireAuth(next echo.HandlerFunc) echo.Handler
 		sm.log.Info("requireAuth called", "auth", auth, "ok", ok)
 
 		if !ok || !auth {
-			redirectTo := url.QueryEscape(c.Request().RequestURI)
+			sm.log.Info("requireAuth: Not authenticated or invalid session")
+			return sm.redirectToLogin(c)
+		}
 
-			// If HTMX request, use HX-Redirect
-			if c.Request().Header.Get("HX-Request") == "true" {
-				c.Response().Header().Set("HX-Redirect", "/login?redirect="+redirectTo)
-				return c.NoContent(http.StatusUnauthorized)
-			}
+		userID, ok := session.Values[sessionKeyUserID].(string)
+		if !ok || userID == "" {
+			sm.log.Warn("requireAuth: Missing or invalid user_id in session")
+			return sm.forceLogoutAndRedirect(c)
+		}
 
-			// Normal browser redirect
-			return c.Redirect(http.StatusSeeOther, "/login?redirect="+redirectTo)
+		ctx := c.Request().Context()
+
+		user, err := sm.fetchUserByID(ctx, userID)
+		if err != nil {
+			sm.log.ErrorContext(ctx, "requireAuth: Error checking user existence in DB", "error", err)
+			return sm.forceLogoutAndRedirect(c)
+		}
+
+		if user == nil {
+			sm.log.WarnContext(ctx, "requireAuth: User ID no longer exists, forcing logout", "user_id", userID)
+			return sm.forceLogoutAndRedirect(c)
 		}
 
 		return next(c)
 	}
 }
+
