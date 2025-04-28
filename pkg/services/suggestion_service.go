@@ -10,10 +10,10 @@ import (
 
 type suggestionService struct {
 	log          logger.Logger
-	kendraClient awskendra.Client
+	kendraClient awskendra.KendraClient
 }
 
-func NewSuggestionService(log logger.Logger, kendraClient awskendra.Client) Suggester {
+func NewSuggestionService(log logger.Logger, kendraClient awskendra.KendraClient) Suggester {
 	serviceLogger := log.With("Service", "Suggestion")
 	return &suggestionService{
 		log:          serviceLogger,

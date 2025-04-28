@@ -13,11 +13,11 @@ import (
 
 type SearchService struct {
 	log          logger.Logger
-	kendraClient awskendra.Client
+	kendraClient awskendra.KendraClient
 	dbQuerier    *db.Queries
 }
 
-func NewSearchService(log logger.Logger, kendra awskendra.Client, dbQuerier *db.Queries) *SearchService {
+func NewSearchService(log logger.Logger, kendra awskendra.KendraClient, dbQuerier *db.Queries) *SearchService {
 	serviceLogger := log.With("Service", "Search")
 	return &SearchService{
 		log:          serviceLogger,
