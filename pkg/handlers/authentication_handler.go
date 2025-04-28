@@ -36,6 +36,7 @@ func (ah *AuthenticationHandler) RegisterAuthenticationRoutes(e *echo.Echo) {
 	e.POST("/logout", ah.Logout)
 }
 
+// Login TODO: Remove checks for HX-Header
 func (ah *AuthenticationHandler) Login(c echo.Context) error {
 	username := c.FormValue("username")
 	password := c.FormValue("password")
