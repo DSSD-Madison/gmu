@@ -174,7 +174,7 @@ func main() {
 	appLogger.Info("Initializing Handlers...")
 
 	homeHandler := handlers.NewHomeHandler(appLogger, sessionManager)
-	searchHandler := handlers.NewSearchHandler(appLogger, searchService)
+	searchHandler := handlers.NewSearchHandler(appLogger, searchService, sessionManager)
 	authHandler := handlers.NewAuthenticationHandler(appLogger, sessionManager, authenticationService)
 	suggestionsHandler := handlers.NewSuggestionsHandler(appLogger, suggestionService)
 	uploadHandler := handlers.NewUploadHandler(appLogger, dbQuerier, bedrockService, fileManagerService, sessionManager)
