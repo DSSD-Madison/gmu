@@ -31,11 +31,13 @@ func NewS3Client(cfg Config) (*S3Client, error) {
 	return s3c, nil
 }
 
-func (s *S3Client) Upload(ctx context.Context, key string, body []byte) error {
+func (s *S3Client) Upload(ctx context.Context, key string, body []byte, contentType string) error {
 	_, err := s.client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket: &s.config.BucketName,
-		Key:    &key,
-		Body:   bytes.NewReader(body),
+		Bucket:             &s.config.BucketName,
+		Key:                &key,
+		Body:               bytes.NewReader(body),
+		ContentType:        &contentType,
+		ContentDisposition: aws.String("inline"),
 	})
 	return err
 }
