@@ -2,21 +2,26 @@ package queue
 
 import "context"
 
-type Job[P, R any] struct {
-	Payload    P
-	ResultChan chan<- R
-	ctx        context.Context
+type Result[R any] struct {
+	Value R
+	Error error
 }
 
-func NewJob[P, R any](ctx context.Context, payload P, resultChan chan<- R) Job[P, R] {
+func newJob[P, R any](ctx context.Context, payload P, resultChan chan R) Job[P, R] {
 	return Job[P, R]{
+		ctx:        ctx,
 		Payload:    payload,
 		ResultChan: resultChan,
-		ctx:        ctx,
 	}
 }
 
+type Job[P, R any] struct {
+	Payload    P
+	ResultChan chan R
+	ctx        context.Context
+}
+
 type Queue[P, R any] interface {
-	Enqueue(job Job[P, R]) bool
+	Enqueue(ctx context.Context, payload P) (R, bool)
 	Shutdown(ctx context.Context) error
 }

@@ -12,15 +12,16 @@ import (
 )
 
 type kendraClientImpl struct {
-	awsClient  *kendra.Client
-	queryQueue QueryExecutor
-	cache      cache.Cache[KendraResults]
-	config     Config
-	log        logger.Logger
+	awsClient       *kendra.Client
+	queryQueue      KendraQueryQueue
+	suggestionQueue KendraSuggestionQueue
+	cache           cache.Cache[KendraResults]
+	config          Config
+	log             logger.Logger
 }
 
 func NewKendraClient(config Config, log logger.Logger) (KendraClient, error) {
-	pkgLogger := log.With("package", "awskendra")
+	pkgLogger := log.With("package", "Kendra Client")
 
 	opts := kendra.Options{
 		Credentials:      config.Credentials,
@@ -42,13 +43,16 @@ func NewKendraClient(config Config, log logger.Logger) (KendraClient, error) {
 	buffer := 5
 	queryQueue := NewKendraQueryQueue(awsClient, queryCache, pkgLogger, workers, buffer)
 	pkgLogger.Info("Kendra query queue initialized", "workers", workers, "buffer", buffer)
+	suggestionsQueue := NewKendraSuggestionsQueue(awsClient, pkgLogger, workers, buffer)
+	pkgLogger.Info("Kendra suggestion queue initialized", "workers", workers, "buffer", buffer)
 
 	return &kendraClientImpl{
-		awsClient:  awsClient,
-		queryQueue: queryQueue,
-		cache:      queryCache,
-		config:     config,
-		log:        pkgLogger,
+		awsClient:       awsClient,
+		queryQueue:      queryQueue,
+		cache:           queryCache,
+		suggestionQueue: suggestionsQueue,
+		config:          config,
+		log:             pkgLogger,
 	}, nil
 }
 
@@ -59,18 +63,100 @@ func (c *kendraClientImpl) GetSuggestions(ctx context.Context, query string) (Ke
 		QueryText: &query,
 	}
 
-	if true {
+	out, ok := c.suggestionQueue.Enqueue(ctx, kendraQuery)
+	if out.Error != nil || !ok {
+		c.log.ErrorContext(ctx, "Kendra GetSuggestions API call failed", "error", out.Error)
+		return KendraSuggestions{}, out.Error
 	}
 
-	out, err := c.awsClient.GetQuerySuggestions(ctx, &kendraQuery)
-	if err != nil {
-		c.log.ErrorContext(ctx, "Kendra GetSuggestions API call failed", "error", err)
-		return KendraSuggestions{}, err
-	}
+	suggestions := out.Value
 
-	suggestions := querySuggestionsOutputToSuggestions(*out)
 	c.log.DebugContext(ctx, "Kendra suggestions retrieved", "count", len(suggestions.Suggestions))
 	return suggestions, nil
+}
+
+func (c *kendraClientImpl) MakeQuery(ctx context.Context, query string, filters map[string][]string, pageNum int) (KendraResults, error) {
+	c.log.DebugContext(ctx, "Building kendra query", "query", query, "page", pageNum, "filter_count", len(filters))
+
+	kendraFilters := types.AttributeFilter{}
+	if len(filters) > 0 {
+		kendraFilters.AndAllFilters = make([]types.AttributeFilter, 0, len(filters))
+		for k, filterCategory := range filters {
+			if len(filterCategory) == 0 {
+				continue
+			}
+			key := k
+
+			var subFilter types.AttributeFilter
+
+			if key == "_file_type" || k == "Source" {
+				subFilter.OrAllFilters = make([]types.AttributeFilter, len(filterCategory))
+				for i, strVal := range filterCategory {
+					val := strVal
+					subFilter.OrAllFilters[i] = types.AttributeFilter{
+						EqualsTo: &types.DocumentAttribute{
+							Key: &key,
+							Value: &types.DocumentAttributeValue{
+								StringValue: &val,
+							},
+						},
+					}
+				}
+			} else {
+				subFilter.ContainsAny = &types.DocumentAttribute{
+					Key: &key,
+					Value: &types.DocumentAttributeValue{
+						StringListValue: filterCategory,
+					},
+				}
+			}
+			kendraFilters.AndAllFilters = append(kendraFilters.AndAllFilters, subFilter)
+		}
+	}
+
+	page := int32(pageNum)
+	kendraQueryInput := kendra.QueryInput{
+		AttributeFilter: nil,
+		IndexId:         &c.config.IndexID,
+		QueryText:       &query,
+		PageNumber:      &page,
+	}
+	if len(kendraFilters.AndAllFilters) > 0 {
+		kendraQueryInput.AttributeFilter = &kendraFilters
+	}
+
+	cacheResult, exist := c.cache.Get(query)
+	if exist {
+		c.log.Info("Query found in cache", "query", query, "page", pageNum)
+		return cacheResult, nil
+	}
+
+	c.log.DebugContext(ctx, "Enqueuing Kendra query")
+
+	queueResult, ok := c.queryQueue.Enqueue(ctx, kendraQueryInput)
+
+	if queueResult.Error != nil || !ok {
+		c.log.ErrorContext(ctx, "Kendra query failed during execution", "error", queueResult.Error)
+		return KendraResults{}, queueResult.Error
+	}
+
+	c.log.DebugContext(ctx, "Kendra query executed successfully", "result_count", queueResult.Value.Count)
+
+	results := queueResult.Value
+	calculatedPages := (results.Count + 9) / 10
+	totalPages := min(calculatedPages, 10)
+
+	results.PageStatus = PageStatus{
+		CurrentPage: pageNum,
+		PrevPage:    pageNum - 1,
+		NextPage:    pageNum + 1,
+		HasPrev:     pageNum > 1,
+		HasNext:     pageNum < totalPages,
+		TotalPages:  totalPages,
+	}
+
+	results.Query = query
+	return results, nil
 }
 
 func queryOutputToResults(out kendra.QueryOutput) KendraResults {
@@ -140,76 +226,6 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 	}
 
 	return kendraResults
-}
-
-func (c *kendraClientImpl) MakeQuery(ctx context.Context, query string, filters map[string][]string, pageNum int) (KendraResults, error) {
-	c.log.DebugContext(ctx, "Building kendra query", "query", query, "page", pageNum, "filter_count", len(filters))
-
-	kendraFilters := types.AttributeFilter{}
-	if len(filters) > 0 {
-		kendraFilters.AndAllFilters = make([]types.AttributeFilter, 0, len(filters))
-		for k, filterCategory := range filters {
-			if len(filterCategory) == 0 {
-				continue
-			}
-			key := k
-
-			var subFilter types.AttributeFilter
-
-			if key == "_file_type" || k == "Source" {
-				subFilter.OrAllFilters = make([]types.AttributeFilter, len(filterCategory))
-				for i, strVal := range filterCategory {
-					val := strVal
-					subFilter.OrAllFilters[i] = types.AttributeFilter{
-						EqualsTo: &types.DocumentAttribute{
-							Key: &key,
-							Value: &types.DocumentAttributeValue{
-								StringValue: &val,
-							},
-						},
-					}
-				}
-			} else {
-				subFilter.ContainsAny = &types.DocumentAttribute{
-					Key: &key,
-					Value: &types.DocumentAttributeValue{
-						StringListValue: filterCategory,
-					},
-				}
-			}
-			kendraFilters.AndAllFilters = append(kendraFilters.AndAllFilters, subFilter)
-		}
-	}
-
-	page := int32(pageNum)
-	kendraQueryInput := kendra.QueryInput{
-		AttributeFilter: nil,
-		IndexId:         &c.config.IndexID,
-		QueryText:       &query,
-		PageNumber:      &page,
-	}
-	if len(kendraFilters.AndAllFilters) > 0 {
-		kendraQueryInput.AttributeFilter = &kendraFilters
-	}
-
-	cacheResult, exist := c.cache.Get(query)
-	if exist {
-		c.log.Info("Query found in cache", "query", query, "page", pageNum)
-		return cacheResult, nil
-	}
-
-	c.log.DebugContext(ctx, "Enqueuing Kendra query")
-	queryResult := c.queryQueue.EnqueueQuery(ctx, kendraQueryInput)
-	if queryResult.Error != nil {
-		c.log.ErrorContext(ctx, "Kendra query failed during execution", "error", queryResult.Error)
-		return KendraResults{}, queryResult.Error
-	}
-
-	c.log.DebugContext(ctx, "Kendra query executed successfully", "result_count", queryResult.Results.Count)
-
-	results := queryResult.Results
-	// results.UrlData.Query = results.Query
-	return results, nil
 }
 
 func querySuggestionsOutputToSuggestions(out kendra.GetQuerySuggestionsOutput) KendraSuggestions {

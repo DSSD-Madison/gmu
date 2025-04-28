@@ -35,7 +35,7 @@ func NewGenericQueue[P, R any](
 	q := &genericQueue[P, R]{
 		jobChan:   make(chan Job[P, R], bufferSize),
 		processor: processor,
-		log:       log.With("component", "GenericQueue"),
+		log:       log,
 		stopChan:  make(chan struct{}),
 	}
 
@@ -44,32 +44,37 @@ func NewGenericQueue[P, R any](
 	return q
 }
 
-func (q *genericQueue[P, R]) Enqueue(job Job[P, R]) bool {
+func (q *genericQueue[P, R]) Enqueue(ctx context.Context, payload P) (R, bool) {
+	resultChan := make(chan R, 1)
+
+	job := newJob(ctx, payload, resultChan)
+
+	var result R
 	select {
 	case <-q.stopChan:
 		q.log.WarnContext(job.ctx, "Enqueue failed: Queue is shutting down")
-		return false
+		return result, false
 	default:
 		select {
 		case q.jobChan <- job:
 			q.log.DebugContext(job.ctx, "Job enqueued successfully")
-			return true
+			result, ok := <-resultChan
+			return result, ok
 		case <-job.ctx.Done():
 			q.log.WarnContext(job.ctx, "Enqueue failed: Job context cancelled before enqueueing")
-			return false
+			return result, false
 		case <-q.stopChan:
 			q.log.WarnContext(job.ctx, "Enqueu failed: Queue shut down during enqueue attempt")
-			return false
+			return result, false
 		}
 	}
 }
 
 func (q *genericQueue[P, R]) startWorkers(workerCount int) {
 	q.wg.Add(workerCount)
-	for i := 0; i < workerCount; i++ {
+	for i := range workerCount {
 		go func(workerID int) {
 			defer q.wg.Done()
-			q.log.Info("Worker started", "worker_id", workerID)
 			for {
 				select {
 				case job, ok := <-q.jobChan:
