@@ -1,8 +1,9 @@
-name: Delete Duplicates
+name: Delete Marked Documents
 
 on:
   schedule:
-      - cron: '0 0 * * *' 
+    - cron: '0 8 * * *'  # 3 AM Eastern = 8 AM UTC
+  workflow_dispatch:  # Allow manual runs
 
 jobs:
   delete-duplicates:

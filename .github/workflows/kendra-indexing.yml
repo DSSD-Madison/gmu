@@ -2,8 +2,8 @@ name: Kendra Indexing
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Run daily at midnight UTC
-
+    - cron: '0 8 * * *'  # 3 AM Eastern = 8 AM UTC
+  workflow_dispatch: # Allow manual runs
 
 jobs:
   index-and-generate-previews:
