@@ -1,5 +1,9 @@
 package components
 
+import (
+    "encoding/json"
+)
+
 templ ErrorMessage(message string) {
     <div
         class="p-4 mb-4 text-sm text-red-800 bg-red-100 border border-red-300 rounded-lg dark:bg-gray-800 dark:text-red-400 dark:border-red-800"
@@ -16,4 +20,38 @@ templ SuccessMessage(message string) {
     >
         <span class="font-medium">Success!</span> { message }
     </div>
+}
+
+
+// Renders the toggle-delete button with dynamic text and hx-vals
+templ ToggleDeleteButton(docID string, nextMark bool, buttonText string) {
+    <button
+        id="toggle-del-btn"
+        class="px-4 py-2 font-bold text-white bg-red-500 rounded hover:bg-red-700 focus:outline-none focus:shadow-outline"
+        hx-post="/toggle-delete"
+        hx-target="#flash-messages"
+        hx-swap="innerHTML"
+        hx-vals={buildJson(docID, nextMark)}
+        type="button"
+        hx-swap-oob="true"
+        hx-on="
+            htmx:beforeRequest: this.disabled = true;
+            htmx:afterRequest:  this.disabled = false
+        "
+    >
+        {buttonText}
+    </button>
+}
+
+func buildJson(docID string, mark bool) string {
+	payload := map[string]interface{}{
+            "docID":     docID,
+            "mark":      mark,
+        }
+
+        b, err := json.Marshal(payload)
+        if err != nil {
+            return "{}"
+        }
+        return string(b)
 }
