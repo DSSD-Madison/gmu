@@ -27,11 +27,12 @@ type SearchHandler struct {
 	sessionManager services.SessionManager
 }
 
-func NewSearchHandler(log logger.Logger, searcher services.Searcher) *SearchHandler {
+func NewSearchHandler(log logger.Logger, searcher services.Searcher, sessionManager services.SessionManager) *SearchHandler {
 	handlerLogger := log.With("Handler", "Search")
 	return &SearchHandler{
-		log:      handlerLogger,
-		searcher: searcher,
+		log:            handlerLogger,
+		sessionManager: sessionManager,
+		searcher:       searcher,
 	}
 }
 
