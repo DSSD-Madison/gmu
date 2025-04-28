@@ -136,10 +136,12 @@ func (c *kendraClientImpl) MakeQuery(ctx context.Context, query string, filters 
 		kendraQueryInput.AttributeFilter = &kendraFilters
 	}
 
-	cacheResult, exist := c.queryCache.Get(query)
-	if exist {
-		c.log.Info("Query found in cache", "query", query, "page", pageNum)
-		return cacheResult, nil
+	if filters == nil {
+		cacheResult, exist := c.queryCache.Get(query)
+		if exist {
+			c.log.Info("Query found in cache", "query", query, "page", pageNum)
+			return cacheResult, nil
+		}
 	}
 
 	c.log.DebugContext(ctx, "Enqueuing Kendra query")
