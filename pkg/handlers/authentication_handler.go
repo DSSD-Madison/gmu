@@ -50,7 +50,9 @@ func (ah *AuthenticationHandler) CreateSession(c echo.Context, user db.User) (*s
 	session.Values["authenticated"] = true
 	session.Values["username"] = user.Username
 	session.Values["is_master"] = user.IsMaster
-	session.Save(c.Request(), c.Response())
+	if err := session.Save(c.Request(), c.Response()); err != nil {
+		ah.log.ErrorContext(c.Request().Context(), "Failed to save session", "error", err)
+	}
 	return session, nil
 }
 

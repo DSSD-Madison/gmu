@@ -122,7 +122,11 @@ func (uh *UploadHandler) readMultipartFile(fh *multipart.FileHeader) ([]byte, er
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Printf("Failed to close uploaded file: %v", err)
+		}
+	}()	
 	return io.ReadAll(file)
 }
 
@@ -274,10 +278,18 @@ func (uh *UploadHandler) HandleMetadataSave(c echo.Context) error {
 	}
 	documentID := uuid.NullUUID{UUID: docID, Valid: true}
 
-	uh.db.DeleteDocAuthorsByDocID(ctx, documentID)
-	uh.db.DeleteDocKeywordsByDocID(ctx, documentID)
-	uh.db.DeleteDocCategoriesByDocID(ctx, documentID)
-	uh.db.DeleteDocRegionsByDocID(ctx, documentID)
+	if err := uh.db.DeleteDocAuthorsByDocID(ctx, documentID); err != nil {
+		uh.log.ErrorContext(ctx, "Failed to delete doc authors", "error", err)
+	}
+	if err := uh.db.DeleteDocKeywordsByDocID(ctx, documentID); err != nil {
+		uh.log.ErrorContext(ctx, "Failed to delete doc keywords", "error", err)
+	}
+	if err := uh.db.DeleteDocCategoriesByDocID(ctx, documentID); err != nil {
+		uh.log.ErrorContext(ctx, "Failed to delete doc categories", "error", err)
+	}
+	if err := uh.db.DeleteDocRegionsByDocID(ctx, documentID); err != nil {
+		uh.log.ErrorContext(ctx, "Failed to delete doc regions", "error", err)
+	}
 
 	authors := util.ResolveIDs(ctx, uh.db, authorStrs, util.GetOrCreateAuthor)
 	keywords := util.ResolveIDs(ctx, uh.db, keywordStrs, util.GetOrCreateKeyword)

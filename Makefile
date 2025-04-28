@@ -1,14 +1,15 @@
 SQLC_VERSION = v1.24.0
 TAILWIND_VERSION = v4.0.6
+GOLANGCI_LINT_VERSION = v1.57.2
 TAILWIND_BASE_URL = https://github.com/tailwindlabs/tailwindcss/releases/download/$(TAILWIND_VERSION)/
 
-install-all-arm64: install-air install-templ install-sqlc-arm64
+install-all-arm64: install-air install-templ install-sqlc-arm64 install-golangci-lint
 	$(MAKE) install-tailwind FILE=tailwindcss-macos-arm64
 
-install-all-x64: install-air install-templ install-sqlc-x64
+install-all-x64: install-air install-templ install-sqlc-x64 install-golangci-lint
 	$(MAKE) install-tailwind FILE=tailwindcss-macos-x64
 
-install-all-linux: install-air install-templ install-sqlc-linux
+install-all-linux: install-air install-templ install-sqlc-linux install-golangci-lint
 	$(MAKE) install-tailwind FILE=tailwindcss-linux-x64
 
 install-tailwind:
@@ -25,6 +26,11 @@ install-air:
 install-templ:
 	@echo "Installing Templ..."
 	go install github.com/a-h/templ/cmd/templ@v0.3.833
+
+install-golangci-lint:
+	@echo "Installing golangci-lint ($(GOLANGCI_LINT_VERSION))..."
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+
 
 install-sqlc-arm64:
 	@echo "Installing sqlc ($(SQLC_VERSION)) for macOS ARM64..."
