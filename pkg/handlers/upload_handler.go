@@ -4,13 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 	"io"
 	"log"
 	"mime/multipart"
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
+
+	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
 	"github.com/DSSD-Madison/gmu/pkg/db/util"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
@@ -18,10 +21,9 @@ import (
 	"github.com/DSSD-Madison/gmu/pkg/services"
 	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
-	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 )
 
+// UploadHandler TODO: Separate Metadata logic and export into services
 type UploadHandler struct {
 	log            logger.Logger
 	bedrockManager services.BedrockManager
