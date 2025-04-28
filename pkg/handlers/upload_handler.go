@@ -377,7 +377,7 @@ func (uh *UploadHandler) updateManyToManyFieldsMetadata(
 			AuthorID: uuid.NullUUID{UUID: authorID, Valid: true},
 		})
 		if err != nil {
-			fmt.Println("[ERROR] Failed to insert into doc_authors: %v", err)
+			log.Printf("[ERROR] Failed to insert into doc_authors: %v", err)
 			return err
 		}
 	}
