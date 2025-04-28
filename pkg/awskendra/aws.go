@@ -27,6 +27,7 @@ func LoadConfig() (*Config, error) {
 		IndexID:          os.Getenv("INDEX_ID"),
 		ModelID:          os.Getenv("MODEL_ID"),
 		KeywordsFilePath: os.Getenv("KEYWORDS_FILE_PATH"),
+		BucketName:       "manually-uploaded-bep",
 		RetryMaxAttempts: 10,
 	}, nil
 }

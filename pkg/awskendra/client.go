@@ -21,6 +21,7 @@ type Config struct {
 	Region           string
 	IndexID          string
 	ModelID          string
+	BucketName       string
 	RetryMaxAttempts int
 	KeywordsFilePath string
 }

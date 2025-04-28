@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -11,6 +10,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
+
+	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
 	"github.com/DSSD-Madison/gmu/pkg/db/util"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
@@ -18,22 +21,23 @@ import (
 	"github.com/DSSD-Madison/gmu/pkg/services"
 	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
-	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
 )
 
+// UploadHandler TODO: Separate Metadata logic and export into services
 type UploadHandler struct {
 	log            logger.Logger
 	bedrockManager services.BedrockManager
+	fileManager    *services.FilemanagerService
 	db             *db.Queries
 }
 
-func NewUploadHandler(log logger.Logger, db *db.Queries, bedrockManager services.BedrockManager) *UploadHandler {
+func NewUploadHandler(log logger.Logger, db *db.Queries, bedrockManager services.BedrockManager, fms *services.FilemanagerService) *UploadHandler {
 	handlerLogger := log.With("Handler", "Upload")
 	return &UploadHandler{
 		log:            handlerLogger,
 		bedrockManager: bedrockManager,
 		db:             db,
+		fileManager:    fms,
 	}
 }
 
@@ -43,108 +47,121 @@ func (uh *UploadHandler) PDFUploadPage(c echo.Context) error {
 	return web.Render(c, http.StatusOK, components.PDFUpload(csrf, isAuthorized, isMaster))
 }
 
+const dateFormat = "2006-01-02"
+
 func (uh *UploadHandler) HandlePDFUpload(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	fileHeader, err := c.FormFile("pdf")
 	if err != nil {
-		uh.log.ErrorContext(c.Request().Context(), "Error getting uploaded file", "error", err)
-		errorMessage := fmt.Sprintf("Failed to get file: %v", err)
-		c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
-		return web.Render(c, http.StatusBadRequest, components.UploadResponse(false, errorMessage))
+		return uh.renderError(c, http.StatusOK, "Failed to get file: %v", err)
 	}
-
-	originalFilename := fileHeader.Filename
+	clientMime := fileHeader.Header.Get("Content-Type")
+	filename := fileHeader.Filename
 	fileID := uuid.New()
-	s3Path := fmt.Sprintf("s3://your-bucket-name/documents/%s", originalFilename)
+	s3Key := filename
+	s3Path := fmt.Sprintf("s3://manually-uploaded-bep/%s", filename)
 
-	// 🧠 Check if document already exists in DB by S3 path
-	existingDoc, err := uh.db.FindDocumentByS3Path(ctx, s3Path)
-	if err == nil {
-		return web.Render(c, http.StatusOK, components.DuplicateUploadResponse(existingDoc.ID.String()))
+	// Check for duplicate
+	if existing, err := uh.db.FindDocumentByS3Path(ctx, s3Path); err == nil {
+		return web.Render(c, http.StatusOK, components.DuplicateUploadResponse(existing.ID.String()))
 	}
 
-	file, err := fileHeader.Open()
+	// Read file bytes
+	fileBytes, err := uh.readMultipartFile(fileHeader)
 	if err != nil {
-		return web.Render(c, http.StatusOK, components.ErrorMessage(fmt.Sprintf("Error opening file: %v", err)))
-	}
-	defer func(file multipart.File) {
-		err := file.Close()
-		if err != nil {
-			uh.log.Error("Error closing file: %v", err)
-		}
-	}(file)
-
-	fileBytes, err := io.ReadAll(file)
-	if err != nil {
-		return web.Render(c, http.StatusOK, components.ErrorMessage(fmt.Sprintf("Error reading file: %v", err)))
+		return uh.renderError(c, http.StatusOK, "Error reading file: %v", err)
 	}
 
+	// Upload to S3
+	if err := uh.fileManager.UploadFile(ctx, s3Key, fileBytes, clientMime); err != nil {
+		return uh.renderError(c, http.StatusOK, "Error uploading file: %v", err)
+	}
+
+	// Extract metadata
 	metadata, err := uh.bedrockManager.ExtractPDFMetadata(ctx, fileBytes)
-	if err != nil {
-		return web.Render(c, http.StatusOK, components.ErrorMessage(err.Error()))
+	if err != nil || metadata == nil {
+		uh.cleanupOnError(ctx, filename)
+		return uh.renderError(c, http.StatusOK, "Error extracting metadata: %v", err)
 	}
 
-	format := "2006-01-02"
+	// Parse publish date
+	publishDate := uh.parsePublishDate(ctx, metadata.PublishDate)
 
-	parse, err := time.Parse(format, metadata.PublishDate)
-	if err != nil {
-		parse = time.Now()
-		fmt.Println(err)
-	}
-	sqlTime := sql.NullTime{
-		Time:  parse,
-		Valid: true,
-	}
-
-	prettyJSON, err := json.MarshalIndent(metadata, "", "  ")
-	if err != nil {
-		log.Printf("⚠️ Error formatting metadata as JSON: %v", err)
-		fmt.Printf("Raw Metadata: %+v\n", metadata) // Print raw struct if formatting fails
-	} else {
-		fmt.Println("--- Extracted Metadata ---")
-		fmt.Println(string(prettyJSON))
-		fmt.Println("--- End Extracted Metadata ---")
-	}
-
+	// Insert document record
 	if err := uh.db.InsertUploadedDocument(ctx, db.InsertUploadedDocumentParams{
 		ID:          fileID,
 		S3File:      s3Path,
-		FileName:    originalFilename,
-		Abstract:    sql.NullString{String: metadata.Abstract, Valid: true},
-		PublishDate: sqlTime,
+		FileName:    filename,
 		Title:       metadata.Title,
+		Abstract:    sql.NullString{String: metadata.Abstract, Valid: true},
+		PublishDate: publishDate,
 	}); err != nil {
-		uh.log.ErrorContext(c.Request().Context(), "DB insert failed", "error", err)
-		errorMessage := "Could not save file metadata to database"
-		c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
-		return web.Render(c, http.StatusInternalServerError, components.UploadResponse(false, errorMessage))
+		uh.cleanupOnError(ctx, s3Key)
+		return uh.renderError(c, 200, "Could not save file metadata to database")
 	}
 
-	uh.modifyAuthors(ctx, metadata.AuthorName)
-	uh.modifyCategories(ctx, metadata.CategoryName)
-	uh.modifyKeywords(ctx, metadata.KeywordName)
-	uh.modifyRegions(ctx, metadata.RegionName)
-
-	err = uh.updateManyToManyFieldsMetadata(
-		ctx,
-		uuid.NullUUID{UUID: fileID, Valid: true},
-		metadata.AuthorName,
-		metadata.KeywordName,
-		metadata.CategoryName,
-		metadata.RegionName,
-	)
-
-	if err != nil {
-		log.Printf("DB insert failed: %v", err)
-		errorMessage := "Could not save file metadata to database"
-		c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
-		return web.Render(c, http.StatusInternalServerError, components.UploadResponse(false, errorMessage))
+	// Update many-to-many joins
+	if err := uh.addAndSaveAssociations(ctx, fileID, metadata); err != nil {
+		uh.cleanupOnError(ctx, s3Key)
+		err := uh.db.DeleteDocumentByID(ctx, fileID)
+		if err != nil {
+			uh.log.ErrorContext(ctx, "Error deleting document from db: %v", err)
+		}
+		return uh.renderError(c, http.StatusOK, "Could not save associated metadata")
 	}
 
-	redirectPath := fmt.Sprintf("/edit-metadata/%s", fileID.String())
-	c.Response().Header().Set("HX-Redirect", redirectPath)
+	// Redirect to metadata editor
+	c.Response().Header().Set("HX-Redirect", fmt.Sprintf("/edit-metadata/%s", fileID))
 	return c.NoContent(http.StatusOK)
+}
+
+func (uh *UploadHandler) readMultipartFile(fh *multipart.FileHeader) ([]byte, error) {
+	file, err := fh.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	return io.ReadAll(file)
+}
+
+func (uh *UploadHandler) parsePublishDate(ctx context.Context, raw string) sql.NullTime {
+	if raw == "" {
+		return sql.NullTime{}
+	}
+	t, err := time.Parse(dateFormat, raw)
+	if err != nil {
+		uh.log.ErrorContext(ctx, "Invalid publish date format", "error", err)
+		return sql.NullTime{}
+	}
+	return sql.NullTime{Time: t, Valid: true}
+}
+
+func (uh *UploadHandler) addAndSaveAssociations(ctx context.Context, docID uuid.UUID, m *awskendra.ExtractedMetadata) error {
+	uh.addNewToStr(ctx, m.AuthorName)
+	uh.addNewToStr(ctx, m.CategoryName)
+	uh.addNewToStr(ctx, m.KeywordName)
+	uh.addNewToStr(ctx, m.RegionName)
+	return uh.updateManyToManyFieldsMetadata(
+		ctx,
+		uuid.NullUUID{UUID: docID, Valid: true},
+		m.AuthorName,
+		m.KeywordName,
+		m.CategoryName,
+		m.RegionName,
+	)
+}
+
+func (uh *UploadHandler) cleanupOnError(ctx context.Context, key string) {
+	if err := uh.fileManager.DeleteFile(ctx, key, "manually-uploaded-bep"); err != nil {
+		uh.log.ErrorContext(ctx, "Failed to delete S3 file during cleanup", "error", err)
+	}
+}
+
+func (uh *UploadHandler) renderError(c echo.Context, code int, format string, args ...interface{}) error {
+	msg := fmt.Sprintf(format, args...)
+	c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
+	return web.Render(c, code, components.ErrorMessage(msg))
 }
 
 func (uh *UploadHandler) PDFMetadataEditPage(c echo.Context) error {
@@ -317,32 +334,10 @@ func (uh *UploadHandler) HandleMetadataSave(c echo.Context) error {
 	return web.Render(c, http.StatusOK, components.SuccessMessage(fmt.Sprintf("Metadata updated successfully for fileId '%s'", docID)))
 }
 
-func (uh *UploadHandler) modifyAuthors(ctx context.Context, authorStrs []string) error {
-	for i, authorStr := range authorStrs {
-		authorStrs[i] = "new:" + authorStr
+func (uh *UploadHandler) addNewToStr(ctx context.Context, strs []string) {
+	for i, s := range strs {
+		strs[i] = "new:" + s
 	}
-	return nil
-}
-
-func (uh *UploadHandler) modifyRegions(ctx context.Context, regionStrs []string) error {
-	for i, regionStr := range regionStrs {
-		regionStrs[i] = "new:" + regionStr
-	}
-	return nil
-}
-
-func (uh *UploadHandler) modifyCategories(ctx context.Context, categoriesStrs []string) error {
-	for i, categoriesStr := range categoriesStrs {
-		categoriesStrs[i] = "new:" + categoriesStr
-	}
-	return nil
-}
-
-func (uh *UploadHandler) modifyKeywords(ctx context.Context, keywordsStrs []string) error {
-	for i, keywordStr := range keywordsStrs {
-		keywordsStrs[i] = "new:" + keywordStr
-	}
-	return nil
 }
 
 func (uh *UploadHandler) updateManyToManyFieldsMetadata(
