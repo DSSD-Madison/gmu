@@ -11,11 +11,15 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/kendra/types"
 )
 
+type QueryCache cache.Cache[KendraResults]
+type SuggestionCache cache.Cache[KendraSuggestions]
+
 type kendraClientImpl struct {
 	awsClient       *kendra.Client
 	queryQueue      KendraQueryQueue
+	queryCache      QueryCache
 	suggestionQueue KendraSuggestionQueue
-	cache           cache.Cache[KendraResults]
+	suggestionCache SuggestionCache
 	config          Config
 	log             logger.Logger
 }
@@ -38,6 +42,8 @@ func NewKendraClient(config Config, log logger.Logger) (KendraClient, error) {
 
 	queryCache := cache.NewGeneric[KendraResults](pkgLogger)
 	pkgLogger.Info("Kendra query cache initialized")
+	suggestionsCache := cache.NewGeneric[KendraSuggestions](pkgLogger)
+	pkgLogger.Info("Kendra query cache initialized")
 
 	workers := 2
 	buffer := 5
@@ -49,8 +55,9 @@ func NewKendraClient(config Config, log logger.Logger) (KendraClient, error) {
 	return &kendraClientImpl{
 		awsClient:       awsClient,
 		queryQueue:      queryQueue,
-		cache:           queryCache,
+		queryCache:      queryCache,
 		suggestionQueue: suggestionsQueue,
+		suggestionCache: suggestionsCache,
 		config:          config,
 		log:             pkgLogger,
 	}, nil
@@ -61,6 +68,10 @@ func (c *kendraClientImpl) GetSuggestions(ctx context.Context, query string) (Ke
 	kendraQuery := kendra.GetQuerySuggestionsInput{
 		IndexId:   &c.config.IndexID,
 		QueryText: &query,
+	}
+
+	if suggestions, ok := c.suggestionCache.Get(query); ok {
+		return suggestions, nil
 	}
 
 	out, ok := c.suggestionQueue.Enqueue(ctx, kendraQuery)
@@ -125,7 +136,7 @@ func (c *kendraClientImpl) MakeQuery(ctx context.Context, query string, filters 
 		kendraQueryInput.AttributeFilter = &kendraFilters
 	}
 
-	cacheResult, exist := c.cache.Get(query)
+	cacheResult, exist := c.queryCache.Get(query)
 	if exist {
 		c.log.Info("Query found in cache", "query", query, "page", pageNum)
 		return cacheResult, nil

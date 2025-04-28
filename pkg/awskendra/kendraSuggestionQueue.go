@@ -2,6 +2,7 @@ package awskendra
 
 import (
 	"context"
+	"time"
 
 	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/DSSD-Madison/gmu/pkg/queue"
@@ -12,12 +13,18 @@ type KendraSuggestionQueue queue.Queue[kendra.GetQuerySuggestionsInput, queue.Re
 
 func NewKendraSuggestionsQueue(
 	awsClient *kendra.Client,
+	c SuggestionCache,
 	log logger.Logger,
 	workerCount int,
 	bufferSize int,
 ) KendraSuggestionQueue {
 	processorFunc := func(ctx context.Context, query kendra.GetQuerySuggestionsInput) queue.Result[KendraSuggestions] {
 		log.DebugContext(ctx, "Processing Kendra query job", "query", *query.QueryText)
+
+		cachedResults, exists := c.Get(*query.QueryText)
+		if exists {
+			return queue.Result[KendraSuggestions]{Value: cachedResults, Error: nil}
+		}
 
 		output, err := awsClient.GetQuerySuggestions(ctx, &query)
 		if err != nil {
@@ -26,6 +33,7 @@ func NewKendraSuggestionsQueue(
 		}
 
 		results := querySuggestionsOutputToSuggestions(*output)
+		c.Set(*query.QueryText, results, 24*time.Hour)
 		return queue.Result[KendraSuggestions]{Value: results, Error: nil}
 	}
 

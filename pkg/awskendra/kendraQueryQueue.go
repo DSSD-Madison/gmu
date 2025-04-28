@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/DSSD-Madison/gmu/pkg/cache"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/DSSD-Madison/gmu/pkg/queue"
 	"github.com/aws/aws-sdk-go-v2/service/kendra"
@@ -14,7 +13,7 @@ type KendraQueryQueue queue.Queue[kendra.QueryInput, queue.Result[KendraResults]
 
 func NewKendraQueryQueue(
 	awsClient *kendra.Client,
-	c cache.Cache[KendraResults],
+	c QueryCache,
 	log logger.Logger,
 	workerCount int,
 	bufferSize int,
@@ -51,9 +50,7 @@ func NewKendraQueryQueue(
 		results.Query = *query.QueryText
 
 		log.DebugContext(ctx, "Finished processing Kendra query job", "result_count", results.Count)
-		if !exists {
-			c.Set(*query.QueryText, results, time.Hour)
-		}
+		c.Set(*query.QueryText, results, 24*time.Hour)
 		return queue.Result[KendraResults]{Value: results, Error: nil}
 	}
 
