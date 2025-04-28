@@ -1,11 +1,11 @@
 import boto3
 import os
 import urllib.parse
-import psycopg2
+import logging
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 from typing import List, Dict, Any
-import logging
+from utils import get_db_connection, get_kendra_client
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -16,22 +16,7 @@ load_dotenv()
 
 # AWS Configuration
 role_arn = os.getenv('ROLE_ARN')
-role_session_name = 'kendra-indexing-session'
 index_id = os.getenv('INDEX_ID')
-
-# Database Configuration
-DB_HOST = os.getenv('DB_HOST')
-DB_USER = os.getenv('DB_USER')
-DB_NAME = os.getenv('DB_NAME')
-DB_PASSWORD = os.getenv('DB_PASSWORD')
-
-def get_db_connection():
-    return psycopg2.connect(
-        host=DB_HOST,
-        database=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD
-    )
 
 def get_unindexed_documents(conn) -> List[Dict[str, Any]]:
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -67,12 +52,10 @@ def get_unindexed_documents(conn) -> List[Dict[str, Any]]:
                 ) AS categories
   
             FROM documents d
-            WHERE d.indexed_by_kendra = false
-              AND d.has_duplicate = false
+            WHERE d.to_index = true
+              AND d.to_delete = false
         """)
         return cur.fetchall()
-
-  
 
 def convert_s3_uri_to_url(s3_uri: str) -> str:
     if not s3_uri.startswith("s3://"):
@@ -148,27 +131,19 @@ def update_document_indexed_status(conn, doc_id: str):
     with conn.cursor() as cur:
         cur.execute("""
             UPDATE documents
-            SET indexed_by_kendra = true
+            SET to_index = false
             WHERE id = %s
         """, (doc_id,))
     conn.commit()
 
-def main():
+def index_documents():
     if not role_arn:
         raise ValueError("ROLE_ARN environment variable is not set")
     if not index_id:
         raise ValueError("INDEX_ID environment variable is not set")
 
-    sts = boto3.client('sts', region_name='us-east-1')
-    creds = sts.assume_role(RoleArn=role_arn, RoleSessionName=role_session_name)['Credentials']
-
-    kendra = boto3.client(
-        'kendra',
-        region_name='us-east-1',
-        aws_access_key_id=creds['AccessKeyId'],
-        aws_secret_access_key=creds['SecretAccessKey'],
-        aws_session_token=creds['SessionToken']
-    )
+    role_session_name = 'kendra-indexing-session'
+    kendra = get_kendra_client(role_session_name)
 
     conn = get_db_connection()
 
@@ -185,7 +160,6 @@ def main():
             for doc in batch:
                 try:
                     if doc['title'].strip().lower() == 'untitled':
-                        # logger.warning(f"Skipping document {doc['s3_file']} due to title='Untitled'")
                         continue
 
                     k_doc = create_kendra_document(doc)
@@ -227,4 +201,4 @@ def main():
         conn.close()
 
 if __name__ == "__main__":
-    main()
+    index_documents()

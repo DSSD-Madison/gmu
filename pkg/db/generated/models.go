@@ -46,19 +46,20 @@ type DocRegion struct {
 }
 
 type Document struct {
-	ID              uuid.UUID
-	FileName        string
-	Title           string
-	Abstract        sql.NullString
-	PublishDate     sql.NullTime
-	Source          sql.NullString
-	IndexedByKendra sql.NullBool
-	S3File          string
-	S3FilePreview   sql.NullString
-	PdfLink         sql.NullString
-	CreatedAt       sql.NullTime
-	DeletedAt       sql.NullTime
-	HasDuplicate    bool
+	ID                uuid.UUID
+	FileName          string
+	Title             string
+	Abstract          sql.NullString
+	PublishDate       sql.NullTime
+	Source            sql.NullString
+	ToIndex           sql.NullBool
+	S3File            string
+	S3FilePreview     sql.NullString
+	PdfLink           sql.NullString
+	CreatedAt         sql.NullTime
+	DeletedAt         sql.NullTime
+	ToDelete          bool
+	ToGeneratePreview sql.NullBool
 }
 
 type FlywaySchemaHistory struct {
