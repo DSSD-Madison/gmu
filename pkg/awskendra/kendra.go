@@ -153,7 +153,7 @@ func (c *kendraClientImpl) MakeQuery(ctx context.Context, query string, filters 
 		return KendraResults{}, queueResult.Error
 	}
 
-	c.log.DebugContext(ctx, "Kendra query executed successfully", "result_count", queueResult.Value.Count)
+	c.log.InfoContext(ctx, "Kendra query executed successfully", "result_count", queueResult.Value.Count)
 
 	results := queueResult.Value
 	calculatedPages := (results.Count + 9) / 10
