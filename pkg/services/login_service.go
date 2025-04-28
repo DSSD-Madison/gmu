@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 
+	"golang.org/x/crypto/bcrypt"
+
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/DSSD-Madison/gmu/pkg/ratelimiter"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthenticationService struct {
