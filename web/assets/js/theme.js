@@ -10,3 +10,8 @@ localStorage.theme = "light";
 localStorage.theme = "dark";
 // Whenever the user explicitly chooses to respect the OS preference
 localStorage.removeItem("theme");
+
+function toggleTheme() {
+	const htmlElement = document.documentElement; // Get the main html element
+	htmlElement.classList.toggle('dark'); // Toggle the 'dark' class
+}
