@@ -28,14 +28,6 @@ func NewAuthenticationHandler(log logger.Logger, sessionManager services.Session
 	}
 }
 
-func (ah *AuthenticationHandler) RegisterAuthenticationRoutes(e *echo.Echo) {
-	// Login Route
-	e.GET("/login", ah.LoginPage)
-	e.POST("/login", ah.Login)
-
-	e.POST("/logout", ah.Logout)
-}
-
 // Login TODO: Remove checks for HX-Header
 func (ah *AuthenticationHandler) Login(c echo.Context) error {
 	username := c.FormValue("username")
