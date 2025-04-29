@@ -110,7 +110,7 @@ CREATE TABLE public.documents (
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     deleted_at timestamp without time zone,
     to_delete boolean DEFAULT false NOT NULL,
-    to_generate_preview boolean DEFAULT false
+    to_generate_preview boolean DEFAULT true
 );
 
 
