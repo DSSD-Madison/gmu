@@ -6,7 +6,7 @@ on:
   workflow_dispatch:  # Allow manual runs
 
 jobs:
-  delete-duplicates:
+  delete-marked-documents:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -51,7 +51,7 @@ jobs:
           INDEX_ID: ${{ secrets.AWS_INDEX_ID }}
           ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
         run: |
-          echo "=== Running delete_duplicates.py ==="
-          python scripts/delete_duplicates.py
+          echo "=== Running delete_marked_documents.py ==="
+          python scripts/delete_marked_documents.py
 
 
