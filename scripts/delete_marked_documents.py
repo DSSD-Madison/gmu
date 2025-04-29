@@ -1,6 +1,5 @@
 import os
 import logging
-import boto3
 from dotenv import load_dotenv
 from psycopg2.extras import RealDictCursor
 from utils import get_db_connection, parse_s3_uri, get_s3_client, get_kendra_client
@@ -25,7 +24,7 @@ def delete_from_s3(s3, s3_uri):
     except Exception as e:
         logger.warning(f"Failed to delete {s3_uri}: {e}")
 
-def delete_duplicates_from_kendra():
+def delete_from_kendra():
     logger.info("Starting Kendra cleanup...")
     conn = get_db_connection()
     try:
@@ -49,7 +48,7 @@ def delete_duplicates_from_kendra():
     finally:
         conn.close()
 
-def delete_duplicates_from_s3():
+def delete_from_s3():
     logger.info("Starting S3 cleanup of marked documents...")
     
     conn = get_db_connection()
@@ -67,7 +66,42 @@ def delete_duplicates_from_s3():
         logger.info("S3 cleanup complete.")
     finally:
         conn.close()
+        
+def delete_from_db():
+    logger.info("Starting database cleanup of marked documents...")
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            # Delete from join tables
+            cur.execute("""
+                DELETE FROM doc_keywords WHERE doc_id IN (SELECT id FROM documents WHERE to_delete = TRUE);
+                DELETE FROM doc_authors WHERE doc_id IN (SELECT id FROM documents WHERE to_delete = TRUE);
+                DELETE FROM doc_regions WHERE doc_id IN (SELECT id FROM documents WHERE to_delete = TRUE);
+                DELETE FROM doc_categories WHERE doc_id IN (SELECT id FROM documents WHERE to_delete = TRUE);
+            """)
+            # Delete from documents table
+            cur.execute("DELETE FROM documents WHERE to_delete = TRUE;")
+
+            # Clean up orphaned metadata
+            cur.execute("""
+                DELETE FROM keywords WHERE id NOT IN (SELECT DISTINCT keyword_id FROM doc_keywords);
+                DELETE FROM authors WHERE id NOT IN (SELECT DISTINCT author_id FROM doc_authors);
+                DELETE FROM regions WHERE id NOT IN (SELECT DISTINCT region_id FROM doc_regions);
+                DELETE FROM categories WHERE id NOT IN (SELECT DISTINCT category_id FROM doc_categories);
+            """)
+
+            conn.commit()
+            logger.info("Database cleanup complete.")
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Database deletion failed: {e}")
+    finally:
+        conn.close()
+
+
 
 if __name__ == "__main__":
-    delete_duplicates_from_kendra()
-    delete_duplicates_from_s3()
+    delete_from_kendra()
+    delete_from_s3()
+    delete_from_db()
