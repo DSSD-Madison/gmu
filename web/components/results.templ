@@ -123,8 +123,8 @@ templ ResultCard(result awskendra.KendraResult, isAuthorized bool) {
 
 templ ResultsContainer(results awskendra.KendraResults, isAuthorized bool) {
 	<div id="results-content-container" class="space-y-6">
-		for _, result := range results.Results {
-			@ResultCard(result, isAuthorized)
+		for _, result := range results.Order {
+			@ResultCard(results.Results[result], isAuthorized)
 		}
 	</div>
 }

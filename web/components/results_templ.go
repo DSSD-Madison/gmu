@@ -436,8 +436,8 @@ func ResultsContainer(results awskendra.KendraResults, isAuthorized bool) templ.
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		for _, result := range results.Results {
-			templ_7745c5c3_Err = ResultCard(result, isAuthorized).Render(ctx, templ_7745c5c3_Buffer)
+		for _, result := range results.Order {
+			templ_7745c5c3_Err = ResultCard(results.Results[result], isAuthorized).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
