@@ -22,6 +22,7 @@ templ Navbar(isAuthenticated bool, isMaster bool) {
 								if isMaster {
 									@NavButton("Manage Users", templ.URL("/admin/users"))
 								}
+								@NavButton("Documents", templ.URL("/latest"))
 								@NavButton("Logout", templ.URL("/logout"))
 							} else {
 								@NavButton("Login", templ.URL("/login"))
@@ -57,6 +58,7 @@ templ mobileMenu(isAuthenticated bool, isMaster bool) {
 				if isMaster {
 					@MobileNavButton("Manage Users", templ.URL("/admin/users"))
 				}
+				@MobileNavButton("Documents", templ.URL("/latest"))
 				@MobileNavButton("Logout", templ.URL("/logout"))
 			} else {
 				@MobileNavButton("Login", templ.URL("/login"))
