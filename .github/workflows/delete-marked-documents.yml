@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: '0 8 * * *'  # 3 AM Eastern = 8 AM UTC
   workflow_dispatch:  # Allow manual runs
+  push:
+    branches:
+      fix-delete
 
 jobs:
   delete-duplicates:
@@ -51,7 +54,7 @@ jobs:
           INDEX_ID: ${{ secrets.AWS_INDEX_ID }}
           ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
         run: |
-          echo "=== Running delete_duplicates.py ==="
-          python scripts/delete_duplicates.py
+          echo "=== Running delete_marked_documents.py ==="
+          python scripts/delete_marked_documents.py
 
 
