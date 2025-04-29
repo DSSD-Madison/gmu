@@ -16,7 +16,7 @@ role_session_name = "document-deletion"
 s3 = get_s3_client(role_session_name)
 kendra_client = get_kendra_client(role_session_name)
 
-def delete_from_s3(s3, s3_uri):
+def delete_document_from_s3(s3, s3_uri):
     bucket, key = parse_s3_uri(s3_uri)
     try:
         s3.delete_object(Bucket=bucket, Key=key)
@@ -24,7 +24,7 @@ def delete_from_s3(s3, s3_uri):
     except Exception as e:
         logger.warning(f"Failed to delete {s3_uri}: {e}")
 
-def delete_from_kendra():
+def delete_documents_from_kendra():
     logger.info("Starting Kendra cleanup...")
     conn = get_db_connection()
     try:
@@ -48,7 +48,7 @@ def delete_from_kendra():
     finally:
         conn.close()
 
-def delete_from_s3():
+def delete_documents_from_s3():
     logger.info("Starting S3 cleanup of marked documents...")
     
     conn = get_db_connection()
@@ -59,15 +59,15 @@ def delete_from_s3():
 
             for row in rows:
                 if row["s3_file"]:
-                    delete_from_s3(s3, row["s3_file"])
+                    delete_document_from_s3(s3, row["s3_file"])
                 if row["s3_file_preview"]:
-                    delete_from_s3(s3, row["s3_file_preview"])
+                    delete_document_from_s3(s3, row["s3_file_preview"])
 
         logger.info("S3 cleanup complete.")
     finally:
         conn.close()
         
-def delete_from_db():
+def delete_documents_from_db():
     logger.info("Starting database cleanup of marked documents...")
 
     conn = get_db_connection()
@@ -102,6 +102,6 @@ def delete_from_db():
 
 
 if __name__ == "__main__":
-    delete_from_kendra()
-    delete_from_s3()
-    delete_from_db()
+    delete_documents_from_kendra()
+    delete_documents_from_s3()
+    delete_documents_from_db()
