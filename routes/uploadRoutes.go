@@ -23,4 +23,6 @@ func RegisterUploadRoutes(e *echo.Echo, uploadHandler *handlers.UploadHandler) {
 
 	e.GET("/latest", uploadHandler.LatestDocumentsPage, middleware.RequireAuth)
 
+	e.POST("/documents-search", uploadHandler.SearchDocumentsPage, middleware.RequireAuth)
+
 }

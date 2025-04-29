@@ -171,7 +171,7 @@ func main() {
 		CookieSecure:   appConfig.Mode == "prod", // Only set secure cookies in prod
 		Skipper: func(c echo.Context) bool {
 			switch c.Path() {
-			case "/", "/search", "/search/suggestions", "/login", "/logout":
+			case "/", "/search", "/search/suggestions", "/login", "/logout", "/document-search":
 				return true
 			default:
 				return false

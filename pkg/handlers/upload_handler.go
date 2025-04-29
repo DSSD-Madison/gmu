@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
@@ -451,10 +453,124 @@ func (uh *UploadHandler) LatestDocumentsPage(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	isAuthorized, isMaster := middleware.GetSessionFlags(c)
+	csrf, _ := c.Get("csrf").(string)
 
-	documents, err := uh.db.GetLatestDocuments(ctx)
+	documents, err := uh.db.SearchDocumentsSorted(
+		ctx,
+		db.SearchDocumentsSortedParams{
+			Column1: sql.NullString{String: "", Valid: true},
+			Limit:   25,
+			Offset:  0,
+			Column4: "created_at",
+			Column5: "desc",
+		},
+	)
 	if err != nil {
 		return err
 	}
-	return web.Render(c, 200, components.RecentDocumentsTable(documents, isAuthorized, isMaster))
+	return web.Render(c, 200, components.RecentDocumentsView(documents, "created_at", "desc", 0, 25, isAuthorized, isMaster, csrf))
+}
+func (uh *UploadHandler) SearchDocumentsPage(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	var req struct {
+		Query   string `form:"query"`
+		SortBy  string `form:"sort_by"`
+		SortDir string `form:"sort_dir"`
+		Offset  int    `form:"offset"`
+		Limit   int    `form:"limit"`
+	}
+
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid parameters").SetInternal(err)
+	}
+
+	// --- Set Defaults and Sanitize ---
+	if req.Offset < 0 {
+		req.Offset = 0
+	}
+	if req.Limit <= 0 {
+		req.Limit = 25 // Default limit
+	}
+	switch req.SortBy {
+	case components.ColTitle, components.ColFilename, components.ColCreatedAt: // Use constants
+	default:
+		req.SortBy = components.ColCreatedAt
+	}
+	req.SortDir = strings.ToLower(req.SortDir)
+	if req.SortDir != components.SortAsc && req.SortDir != components.SortDesc { // Use constants
+		req.SortDir = components.SortDesc
+	}
+
+	// --- Database Query ---
+	docs, err := uh.db.SearchDocumentsSorted(
+		ctx,
+		db.SearchDocumentsSortedParams{
+			Column1: sql.NullString{String: req.Query, Valid: true},
+			Limit:   int32(req.Limit),
+			Offset:  int32(req.Offset),
+			Column4: req.SortBy,
+			Column5: req.SortDir,
+		},
+	)
+	if err != nil {
+		// Consider returning an error snippet via HTMX if appropriate
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to retrieve documents").SetInternal(err)
+	}
+
+	// --- Determine Response Type (Full Table vs Infinite Scroll Rows) ---
+	isInfiniteScroll := c.Request().Header.Get("HX-Trigger") != "" && // Check if triggered by HTMX
+		strings.HasPrefix(c.Request().Header.Get("HX-Trigger"), "document-row-nil-") || // Triggered by old sentinel ID format
+		c.Request().Header.Get("HX-Target") == c.Request().Header.Get("HX-Trigger") // More reliable: target is the trigger row itself
+
+	// Check if the specific trigger ID corresponds to the infinite scroll row's pattern (if you add one)
+	// A simpler check often used: if offset > 0, assume it's infinite scroll.
+	// Let's use the HX-Target == HX-Trigger check as it's quite specific to the infinite scroll pattern used.
+	if isInfiniteScroll {
+		var buf bytes.Buffer
+
+		// Render each new document row
+		for _, doc := range docs {
+			err := components.DocumentTableRow(doc).Render(ctx, &buf)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, "Failed to render document row").SetInternal(err)
+			}
+		}
+
+		if len(docs) >= req.Limit {
+			nextOffset := req.Offset + len(docs)
+			nextTriggerHTML := fmt.Sprintf(`
+                <tr hx-post="%s"
+                    hx-trigger="revealed"
+                    hx-swap="outerHTML"
+                    hx-target="this"
+                    hx-include="#document-sort-form,#document-search"
+                    hx-vals='%s'>
+                    <td colspan="5" class="py-4 text-center text-gray-500 dark:text-gray-400">
+                        <svg class="animate-spin h-5 w-5 text-gray-500 dark:text-gray-400 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Loading more…
+                    </td>
+                </tr>`,
+				components.SearchURL,
+				components.GetNextOffsetJson(nextOffset), // Use helper for JSON vals
+			)
+			buf.WriteString(nextTriggerHTML)
+		}
+
+		c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
+		return c.String(http.StatusOK, buf.String())
+
+	}
+
+	component := components.DocumentTable(
+		docs,
+		req.SortBy,
+		req.SortDir,
+		req.Offset,
+		req.Limit,
+	)
+	return web.Render(c, 200, component)
 }
