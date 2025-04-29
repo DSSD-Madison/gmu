@@ -447,10 +447,31 @@ CREATE INDEX idx_doc_regions_region_id ON public.doc_regions USING btree (region
 
 
 --
+-- Name: idx_documents_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_documents_created_at ON public.documents USING btree (created_at);
+
+
+--
+-- Name: idx_documents_file_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_documents_file_name ON public.documents USING btree (file_name);
+
+
+--
 -- Name: idx_documents_publish_date; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_documents_publish_date ON public.documents USING btree (publish_date);
+
+
+--
+-- Name: idx_documents_title; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_documents_title ON public.documents USING btree (title);
 
 
 --

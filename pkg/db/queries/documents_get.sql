@@ -58,3 +58,21 @@ SELECT *
 FROM documents
 WHERE s3_file = $1;
 
+-- name: SearchDocumentsSorted :many
+SELECT *
+FROM documents
+WHERE title     ILIKE '%' || $1 || '%'
+   OR file_name ILIKE '%' || $1 || '%'
+ORDER BY
+    -- sort by file_name?
+  CASE WHEN $4 = 'file_name' AND $5 = 'asc'  THEN file_name END  ASC,
+  CASE WHEN $4 = 'file_name' AND $5 = 'desc' THEN file_name END DESC,
+  -- sort by title?
+  CASE WHEN $4 = 'title'     AND $5 = 'asc'  THEN title     END  ASC,
+  CASE WHEN $4 = 'title'     AND $5 = 'desc' THEN title     END DESC,
+  -- sort by created_at?
+  CASE WHEN $4 = 'created_at' AND $5 = 'asc'  THEN created_at END  ASC,
+  CASE WHEN $4 = 'created_at' AND $5 = 'desc' THEN created_at END DESC
+LIMIT  $2  -- page size
+OFFSET $3; -- start row
+

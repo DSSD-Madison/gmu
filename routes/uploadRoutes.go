@@ -17,7 +17,13 @@ func RegisterUploadRoutes(e *echo.Echo, uploadHandler *handlers.UploadHandler) {
 	e.GET("/edit-metadata/:fileId", uploadHandler.PDFMetadataEditPage, middleware.RequireAuth) // <<< ADDED ROUTE
 
 	// Action endpoint to handle the saving of edited metadata
-	e.POST("/save-metadata", uploadHandler.HandleMetadataSave, middleware.RequireAuth) // <<< ADDED ROUTE
+	e.POST("/save-metadata", uploadHandler.HandleMetadataSave, middleware.RequireAuth)
+
+	e.POST("/toggle-delete", uploadHandler.ToggleDelete, middleware.RequireAuth)
+
+	e.GET("/latest", uploadHandler.LatestDocumentsPage, middleware.RequireAuth)
+
+	e.POST("/documents-search", uploadHandler.SearchDocumentsPage, middleware.RequireAuth)
 
 	// Action endpoint to handle the saving of edited metadata
 	e.POST("/toggle-delete", uploadHandler.ToggleDelete, middleware.RequireAuth) // <<< ADDED ROUTE

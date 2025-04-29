@@ -110,7 +110,7 @@ func Searchbar(data awskendra.UrlData, oob bool) templ.Component {
 			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<input class=\"text-2xl peer border-2 px-6 py-3 w-full outline-none bg-white dark:border-gray-600 dark:bg-gray-800 dark:text-white\" id=\"searchquery\" autocomplete=\"off\" placeholder=\"Begin Your Search Here...\" type=\"text\" name=\"query\" hx-push-url=\"false\" hx-post=\"/search/suggestions\" hx-trigger=\"input changed delay:250ms\" hx-target=\"#suggestions\" hx-swap=\"innerHTML\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<input class=\"text-2xl peer border-2 px-6 py-3 w-full outline-none bg-white dark:border-gray-600 dark:bg-gray-800 dark:text-white\" id=\"searchquery\" autocomplete=\"off\" placeholder=\"Begin Your Search Here...\" type=\"search\" enterkeyhint=\"search\" inputmode=\"search\" name=\"query\" hx-push-url=\"false\" hx-post=\"/search/suggestions\" hx-trigger=\"input changed delay:250ms\" hx-target=\"#suggestions\" hx-swap=\"innerHTML\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -127,7 +127,7 @@ func Searchbar(data awskendra.UrlData, oob bool) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(data.Query)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/searchbar.templ`, Line: 32, Col: 22}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/searchbar.templ`, Line: 34, Col: 22}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -147,7 +147,7 @@ func Searchbar(data awskendra.UrlData, oob bool) templ.Component {
 					var templ_7745c5c3_Var6 string
 					templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(filter.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/searchbar.templ`, Line: 37, Col: 43}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/searchbar.templ`, Line: 39, Col: 43}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 					if templ_7745c5c3_Err != nil {
@@ -160,7 +160,7 @@ func Searchbar(data awskendra.UrlData, oob bool) templ.Component {
 					var templ_7745c5c3_Var7 string
 					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(str)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/searchbar.templ`, Line: 37, Col: 57}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/searchbar.templ`, Line: 39, Col: 57}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 					if templ_7745c5c3_Err != nil {
@@ -179,7 +179,7 @@ func Searchbar(data awskendra.UrlData, oob bool) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(data.Page))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/searchbar.templ`, Line: 40, Col: 65}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/searchbar.templ`, Line: 42, Col: 65}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {

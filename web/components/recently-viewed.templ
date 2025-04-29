@@ -1,0 +1,267 @@
+package components
+
+import (
+	"encoding/json"
+	"fmt"
+	"time"
+
+	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
+	"github.com/google/uuid"
+)
+
+const (
+	SearchURL    = "/documents-search"
+	SortAsc      = "asc"
+	SortDesc     = "desc"
+	ColTitle     = "title"
+	ColFilename  = "file_name"
+	ColCreatedAt = "created_at"
+)
+
+func formatTime(t time.Time) string {
+	if t.IsZero() {
+		return ""
+	}
+	return t.Format("Jan 02, 2006 15:04")
+}
+
+func getRowID(id uuid.UUID) string {
+	if id != uuid.Nil {
+		return fmt.Sprintf("document-row-%s", id.String())
+	}
+	return fmt.Sprintf("document-row-nil-%d", time.Now().UnixNano())
+}
+
+templ sortAscIcon() {
+	<svg class="w-5 h-5 ml-1 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+		<path d="M7.247 4.86l-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z"/>
+	</svg>
+}
+
+templ sortDescIcon() {
+	<svg class="w-5 h-5 ml-1 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+		<path d="M7.247 11.14l-4.796-5.481c-.566-.647-.106-1.659.753-1.659h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+	</svg>
+}
+
+templ sortableIcon() {
+	<svg class="w-5 h-5 ml-1 flex-shrink-0 text-gray-300 dark:text-gray-600 group-hover:text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+		 <path d="M3.5 2.5a.5.5 0 0 0-1 0v11a.5.5 0 0 0 1 0v-11zm4-1a.5.5 0 0 1 .5.5V14a.5.5 0 0 1-1 0V2a.5.5 0 0 1 .5-.5zm4 1a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-1 0v-11a.5.5 0 0 1 .5-.5z"/>
+	</svg>
+}
+
+templ indexedIcon() {
+	<svg class="w-5 h-5 text-green-600 dark:text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+		<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+	</svg>
+}
+
+templ pendingIndexIcon() {
+	<svg class="w-5 h-5 text-gray-400 dark:text-gray-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+		<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+		<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+	</svg>
+}
+
+templ markedForDeletionIcon() {
+	<svg class="w-5 h-5 text-red-600 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+		<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
+	</svg>
+}
+
+templ notMarkedForDeletionIcon() {
+	<svg class="w-5 h-5 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+		 <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z"/>
+	</svg>
+}
+
+templ SortableHeader(column, label, currentSortBy, currentSortDir string) {
+	<th scope="col" class="w-1/3 px-6 py-3 text-left text-xs uppercase tracking-wider">
+		<button
+			class="group inline-flex items-center text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 focus:outline-none"
+			hx-post={ SearchURL }
+			hx-target="#document-table"
+			hx-swap="outerHTML"
+			hx-include="#document-sort-form,#document-search"
+			hx-vals={ fmt.Sprintf(`js:{
+                sort_by: '%s',
+                sort_dir: ('%s' === '%s' && '%s' === 'desc') ? 'asc' : 'desc',
+                offset: "0"
+            }`, column, column, currentSortBy, currentSortDir) }
+			hx-on="htmx:afterRequest:
+                document.querySelector('#document-sort-form input[name=sort_by]').value = this.getAttribute('hx-vals').match(/sort_by:\s*'([^']+)'/)[1];
+                document.querySelector('#document-sort-form input[name=sort_dir]').value = this.getAttribute('hx-vals').match(/sort_dir:\s*'([^']+)'/)[1];
+				document.querySelector('#document-sort-form input[name=offset]').value = '0';
+            "
+		>
+			<span class={
+                "mr-1",
+                templ.KV("font-semibold text-indigo-600 dark:text-indigo-400", currentSortBy == column),
+            }>{ label }</span>
+			if currentSortBy == column {
+				if currentSortDir == SortAsc {
+					@sortAscIcon()
+				} else {
+					@sortDescIcon()
+				}
+			} else {
+				@sortableIcon()
+			}
+		</button>
+	</th>
+}
+
+templ DocumentTableRow(doc db.Document) {
+	<tr id={ getRowID(doc.ID) } class="hover:bg-gray-50 dark:hover:bg-gray-800">
+		<td class="px-6 py-4 whitespace-nowrap">
+			<a href={ templ.SafeURL(fmt.Sprintf("/edit-metadata/%s", doc.ID)) }
+			   class="block overflow-hidden whitespace-nowrap text-ellipsis max-w-xs font-medium text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
+				{ doc.Title }
+			</a>
+		</td>
+		<td class="px-6 py-4 whitespace-nowrap">
+			<div class="overflow-hidden whitespace-nowrap text-ellipsis max-w-xs text-sm text-gray-900 dark:text-gray-200">
+				{ doc.FileName }
+			</div>
+		</td>
+		<td class="px-6 py-4 whitespace-nowrap">
+			<div class="text-sm text-gray-500 dark:text-gray-400">{ formatTime(doc.CreatedAt.Time) }</div>
+		</td>
+		<td class="px-3 py-4 text-center align-middle">
+			if doc.ToIndex.Valid && !doc.ToIndex.Bool {
+				@indexedIcon()
+			} else {
+				@pendingIndexIcon()
+			}
+		</td>
+		<td class="px-3 py-4 text-center align-middle">
+			if doc.ToDelete {
+				@markedForDeletionIcon()
+			} else {
+				@notMarkedForDeletionIcon()
+			}
+		</td>
+	</tr>
+}
+
+templ DocumentTableBody(documents []db.Document, currentOffset int, limit int) {
+	<tbody id="document-table-body" class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+		if len(documents) == 0 && currentOffset == 0 {
+			<tr>
+				<td colspan="5" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
+					No documents found.
+				</td>
+			</tr>
+		}
+
+		for _, doc := range documents {
+			@DocumentTableRow(doc)
+		}
+
+		if len(documents) >= limit {
+			<tr
+				hx-post={ SearchURL }
+				hx-trigger="revealed"
+				hx-swap="outerHTML"
+				hx-target="this"
+				hx-include="#document-sort-form,#document-search"
+				hx-vals=GetNextOffsetJson(nextOffset)
+			>
+				<td colspan="5" class="py-4 text-center text-gray-500 dark:text-gray-400">
+					<svg class="animate-spin h-5 w-5 text-gray-500 dark:text-gray-400 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+						<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+						<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+					</svg>
+					Loading more…
+				</td>
+			</tr>
+		}
+	</tbody>
+}
+
+templ DocumentTable(documents []db.Document, sortBy, sortDir string, currentOffset, limit int) {
+	<table id="document-table" class="min-w-full table-fixed divide-y divide-gray-200 dark:divide-gray-700">
+		<thead class="bg-gray-50 dark:bg-gray-800">
+			<tr>
+				@SortableHeader(ColTitle, "Title", sortBy, sortDir)
+				@SortableHeader(ColFilename, "Filename", sortBy, sortDir)
+				@SortableHeader(ColCreatedAt, "Uploaded At", sortBy, sortDir)
+				<th scope="col" class="w-1/12 px-3 py-3 text-center text-xs uppercase tracking-wider text-gray-600 dark:text-gray-300">Indexed</th>
+				<th scope="col" class="w-1/12 px-3 py-3 text-center text-xs uppercase tracking-wider text-gray-600 dark:text-gray-300">Deletion</th>
+			</tr>
+		</thead>
+		@DocumentTableBody(documents, currentOffset, limit)
+	</table>
+}
+
+templ RecentDocumentsView(
+	documents    []db.Document,
+	sortBy       string,
+	sortDir      string,
+	currentOffset int,
+	limit        int,
+	isAuthorized bool,
+	isMaster     bool,
+	csrf         string,
+) {
+	if sortBy == "" {
+		sortBy = ColCreatedAt
+	}
+	if sortDir == "" {
+		sortDir = SortDesc
+	}
+	if limit <= 0 {
+		limit = 25
+	}
+
+	@Base("Recent Documents", isAuthorized, isMaster) {
+		<div class="space-y-4">
+			<div class="relative">
+				<label for="document-search" class="sr-only">Search Documents</label>
+				<input
+					type="search"
+					id="document-search"
+					autocomplete="off"
+                    spellcheck="false"
+					name="query"
+					placeholder="Search by title or filename…"
+					class="focus:outline-none block w-full p-3 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-indigo-500 dark:focus:border-indigo-500"
+					hx-post={ SearchURL }
+					hx-trigger="keyup changed delay:500ms, search"
+					hx-target="#document-table"
+					hx-swap="outerHTML"
+					hx-include="#document-sort-form,#document-search"
+					hx-vals={ `{"offset":"0"}` }
+				/>
+				<div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+					<svg class="w-5 h-5 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+					</svg>
+				</div>
+			</div>
+
+			<form id="document-sort-form" class="hidden">
+				<input type="hidden" name="sort_by" value={ sortBy }/>
+				<input type="hidden" name="sort_dir" value={ sortDir }/>
+				<input type="hidden" name="offset" value="0"/>
+				<input type="hidden" name="limit" value={ fmt.Sprint(limit) }/>
+				<input type="hidden" name="_csrf" value={ csrf }/>
+			</form>
+
+			<div class="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 rounded-lg dark:ring-white dark:ring-opacity-10">
+				@DocumentTable(documents, sortBy, sortDir, currentOffset, limit)
+			</div>
+		</div>
+	}
+}
+
+func GetNextOffsetJson(nextOffset int) string {
+	payload := map[string]interface{}{
+		"offset": nextOffset,
+	}
+	b, err := json.Marshal(payload)
+	if err != nil {
+		return `{"offset":0}`
+	}
+	return string(b)
+}

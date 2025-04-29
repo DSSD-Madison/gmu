@@ -209,3 +209,74 @@ func (q *Queries) GetDocumentsByURIs(ctx context.Context, dollar_1 []string) ([]
 	}
 	return items, nil
 }
+
+const searchDocumentsSorted = `-- name: SearchDocumentsSorted :many
+SELECT id, file_name, title, abstract, publish_date, source, to_index, s3_file, s3_file_preview, pdf_link, created_at, deleted_at, to_delete, to_generate_preview
+FROM documents
+WHERE title     ILIKE '%' || $1 || '%'
+   OR file_name ILIKE '%' || $1 || '%'
+ORDER BY
+    -- sort by file_name?
+  CASE WHEN $4 = 'file_name' AND $5 = 'asc'  THEN file_name END  ASC,
+  CASE WHEN $4 = 'file_name' AND $5 = 'desc' THEN file_name END DESC,
+  -- sort by title?
+  CASE WHEN $4 = 'title'     AND $5 = 'asc'  THEN title     END  ASC,
+  CASE WHEN $4 = 'title'     AND $5 = 'desc' THEN title     END DESC,
+  -- sort by created_at?
+  CASE WHEN $4 = 'created_at' AND $5 = 'asc'  THEN created_at END  ASC,
+  CASE WHEN $4 = 'created_at' AND $5 = 'desc' THEN created_at END DESC
+LIMIT  $2  -- page size
+OFFSET $3
+`
+
+type SearchDocumentsSortedParams struct {
+	Column1 sql.NullString
+	Limit   int32
+	Offset  int32
+	Column4 interface{}
+	Column5 interface{}
+}
+
+func (q *Queries) SearchDocumentsSorted(ctx context.Context, arg SearchDocumentsSortedParams) ([]Document, error) {
+	rows, err := q.db.QueryContext(ctx, searchDocumentsSorted,
+		arg.Column1,
+		arg.Limit,
+		arg.Offset,
+		arg.Column4,
+		arg.Column5,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Document
+	for rows.Next() {
+		var i Document
+		if err := rows.Scan(
+			&i.ID,
+			&i.FileName,
+			&i.Title,
+			&i.Abstract,
+			&i.PublishDate,
+			&i.Source,
+			&i.ToIndex,
+			&i.S3File,
+			&i.S3FilePreview,
+			&i.PdfLink,
+			&i.CreatedAt,
+			&i.DeletedAt,
+			&i.ToDelete,
+			&i.ToGeneratePreview,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
