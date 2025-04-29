@@ -195,7 +195,10 @@ func (c *kendraClientImpl) MakeQuery(ctx context.Context, query string, filters 
 
 	results := queryResult.Results
 	calculatedPages := (results.Count + 9) / 10
-	totalPages := min(calculatedPages, 10)
+	totalPages := calculatedPages
+	if totalPages > 10 {
+		totalPages = 10
+	}
 
 	results.PageStatus = PageStatus{
 		CurrentPage: pageNum,

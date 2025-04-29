@@ -25,4 +25,7 @@ func RegisterUploadRoutes(e *echo.Echo, uploadHandler *handlers.UploadHandler) {
 
 	e.POST("/documents-search", uploadHandler.SearchDocumentsPage, middleware.RequireAuth)
 
+	// Action endpoint to handle the saving of edited metadata
+	e.POST("/toggle-delete", uploadHandler.ToggleDelete, middleware.RequireAuth) // <<< ADDED ROUTE
+
 }

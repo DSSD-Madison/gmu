@@ -27,10 +27,6 @@ func NewUserManagementHandler(log logger.Logger, db *db.Queries) *UserManagement
 	}
 }
 
-func RegisterUserManagementRoutes(e echo.Echo, umh *UserManagementHandler) {
-
-}
-
 func (uh *UserManagementHandler) ManageUsersPage(c echo.Context) error {
 	csrf := c.Get("csrf").(string)
 	isAuthorized, isMaster := middleware.GetSessionFlags(c)

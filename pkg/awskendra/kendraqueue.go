@@ -16,7 +16,6 @@ type genericQueue[P, R any] struct {
 	log       logger.Logger
 	wg        sync.WaitGroup
 	stopChan  chan struct{}
-	semaphore chan struct{}
 }
 
 func NewGenericQueue[P, R any](
