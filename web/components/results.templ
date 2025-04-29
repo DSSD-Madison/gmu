@@ -14,7 +14,7 @@ templ ResultsPage(results awskendra.KendraResults, isAuthorized bool) {
 			@ResultsAndPagination(results, isAuthorized)
 		</div>
 	</div>
-	@Searchbar(results.UrlData, isAuthorized)
+	@Searchbar(results.UrlData, true)
 	@suggestions_container(true)
 }
 
