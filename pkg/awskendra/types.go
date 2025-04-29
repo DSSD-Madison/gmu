@@ -32,6 +32,7 @@ type PageStatus struct {
 type KendraResults struct {
 	IsStoringUrl bool
 	Results      map[string]KendraResult
+	Order        []string
 	Query        string
 	Count        int
 	PageStatus   PageStatus

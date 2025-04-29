@@ -81,6 +81,7 @@ func queryOutputToResults(out kendra.QueryOutput) KendraResults {
 				Excerpts: make([]Excerpt, 0),
 				Link:     *item.DocumentURI,
 			}
+			kendraResults.Order = append(kendraResults.Order, title)
 		} else {
 			res = result
 		}
