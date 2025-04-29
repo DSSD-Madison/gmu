@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: '0 8 * * *'  # 3 AM Eastern = 8 AM UTC
   workflow_dispatch:  # Allow manual runs
+  push:
+    branches:
+      delete-fixes-2
 
 jobs:
   delete-marked-documents:
