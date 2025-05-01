@@ -44,7 +44,7 @@ func sidecolumn(results awskendra.KendraResults) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<button id=\"apply-filters-btn\" type=\"submit\" class=\"w-full bg-blue-600 dark:bg-blue-500 text-white p-2 rounded-md hover:bg-blue-700 cursor-pointer transition flex items-center justify-center\" hx-on:htmx:request=\"\n          this.disabled = true;\n          this.querySelector(&#39;.spinner&#39;).classList.remove(&#39;hidden&#39;);\n        \" hx-on:htmx:afterSwap=\"\n          this.disabled = false;\n          this.querySelector(&#39;.spinner&#39;).classList.add(&#39;hidden&#39;);\n        \"><span>Apply Filters</span> <svg class=\"spinner hidden w-5 h-5 ml-2 animate-spin\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\"><circle class=\"opacity-25\" cx=\"12\" cy=\"12\" r=\"10\" stroke=\"currentColor\" stroke-width=\"4\"></circle> <path class=\"opacity-75\" fill=\"currentColor\" d=\"M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z\"></path></svg></button></form></aside>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<button id=\"apply-filters-btn\" type=\"submit\" class=\"w-full bg-blue-600 dark:bg-blue-500 text-white p-2 rounded-md hover:bg-blue-700 cursor-pointer transition\">Apply Filters</button></form></aside>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -80,7 +80,7 @@ func filterCard(filter awskendra.FilterCategory) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(filter.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/sidecolumn.templ`, Line: 63, Col: 39}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/sidecolumn.templ`, Line: 35, Col: 39}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -137,7 +137,7 @@ func filterOption(filter awskendra.FilterCategory, option awskendra.FilterOption
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(filter.Category)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/sidecolumn.templ`, Line: 83, Col: 28}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/sidecolumn.templ`, Line: 55, Col: 28}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -150,7 +150,7 @@ func filterOption(filter awskendra.FilterCategory, option awskendra.FilterOption
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(option.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/sidecolumn.templ`, Line: 84, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/sidecolumn.templ`, Line: 56, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -168,7 +168,7 @@ func filterOption(filter awskendra.FilterCategory, option awskendra.FilterOption
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(filter.Category)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/sidecolumn.templ`, Line: 89, Col: 28}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/sidecolumn.templ`, Line: 61, Col: 28}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -181,7 +181,7 @@ func filterOption(filter awskendra.FilterCategory, option awskendra.FilterOption
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(option.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/sidecolumn.templ`, Line: 90, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/sidecolumn.templ`, Line: 62, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -199,7 +199,7 @@ func filterOption(filter awskendra.FilterCategory, option awskendra.FilterOption
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(option.Label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/sidecolumn.templ`, Line: 92, Col: 92}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/sidecolumn.templ`, Line: 64, Col: 92}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -212,7 +212,7 @@ func filterOption(filter awskendra.FilterCategory, option awskendra.FilterOption
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(int(option.Count)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/sidecolumn.templ`, Line: 93, Col: 92}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/sidecolumn.templ`, Line: 65, Col: 92}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
