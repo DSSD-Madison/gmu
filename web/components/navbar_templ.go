@@ -29,7 +29,7 @@ func Navbar(isAuthenticated bool, isMaster bool) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<nav class=\"dark:bg-gray-800 bg-gray-100 dark:text-white\"><div class=\"mx-auto max-w-7xl px-2 sm:px-6 lg:px-8\"><div class=\"relative flex h-16 items-center justify-between\"><div class=\"absolute inset-y-0 left-0 flex items-center sm:hidden\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<nav class=\"dark:bg-gray-800 bg-gray-100 dark:text-white\"><div class=\"mx-auto max-w-full px-2 sm:px-6 lg:px-8\"><div class=\"relative flex h-16 items-center justify-between\"><div class=\"absolute inset-y-0 left-0 flex items-center sm:hidden\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -1,8 +1,8 @@
 package components
 
 templ Navbar(isAuthenticated bool, isMaster bool) {
-	<nav class="dark:bg-gray-800 bg-gray-100 dark:text-white">
-		<div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+	<nav class="w-full bg-gray-100 dark:bg-gray-800 dark:text-white">
+		<div class="max-w-screen-xl mx-auto px-2 sm:px-6 lg:px-8">
 			<div class="relative flex h-16 items-center justify-between">
 				<div class="absolute inset-y-0 left-0 flex items-center sm:hidden">
 					@mobileMenuButton()
@@ -14,22 +14,19 @@ templ Navbar(isAuthenticated bool, isMaster bool) {
 					</div>
 					<div class="hidden sm:ml-6 sm:block">
 						<div class="flex space-x-4">
-							<!-- Current: "bg-gray-900 text-white", Default: "text-gray-300 hover:bg-gray-700 hover:text-white" -->
 							@NavButton("Home", templ.URL("/"))
-
-							if isAuthenticated {
+							{{ if isAuthenticated }}
 								@NavButton("Upload", templ.URL("/upload"))
-								if isMaster {
-									@NavButton("Manage Users", templ.URL("/admin/users"))
-								}
+								{{ if isMaster }}@NavButton("Manage Users", templ.URL("/admin/users")){{ end }}
 								@NavButton("Documents", templ.URL("/latest"))
 								@NavButton("Logout", templ.URL("/logout"))
-							} else {
+							{{ else }}
 								@NavButton("Login", templ.URL("/login"))
-							}
+							{{ end }}
 						</div>
 					</div>
 				</div>
+
 				<div class="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
 					@LightDarkButton()
 				</div>

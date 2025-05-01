@@ -8,14 +8,20 @@ import (
 )
 
 templ ResultsPage(results awskendra.KendraResults, isAuthorized bool) {
-	<div id="grid-container" class="py-4 md:grid md:grid-cols-[1fr_4fr] md:w-full md:gap-4 flex flex-col justify-center">
-		@sidecolumn(results)
-		<div id="results-and-pagination">
-			@ResultsAndPagination(results, isAuthorized)
-		</div>
+    <div class="w-full sm:w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 mx-auto py-4">
+         <div id="grid-container" class="md:grid md:grid-cols-[1fr_4fr] md:gap-4 flex flex-col justify-center">
+         @sidecolumn(results)
+            <div id="results-and-pagination">
+                @ResultsAndPagination(results, isAuthorized)
+            </div>
+        </div>
 	</div>
-	@Searchbar(results.UrlData, true)
-	@suggestions_container(true)
+	<div class="flex flex-col items-center px-4 mt-6">
+      <div class="w-full sm:w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2">
+        @Searchbar(results.UrlData, true)
+        @suggestions_container(true)
+      </div>
+    </div>
 }
 
 templ ResultsAndPagination(results awskendra.KendraResults, isAuthorized bool) {

@@ -6,7 +6,17 @@ import (
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 )
 
-var searchbar_classes = `relative w-full not-has-[p]:focus-within:[&_input]:rounded-3xl not-has-[p]:focus-within:[&_input]:border-blue-400 has-[p]:focus-within:[&_input]:rounded-t-3xl has-[p]:focus-within:[&_input]:border-blue-400 not-has-[p]:not-focus-within:[&_input]:rounded-3xl has-[p]:not-focus-within:[&_input]:rounded-3xl hover:[&_input]:rounded-t-3xl`
+//var searchbar_classes = `relative w-full not-has-[p]:focus-within:[&_input]:rounded-3xl not-has-[p]:focus-within:[&_input]:border-blue-400 has-[p]:focus-within:[&_input]:rounded-t-3xl has-[p]:focus-within:[&_input]:border-blue-400 not-has-[p]:not-focus-within:[&_input]:rounded-3xl has-[p]:not-focus-within:[&_input]:rounded-3xl hover:[&_input]:rounded-t-3xl`
+var searchbar_classes = `relative
+  w-full
+  mx-auto
+  not-has-[p]:focus-within:[&_input]:rounded-3xl
+  not-has-[p]:focus-within:[&_input]:border-blue-400
+  has-[p]:focus-within:[&_input]:rounded-t-3xl
+  has-[p]:focus-within:[&_input]:border-blue-400
+  not-has-[p]:not-focus-within:[&_input]:rounded-3xl
+  has-[p]:not-focus-within:[&_input]:rounded-3xl
+  hover:[&_input]:rounded-t-3xl`
 
 templ SearchbarContainer(results awskendra.KendraResults, oob bool) {
 	<div if oob { hx-swap-oob="true" } id="searchbar" class={ searchbar_classes }>
@@ -17,7 +27,7 @@ templ SearchbarContainer(results awskendra.KendraResults, oob bool) {
 }
 
 templ Searchbar(data awskendra.UrlData, oob bool) {
-	<input class="text-2xl peer border-2 px-6 py-3 w-full outline-none bg-white dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+	<input class="peer border-2 w-full px-4 py-2 outline-none bg-white dark:border-gray-600 dark:bg-gray-800 dark:text-white text-base sm:text-md md:text-lg lg:text-2xl"
 	   id="searchquery"
 	   autocomplete="off"
 	   placeholder="Begin Your Search Here..."
