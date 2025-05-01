@@ -34,8 +34,8 @@ templ Base(title string, isAuthenticated bool, isMaster bool) {
 			<script src="/js/navbar.js"></script>
 			<script>
               document.body.addEventListener('htmx:afterSwap', function(event) {
-                if (event.detail.target.id === 'root') {
-                  window.scrollTo({ top: 0, behavior: 'instant' });
+                if (event.detail.target.id === 'root' || event.detail.target.id === 'results-and-pagination') {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
               });
             </script>
