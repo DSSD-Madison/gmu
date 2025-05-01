@@ -7,44 +7,72 @@ import (
 )
 
 templ Home(isAuthorized bool, isMaster bool) {
-	@Base("", isAuthorized, isMaster) {
-		<div class="flex flex-col items-center justify-start min-h-screen pt-80">
-			<h2 class="py-3 text-xl font-semibold text-gray-700 dark:text-white">Better Evidence Project</h2>
-			<form hx-get="/search" hx-swap="innerHTML" hx-target="#root" hx-push-url="true" class="flex flex-row w-3/8">
-				@SearchbarContainer(awskendra.KendraResults{}, false)
-			</form>
-		</div>
-	}
+  @Base("", isAuthorized, isMaster) {
+    <div class="flex flex-col items-center justify-start min-h-screen pt-60 px-4">
+      <div class="w-full sm:w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2">
+        <h2 class="py-3 text-xl font-semibold text-gray-700 dark:text-white text-center">
+          Better Evidence Project
+        </h2>
+        <form
+          hx-get="/search"
+          hx-swap="innerHTML"
+          hx-target="#root"
+          hx-push-url="true"
+          class="w-full flex flex-row"
+        >
+          @SearchbarContainer(awskendra.KendraResults{}, false)
+        </form>
+      </div>
+    </div>
+  }
 }
-
 func searchHeadersJSON() string {
 	bytes, _ := json.Marshal(map[string]string{"init": "true"})
 	return string(bytes)
 }
 
-// The partial response for page pre-loading
 templ Search(results awskendra.KendraResults) {
-	<div class="relative grid place-items-center">
-		<img src="images/Banner.jpeg" class="top-0 object-cover w-full h-auto col-start-1 row-start-1 z-1"/>
-		<div id="formwrapper" class="flex items-center justify-center w-full col-start-1 row-start-1 z-2" hx-indicator="#indicator">
-			<form hx-get="/search" hx-target="#results-container" hx-swap="innerHTML" hx-trigger="load, submit" class="w-3/8" hx-headers={searchHeadersJSON()} hx-push-url="true">
-				@SearchbarContainer(results, false)
-			</form>
-		</div>
-		<div id="results-container" class="w-full min-h-screen px-4">
-			<div id="grid-container" class="pt-10 pr-10 grid grid-cols-[1fr_3fr] w-full">
-				<aside id="sidecolmn" class="w-64 mx-10">
-					@skeleton()
-				</aside>
-				<div id="results-content-container" class="space-y-6">
-					@skeleton()
-					@skeleton()
-				</div>
-			</div>
-		</div>
-	</div>
+  <div class="mx-auto relative grid place-items-center">
+    <img
+      src="images/Banner.jpeg"
+      class="top-0 object-cover w-full h-auto col-start-1 row-start-1 z-1"
+    />
+    <div
+      id="formwrapper"
+      class="flex items-center justify-center w-full col-start-1 row-start-1 z-2 px-4"
+      hx-indicator="#indicator"
+    >
+      <div class="w-full sm:w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2">
+        <form
+          hx-get="/search"
+          hx-target="#results-container"
+          hx-swap="innerHTML"
+          hx-trigger="load, submit"
+          hx-headers={searchHeadersJSON()}
+          hx-push-url="true"
+          hx-on="htmx:afterSwap:window.scrollTo({ top: 0, behavior: 'smooth' })"
+          class="w-full flex flex-col sm:flex-row min-w-0"
+        >
+          @SearchbarContainer(results, false)
+        </form>
+      </div>
+    </div>
+  </div>
+  <div id="results-container" class="w-full min-h-screen px-4">
+    <div
+      id="grid-container"
+      class="pt-10 pr-4 md:pr-10 grid grid-cols-1 md:grid-cols-[1fr_3fr] w-full"
+    >
+      <aside id="sidecolmn" class="w-full md:w-64 md:mx-10">
+        @skeleton()
+      </aside>
+      <div id="results-content-container" class="flex-grow space-y-6">
+        @skeleton()
+        @skeleton()
+      </div>
+    </div>
+  </div>
 }
-
 templ SearchHome(results awskendra.KendraResults, isAuthorized bool, isMaster bool) {
 	@Base("", isAuthorized, isMaster) {
 		@Search(results)

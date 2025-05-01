@@ -44,7 +44,7 @@ func sidecolumn(results awskendra.KendraResults) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<button id=\"apply-filters-btn\" type=\"submit\" class=\"w-full bg-blue-600 dark:bg-blue-500 text-white p-2 rounded-md hover:bg-blue-700 cursor-pointer transition\">Apply Filters</button></form></aside>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<button id=\"apply-filters-btn\" type=\"submit\" class=\"w-full bg-blue-600 dark:bg-blue-500 text-white p-2 rounded-md hover:bg-blue-700 cursor-pointer transition shadow\">Apply Filters</button></form></aside>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

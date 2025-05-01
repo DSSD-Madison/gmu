@@ -14,14 +14,75 @@ func paginationJSON(page int) string {
 
 templ Pagination(status awskendra.PageStatus) {
 	{{ maxPages := 5 }}
-	<div class="flex items-center justify-center p-4 mt-4 space-x-2 bg-gray-100 rounded-lg shadow dark:bg-gray-800">
+	// large screen pagination
+	<div class="hidden sm:flex items-center justify-center p-4 mt-4 space-x-2 bg-gray-100 rounded-lg shadow dark:bg-gray-800">
 		@prevButton(status)
 
 		@paginationPages(status, maxPages)
 
 		@nextButton(status)
 	</div>
+	// small screen pagination
+	<div class="sm:hidden flex items-center justify-center p-4 mt-4 space-x-2 bg-gray-100 rounded-lg shadow dark:bg-gray-800">
+		{{ maxPages = 3 }}
+		@mobilePrevButton(status)
+		@mobilePaginationPages(status, maxPages)
+		@mobileNextButton(status)
+	</div>
 }
+
+templ mobilePrevButton(status awskendra.PageStatus) {
+	if status.HasPrev {
+		@mobilePaginationButton(paginationJSON(status.PrevPage)) {
+			@leftChevron()
+		}
+	}
+}
+
+templ mobileNextButton(status awskendra.PageStatus) {
+	if status.HasNext {
+		@mobilePaginationButton(paginationJSON(status.NextPage)) {
+			@rightChevron()
+		}
+	}
+}
+
+templ mobilePaginationPages(status awskendra.PageStatus, maxPages int) {
+	{{ vm := getPaginationVM(status, maxPages) }}
+	if vm.lower_overflow {
+		@dots()
+	}
+	if vm.buttonCount < maxPages {
+		for i := 0; i < vm.buttonCount; i++ {
+			if i == status.CurrentPage {
+				@currentPageButton(i)
+			} else {
+				@pageNumberButton(i)
+			}
+		}
+
+	} else {
+		for i := vm.lowerPage; i <= vm.upperPage; i++ {
+			if i == status.CurrentPage {
+				@currentPageButton(i)
+			} else {
+				@pageNumberButton(i)
+			}
+		}
+	}
+	if vm.upper_overflow {
+		@dots()
+	}
+}
+
+templ mobileCurrentPageButton(pageNum int) {
+	<span
+		class="px-4 py-2 text-white bg-blue-500 rounded dark:bg-blue-500 dark:text-white"
+	>
+		{ strconv.Itoa(pageNum) }
+	</span>
+}
+
 
 templ paginationPages(status awskendra.PageStatus, maxPages int) {
 	{{ vm := getPaginationVM(status, maxPages) }}
@@ -93,14 +154,41 @@ templ paginationButton(content string, json string) {
 		</button>
 }
 
+templ mobilePaginationButton(json string) {
+		<button
+			hx-get="/search"
+			hx-push-url="true"
+			hx-target="#results-and-pagination"
+			hx-include="#searchbar, #sidecolumn"
+			hx-vals={json}
+			hx-swap="innerHTML"
+			class="px-4 py-2 text-white bg-blue-500 rounded cursor-pointer hover:bg-blue-600"
+		>
+			{children...}
+		</button>
+}
+
+
 templ prevButton(status awskendra.PageStatus) {
-	if (status.HasPrev) {
+	if status.HasPrev {
 		@paginationButton("Prev", paginationJSON(status.PrevPage))
 	}
 }
 
 templ nextButton(status awskendra.PageStatus) {
-	if (status.HasNext) {
+	if status.HasNext {
 		@paginationButton("Next", paginationJSON(status.NextPage))
 	}
+}
+
+templ leftChevron() {
+	<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+		<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+	</svg>
+}
+
+templ rightChevron() {
+	<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+		<path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+	</svg>
 }

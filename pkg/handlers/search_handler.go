@@ -9,13 +9,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/DSSD-Madison/gmu/pkg/middleware"
-
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
 
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
+	"github.com/DSSD-Madison/gmu/pkg/middleware"
 	"github.com/DSSD-Madison/gmu/pkg/services"
 	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
