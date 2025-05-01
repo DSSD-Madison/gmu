@@ -95,7 +95,7 @@ func Search(results awskendra.KendraResults) templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"container mx-auto relative grid place-items-center\"><img src=\"images/Banner.jpeg\" class=\"top-0 object-cover w-full h-auto col-start-1 row-start-1 z-1\"><div id=\"formwrapper\" class=\"flex items-center justify-center w-full col-start-1 row-start-1 z-2 px-4\" hx-indicator=\"#indicator\"><div class=\"w-full sm:w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2\"><form hx-get=\"/search\" hx-target=\"#results-container\" hx-swap=\"innerHTML\" hx-trigger=\"load, submit\" hx-headers=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"mx-auto relative grid place-items-center\"><img src=\"images/Banner.jpeg\" class=\"top-0 object-cover w-full h-auto col-start-1 row-start-1 z-1\"><div id=\"formwrapper\" class=\"flex items-center justify-center w-full col-start-1 row-start-1 z-2 px-4\" hx-indicator=\"#indicator\"><div class=\"w-full sm:w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2\"><form hx-get=\"/search\" hx-target=\"#results-container\" hx-swap=\"innerHTML\" hx-trigger=\"load, submit\" hx-headers=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
