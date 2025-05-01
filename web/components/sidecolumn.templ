@@ -21,7 +21,7 @@ templ sidecolumn(results awskendra.KendraResults) {
 			<button
 					id="apply-filters-btn"
 					type="submit"
-					class="w-full bg-blue-600 dark:bg-blue-500 text-white p-2 rounded-md hover:bg-blue-700 cursor-pointer transition"
+					class="w-full bg-blue-600 dark:bg-blue-500 text-white p-2 rounded-md hover:bg-blue-700 cursor-pointer transition shadow"
 			>
 				Apply Filters
 			</button>
@@ -43,7 +43,7 @@ templ filterCard(filter awskendra.FilterCategory) {
 			}
 		</div>
 	</details>
-	}
+}
 
 templ filterOption(filter awskendra.FilterCategory, option awskendra.FilterOption) {
 	<div class="cursor-pointer dark:hover:bg-gray-600 hover:bg-blue-50 text-sm">
