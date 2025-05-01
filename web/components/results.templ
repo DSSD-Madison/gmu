@@ -8,7 +8,7 @@ import (
 )
 
 templ ResultsPage(results awskendra.KendraResults, isAuthorized bool) {
-    <div class="w-full sm:w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 mx-auto py-4">
+    <div class="w-full mx-auto py-4">
          <div id="grid-container" class="md:grid md:grid-cols-[1fr_4fr] md:gap-4 flex flex-col justify-center">
          @sidecolumn(results)
             <div id="results-and-pagination">

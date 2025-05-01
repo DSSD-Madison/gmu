@@ -36,7 +36,7 @@ func ResultsPage(results awskendra.KendraResults, isAuthorized bool) templ.Compo
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"w-full sm:w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 mx-auto py-4\"><div id=\"grid-container\" class=\"md:grid md:grid-cols-[1fr_4fr] md:gap-4 flex flex-col justify-center\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"w-full mx-auto py-4\"><div id=\"grid-container\" class=\"md:grid md:grid-cols-[1fr_4fr] md:gap-4 flex flex-col justify-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

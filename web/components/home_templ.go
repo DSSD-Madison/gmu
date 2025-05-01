@@ -74,7 +74,6 @@ func searchHeadersJSON() string {
 	return string(bytes)
 }
 
-// The partial response for page pre-loading
 func Search(results awskendra.KendraResults) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -103,7 +102,7 @@ func Search(results awskendra.KendraResults) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(searchHeadersJSON())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/home.templ`, Line: 55, Col: 41}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/home.templ`, Line: 51, Col: 41}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
