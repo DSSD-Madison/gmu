@@ -69,6 +69,10 @@ func parseSearchRequest(c echo.Context) (searchRequest, error) {
 		return searchRequest{}, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query must be at least %d characters", MinQueryLength))
 	}
 
+	if query == "" {
+		return searchRequest{}, echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query must be at least %d characters", MinQueryLength))
+	}
+
 	target := c.Request().Header.Get("HX-Target")
 
 	return searchRequest{
