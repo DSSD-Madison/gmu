@@ -99,7 +99,7 @@ func convertToSearchResults(out awskendra.QueryOutput, pageNum int) search.Resul
 
 func convertSuggestions(out awskendra.GetQuerySuggestionsOutput) search.Suggestions {
 	suggestions := search.Suggestions{
-		Suggestions: make([]string, len(out.Suggestions)),
+		Suggestions: make([]string, 0),
 	}
 
 	for _, item := range out.Suggestions {
