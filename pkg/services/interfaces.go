@@ -4,17 +4,18 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/DSSD-Madison/gmu/pkg/awskendra"
+	"github.com/DSSD-Madison/gmu/pkg/aws/bedrock"
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
+	"github.com/DSSD-Madison/gmu/pkg/model/search"
 	"github.com/labstack/echo/v4"
 )
 
 type Searcher interface {
-	SearchDocuments(ctx context.Context, query string, filters url.Values, pageNum int) (awskendra.KendraResults, error)
+	SearchDocuments(ctx context.Context, query string, filters url.Values, pageNum int) (search.Results, error)
 }
 
 type Suggester interface {
-	GetSuggestions(ctx context.Context, query string) (awskendra.KendraSuggestions, error)
+	GetSuggestions(ctx context.Context, query string) (search.Suggestions, error)
 }
 
 type UserManager interface {
@@ -35,7 +36,7 @@ type FileManager interface {
 }
 
 type BedrockManager interface {
-	ExtractPDFMetadata(ctx context.Context, pdfBytes []byte) (*awskendra.ExtractedMetadata, error)
+	ExtractPDFMetadata(ctx context.Context, pdfBytes []byte) (*bedrock.ExtractedMetadata, error)
 }
 
 type SessionManager interface {

@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/DSSD-Madison/gmu/pkg/awskendra"
+	"github.com/DSSD-Madison/gmu/pkg/model/search"
 )
 
 func Test_getNumberOfButtons(t *testing.T) {
@@ -344,7 +344,7 @@ func Test_getLowerOverflow(t *testing.T) {
 
 func Test_getPaginationVM(t *testing.T) {
 	type args struct {
-		status   awskendra.PageStatus
+		status   search.PageStatus
 		maxPages int
 	}
 	tests := []struct {
@@ -355,7 +355,7 @@ func Test_getPaginationVM(t *testing.T) {
 		{
 			name: "Lower end of range",
 			args: args{
-				status: awskendra.PageStatus{
+				status: search.PageStatus{
 					CurrentPage: 1,
 					HasPrev:     false,
 					HasNext:     true,
@@ -378,7 +378,7 @@ func Test_getPaginationVM(t *testing.T) {
 		{
 			name: "Middle of range",
 			args: args{
-				status: awskendra.PageStatus{
+				status: search.PageStatus{
 					CurrentPage: 10,
 					HasPrev:     true,
 					HasNext:     true,
@@ -401,7 +401,7 @@ func Test_getPaginationVM(t *testing.T) {
 		{
 			name: "Upper end of range",
 			args: args{
-				status: awskendra.PageStatus{
+				status: search.PageStatus{
 					CurrentPage: 20,
 					HasPrev:     true,
 					HasNext:     false,

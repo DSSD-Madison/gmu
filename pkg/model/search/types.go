@@ -1,11 +1,11 @@
-package awskendra
+package search
 
-type Excerpt struct {
-	Text    string
-	PageNum int
+type Suggestions struct {
+	Suggestions []string
 }
 
-type KendraResult struct {
+type Result struct {
+	ID          string
 	Title       string
 	Excerpts    []Excerpt
 	Link        string
@@ -20,6 +20,11 @@ type KendraResult struct {
 	UUID        string
 }
 
+type Excerpt struct {
+	Text    string
+	PageNum int
+}
+
 type PageStatus struct {
 	CurrentPage int
 	HasPrev     bool
@@ -29,19 +34,15 @@ type PageStatus struct {
 	TotalPages  int
 }
 
-type KendraResults struct {
+type Results struct {
 	IsStoringUrl bool
-	Results      map[string]KendraResult
+	Results      map[string]Result
 	Order        []string
 	Query        string
 	Count        int
 	PageStatus   PageStatus
 	Filters      []FilterCategory
 	UrlData      UrlData
-}
-
-type KendraSuggestions struct {
-	Suggestions []string
 }
 
 type FilterOption struct {

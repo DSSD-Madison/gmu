@@ -11,8 +11,8 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 
+	"github.com/DSSD-Madison/gmu/pkg/core/logger"
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
-	"github.com/DSSD-Madison/gmu/pkg/logger"
 )
 
 const (
@@ -144,7 +144,7 @@ func (sm *GorillaSessionManager) redirectToLogin(c echo.Context) error {
 
 // forceLogoutAndRedirect destroys the session and redirects the user to login.
 func (sm *GorillaSessionManager) forceLogoutAndRedirect(c echo.Context) error {
-	_ = sm.Destroy(c) 
+	_ = sm.Destroy(c)
 	return sm.redirectToLogin(c)
 }
 
@@ -208,4 +208,3 @@ func (sm *GorillaSessionManager) RequireAuth(next echo.HandlerFunc) echo.Handler
 		return next(c)
 	}
 }
-

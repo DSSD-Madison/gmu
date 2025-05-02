@@ -1,8 +1,6 @@
 package components
 
-import (
-	"github.com/DSSD-Madison/gmu/pkg/awskendra"
-)
+import "github.com/DSSD-Madison/gmu/pkg/model/search"
 
 // max=5 & total=4, show only 4 buttons
 func getNumberOfButtons(totalPages, maxPages int) int {
@@ -73,7 +71,7 @@ func getLowerOverflow(currentPage, maxPages int) bool {
 	}
 }
 
-func getPaginationVM(status awskendra.PageStatus, maxPages int) paginationViewModel {
+func getPaginationVM(status search.PageStatus, maxPages int) paginationViewModel {
 	sideCount := maxPages / 2
 	upperPage := getUpperPageNumber(status.CurrentPage, status.TotalPages, maxPages)
 	lowerPage := getLowerPageNumber(status.CurrentPage, status.TotalPages, maxPages)

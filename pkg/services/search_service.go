@@ -5,19 +5,20 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/DSSD-Madison/gmu/pkg/awskendra"
-	"github.com/DSSD-Madison/gmu/pkg/db/generated"
+	"github.com/DSSD-Madison/gmu/pkg/aws/kendra"
+	"github.com/DSSD-Madison/gmu/pkg/core/logger"
+	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
 	db_util "github.com/DSSD-Madison/gmu/pkg/db/util"
-	"github.com/DSSD-Madison/gmu/pkg/logger"
+	"github.com/DSSD-Madison/gmu/pkg/model/search"
 )
 
 type SearchService struct {
 	log          logger.Logger
-	kendraClient awskendra.Client
+	kendraClient kendra.Client
 	dbQuerier    *db.Queries
 }
 
-func NewSearchService(log logger.Logger, kendra awskendra.Client, dbQuerier *db.Queries) *SearchService {
+func NewSearchService(log logger.Logger, kendra kendra.Client, dbQuerier *db.Queries) *SearchService {
 	serviceLogger := log.With("Service", "Search")
 	return &SearchService{
 		log:          serviceLogger,
@@ -26,7 +27,7 @@ func NewSearchService(log logger.Logger, kendra awskendra.Client, dbQuerier *db.
 	}
 }
 
-func (s *SearchService) SearchDocuments(ctx context.Context, query string, filters url.Values, pageNum int) (awskendra.KendraResults, error) {
+func (s *SearchService) SearchDocuments(ctx context.Context, query string, filters url.Values, pageNum int) (search.Results, error) {
 	s.log.DebugContext(ctx, "Starting document search", "query", query, "page", pageNum)
 
 	kendraFilterMap := convertURLValuesToKendraFilters(filters)
@@ -35,7 +36,7 @@ func (s *SearchService) SearchDocuments(ctx context.Context, query string, filte
 	results, err := s.kendraClient.MakeQuery(ctx, query, kendraFilterMap, pageNum)
 	if err != nil {
 		s.log.ErrorContext(ctx, "Kendra MakeQuery failed", "query", query, "page", pageNum, "error", err)
-		return awskendra.KendraResults{}, fmt.Errorf("failed to retrieve search results: %w", err)
+		return search.Results{}, fmt.Errorf("failed to retrieve search results: %w", err)
 	}
 	s.log.DebugContext(ctx, "Received results from Kendra", "count", results.Count)
 

@@ -15,12 +15,13 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
-	"github.com/DSSD-Madison/gmu/pkg/awskendra"
-	"github.com/DSSD-Madison/gmu/pkg/config"
+	"github.com/DSSD-Madison/gmu/pkg/aws/bedrock"
+	"github.com/DSSD-Madison/gmu/pkg/aws/kendra"
+	"github.com/DSSD-Madison/gmu/pkg/aws/s3"
+	"github.com/DSSD-Madison/gmu/pkg/core/config"
+	"github.com/DSSD-Madison/gmu/pkg/core/logger"
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
-	db_util "github.com/DSSD-Madison/gmu/pkg/db/util"
 	"github.com/DSSD-Madison/gmu/pkg/handlers"
-	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/DSSD-Madison/gmu/pkg/ratelimiter"
 	"github.com/DSSD-Madison/gmu/pkg/services"
 	"github.com/DSSD-Madison/gmu/routes"
@@ -40,24 +41,14 @@ const (
 
 func main() {
 	// --- Configuration ---
-	appConfig, err := config.LoadConfig()
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatalf("Error loading app config: %v", err)
-	}
-	dbConfig, err := db_util.LoadConfig()
-	if err != nil {
-		log.Fatalf("Error loading database config: %v", err)
-		os.Exit(1)
-	}
-	awsConfig, err := awskendra.LoadConfig()
-	if err != nil {
-		log.Fatalf("Error loading kendra config: %v", err)
-		os.Exit(1)
 	}
 
 	// --- Logger Initialization ---
 	var level slog.Level
-	switch appConfig.LogLevel {
+	switch cfg.LogLevel {
 	case "debug":
 		level = slog.LevelDebug
 	case "info":
@@ -71,17 +62,17 @@ func main() {
 	}
 
 	loggerOpts := logger.HandlerOptions{
-		Mode:      appConfig.Mode,
+		Mode:      cfg.Mode,
 		Level:     level,
-		AddSource: appConfig.Mode == "dev",
+		AddSource: cfg.Mode == "dev",
 	}
 	appLogger := logger.New(&loggerOpts)
-	appLogger.Info("Logger initialized", "mode", appConfig.Mode, "level", level.String())
+	appLogger.Info("Logger initialized", "mode", cfg.Mode, "level", level.String())
 
 	// --- Database Initialization ---
 	databaseURL := fmt.Sprintf(
 		"postgres://%s:%s@%s/%s?sslmode=disable",
-		dbConfig.DBUser, dbConfig.DBPassword, dbConfig.DBHost, dbConfig.DBName,
+		cfg.Database.User, cfg.Database.Password, cfg.Database.Host, cfg.Database.Name,
 	)
 
 	sqlDB, err := sql.Open("pgx", databaseURL)
@@ -104,7 +95,7 @@ func main() {
 	dbClient := db.New(sqlDB)
 
 	// --- AWS Kendra Initialization ---
-	kendraClient, err := awskendra.New(*awsConfig, appLogger)
+	kendraClient, err := kendra.NewClient(*cfg, appLogger)
 	if err != nil {
 		appLogger.Error("Could not initialize kendra client", "error", err)
 		os.Exit(1)
@@ -112,13 +103,13 @@ func main() {
 	appLogger.Info("Kendra client initialized")
 
 	// TODO: Add DI and make an interface
-	bedrockClient, err := awskendra.NewBedrockClient(*awsConfig)
+	bedrockClient, err := bedrock.NewBedrockClient(*cfg)
 	if err != nil {
 		appLogger.Error("Could not initialize bedrock client", "error", err)
 		os.Exit(1)
 	}
 
-	s3Client, err := awskendra.NewS3Client(*awsConfig)
+	s3Client, err := s3.NewS3Client(*cfg)
 	if err != nil {
 		log.Fatalf("failed to create S3 client: %v", err)
 		os.Exit(1)
@@ -129,7 +120,7 @@ func main() {
 	appLogger.Info("Initializing Session Store...")
 	sessionSecretKey := os.Getenv("SESSION_SECRET_KEY")
 	if sessionSecretKey == "" {
-		if appConfig.Mode == "prod" {
+		if cfg.Mode == "prod" {
 			appLogger.Error("SESSION_SECRET_KEY environment variable not set in prod. Exiting now.")
 			os.Exit(1)
 		}
@@ -142,7 +133,7 @@ func main() {
 		Path:     "/",
 		MaxAge:   86400 * 7, // 7 days
 		HttpOnly: true,
-		Secure:   appConfig.Mode == "prod",
+		Secure:   cfg.Mode == "prod",
 		SameSite: http.SameSiteLaxMode,
 	}
 	appLogger.Info("Session Store initialized", "name", sessionCookieName, "secure", cookieStore.Options.Secure)
@@ -219,7 +210,7 @@ func main() {
 		CookieDomain:   "",
 		ContextKey:     "csrf",
 		CookieSameSite: http.SameSiteLaxMode,
-		CookieSecure:   appConfig.Mode == "prod", // Only set secure cookies in prod
+		CookieSecure:   cfg.Mode == "prod", // Only set secure cookies in prod
 		Skipper: func(c echo.Context) bool {
 			path := c.Path()
 			if path == "/search/suggestions" {

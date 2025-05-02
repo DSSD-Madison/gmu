@@ -1,4 +1,4 @@
-package awskendra
+package bedrock
 
 import (
 	"archive/zip"
@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/DSSD-Madison/gmu/pkg/core/config"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 	"github.com/ledongthuc/pdf"
@@ -30,10 +31,14 @@ var (
 	topP                = 1.0
 )
 
+type Client interface {
+	ProcessDocAndExtractMetadata(ctx context.Context, docBytes []byte) (*ExtractedMetadata, error)
+}
+
 // BedrockClient provides methods to interact with the AWS Bedrock Runtime service.
 type BedrockClient struct {
 	client     *bedrockruntime.Client
-	config     Config
+	config     config.Config
 	categories []string
 	regions    []string
 	keywords   []string
@@ -99,10 +104,10 @@ func loadKeywordsFromFile(filepath string) ([]string, error) {
 	return loadedKeywords, nil
 }
 
-func NewBedrockClient(cfg Config) (*BedrockClient, error) {
+func NewBedrockClient(cfg config.Config) (*BedrockClient, error) {
 	opts := aws.Config{
-		Region:      cfg.Region,
-		Credentials: cfg.Credentials,
+		Region:      cfg.AWS.Region,
+		Credentials: cfg.AWS.Credentials,
 	}
 
 	brClient := bedrockruntime.NewFromConfig(opts)
@@ -127,7 +132,7 @@ func NewBedrockClient(cfg Config) (*BedrockClient, error) {
 	}
 
 	// Load keywords from file
-	keywords, err := loadKeywordsFromFile(cfg.KeywordsFilePath)
+	keywords, err := loadKeywordsFromFile(cfg.AWS.KeywordsFilePath)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to load keywords from file: %w", err)
@@ -214,7 +219,7 @@ func ExtractTextFromDocxBytes(data []byte) (string, error) {
 	defer func() {
 		_ = os.Remove(tmp.Name())
 	}()
-	
+
 	if _, err := tmp.Write(data); err != nil {
 		cerr := tmp.Close()
 		if cerr != nil {
@@ -222,7 +227,7 @@ func ExtractTextFromDocxBytes(data []byte) (string, error) {
 		}
 		return "", fmt.Errorf("writing temp docx: %w", err)
 	}
-	
+
 	if err := tmp.Close(); err != nil {
 		return "", fmt.Errorf("closing temp docx: %w", err)
 	}
@@ -234,7 +239,6 @@ func ExtractTextFromDocxBytes(data []byte) (string, error) {
 	defer func() {
 		_ = doc.Close()
 	}()
-	
 
 	content := doc.Editable().GetContent()
 
@@ -272,7 +276,7 @@ func (c BedrockClient) callClaudeHaiku(prompt string) (string, int, int, error) 
 
 	resp, err := c.client.InvokeModel(ctx, &bedrockruntime.InvokeModelInput{
 		Body:        jsonBody,
-		ModelId:     aws.String(c.config.ModelID),
+		ModelId:     aws.String(c.config.AWS.BedrockModelID),
 		ContentType: aws.String("application/json"),
 		Accept:      aws.String("application/json"),
 	})

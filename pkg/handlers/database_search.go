@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/DSSD-Madison/gmu/pkg/core/logger"
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
-	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
 	"github.com/labstack/echo/v4"

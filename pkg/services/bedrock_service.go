@@ -3,16 +3,16 @@ package services
 import (
 	"context"
 
-	"github.com/DSSD-Madison/gmu/pkg/awskendra"
-	"github.com/DSSD-Madison/gmu/pkg/logger"
+	"github.com/DSSD-Madison/gmu/pkg/aws/bedrock"
+	"github.com/DSSD-Madison/gmu/pkg/core/logger"
 )
 
 type BedrockService struct {
 	log           logger.Logger
-	bedrockClient awskendra.BedrockClient
+	bedrockClient bedrock.BedrockClient
 }
 
-func NewBedrockService(log logger.Logger, client awskendra.BedrockClient) *BedrockService {
+func NewBedrockService(log logger.Logger, client bedrock.BedrockClient) *BedrockService {
 	serviceLogger := log.With("service", "Bedrock")
 	return &BedrockService{
 		log:           serviceLogger,
@@ -20,7 +20,7 @@ func NewBedrockService(log logger.Logger, client awskendra.BedrockClient) *Bedro
 	}
 }
 
-func (b *BedrockService) ExtractPDFMetadata(ctx context.Context, pdfBytes []byte) (*awskendra.ExtractedMetadata, error) {
+func (b *BedrockService) ExtractPDFMetadata(ctx context.Context, pdfBytes []byte) (*bedrock.ExtractedMetadata, error) {
 	metadata, err := b.bedrockClient.ProcessDocAndExtractMetadata(ctx, pdfBytes)
 	if err != nil {
 		b.log.ErrorContext(ctx, "failed to extract metadata from pdf", "error", err)
