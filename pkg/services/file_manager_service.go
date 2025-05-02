@@ -2,17 +2,18 @@ package services
 
 import (
 	"context"
-	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 
-	"github.com/DSSD-Madison/gmu/pkg/logger"
+	"github.com/DSSD-Madison/gmu/pkg/aws/s3"
+
+	"github.com/DSSD-Madison/gmu/pkg/core/logger"
 )
 
 type FilemanagerService struct {
 	log      logger.Logger
-	s3Client *awskendra.S3Client
+	s3Client *s3.S3Client
 }
 
-func NewFilemanagerService(log logger.Logger, s3Client *awskendra.S3Client) *FilemanagerService {
+func NewFilemanagerService(log logger.Logger, s3Client *s3.S3Client) *FilemanagerService {
 	return &FilemanagerService{log: log, s3Client: s3Client}
 }
 

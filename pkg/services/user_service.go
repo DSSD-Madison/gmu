@@ -3,8 +3,8 @@ package services
 import (
 	"context"
 
+	"github.com/DSSD-Madison/gmu/pkg/core/logger"
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
-	"github.com/DSSD-Madison/gmu/pkg/logger"
 )
 
 type UserService struct {

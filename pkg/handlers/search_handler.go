@@ -12,8 +12,8 @@ import (
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
 
-	"github.com/DSSD-Madison/gmu/pkg/awskendra"
-	"github.com/DSSD-Madison/gmu/pkg/logger"
+	"github.com/DSSD-Madison/gmu/pkg/core/logger"
+	"github.com/DSSD-Madison/gmu/pkg/model/search"
 	"github.com/DSSD-Madison/gmu/pkg/services"
 	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
@@ -40,7 +40,7 @@ type searchRequest struct {
 	query   string
 	pageNum int
 	filters url.Values
-	urlData awskendra.UrlData
+	urlData search.UrlData
 	target  string
 }
 
@@ -59,7 +59,7 @@ func parseSearchRequest(c echo.Context) (searchRequest, error) {
 
 	kendraFilterList := convertFilterstoKendra(filters)
 
-	urlData := awskendra.UrlData{
+	urlData := search.UrlData{
 		Query:        query,
 		Filters:      kendraFilterList,
 		Page:         pageNum,
@@ -94,7 +94,7 @@ func (h *SearchHandler) Search(c echo.Context) error {
 	}
 	if req.query == "" {
 		h.log.DebugContext(ctx, "No search query provided, rendering initial search component")
-		return web.Render(c, http.StatusOK, components.Search(awskendra.KendraResults{UrlData: req.urlData}))
+		return web.Render(c, http.StatusOK, components.Search(search.Results{UrlData: req.urlData}))
 	}
 
 	h.log.InfoContext(ctx, "Performing search", "query", req.query, "page", req.pageNum, "filters", req.filters)
@@ -129,25 +129,25 @@ func parsePageNum(pageNumStr string) int {
 	return num
 }
 
-func selectResultsFromTarget(ctx context.Context, h *SearchHandler, req searchRequest) (awskendra.KendraResults, error) {
+func selectResultsFromTarget(ctx context.Context, h *SearchHandler, req searchRequest) (search.Results, error) {
 	if h == nil {
-		return awskendra.KendraResults{}, fmt.Errorf("Cannot get results from nil handler")
+		return search.Results{}, fmt.Errorf("Cannot get results from nil handler")
 	}
 	switch req.target {
 	case "root", "":
-		return awskendra.KendraResults{UrlData: req.urlData}, nil
+		return search.Results{UrlData: req.urlData}, nil
 	case "results-container", "results-content-container", "results-and-pagination":
 		results, err := h.searcher.SearchDocuments(ctx, req.query, req.filters, req.pageNum)
 		if err != nil {
 			h.log.ErrorContext(ctx, "Search service failed", "query", req.query, "error", err)
-			return awskendra.KendraResults{}, err
+			return search.Results{}, err
 		}
 		kendraFilters := convertFilterstoKendra(req.filters)
 		if req.target == "results-container" && len(kendraFilters) > 0 {
 			tempResults, err := h.searcher.SearchDocuments(ctx, req.query, nil, 1)
 			if err != nil {
 				h.log.ErrorContext(ctx, "Search service failed", "query", req.query, "error", err)
-				return awskendra.KendraResults{}, err
+				return search.Results{}, err
 			}
 			results.Filters = tempResults.Filters
 			selectFilters(req.filters, &results)
@@ -155,16 +155,16 @@ func selectResultsFromTarget(ctx context.Context, h *SearchHandler, req searchRe
 		return results, nil
 	default:
 		h.log.ErrorContext(ctx, "Failed to select results from target header")
-		return awskendra.KendraResults{}, fmt.Errorf("Failed to select results from target header")
+		return search.Results{}, fmt.Errorf("Failed to select results from target header")
 	}
 }
 
-func selectComponentTarget(target string, r searchRequest, results awskendra.KendraResults, isAuthorized bool, isMaster bool) (templ.Component, error) {
+func selectComponentTarget(target string, r searchRequest, results search.Results, isAuthorized bool, isMaster bool) (templ.Component, error) {
 	switch target {
 	case "root":
 		return components.Search(results), nil
 	case "":
-		return components.SearchHome(awskendra.KendraResults{UrlData: r.urlData}, isAuthorized, isMaster), nil
+		return components.SearchHome(search.Results{UrlData: r.urlData}, isAuthorized, isMaster), nil
 	case "results-container", "results-content-container":
 		return components.ResultsPage(results, isAuthorized), nil
 	case "results-and-pagination":
@@ -174,8 +174,8 @@ func selectComponentTarget(target string, r searchRequest, results awskendra.Ken
 	}
 }
 
-func convertFilterstoKendra(filters url.Values) []awskendra.Filter {
-	filterList := make([]awskendra.Filter, len(filters))
+func convertFilterstoKendra(filters url.Values) []search.Filter {
+	filterList := make([]search.Filter, len(filters))
 	i := 0
 	for key, values := range filters {
 		filterList[i].Name = key
@@ -185,7 +185,7 @@ func convertFilterstoKendra(filters url.Values) []awskendra.Filter {
 	return filterList
 }
 
-func selectFilters(filters url.Values, results *awskendra.KendraResults) {
+func selectFilters(filters url.Values, results *search.Results) {
 	for i, cat := range results.Filters {
 		if selectedOptions, exists := filters[cat.Category]; exists {
 			for idx, o := range cat.Options {

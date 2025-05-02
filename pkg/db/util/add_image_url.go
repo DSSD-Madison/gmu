@@ -9,12 +9,12 @@ import (
 
 	"github.com/lib/pq"
 
-	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
 	"github.com/DSSD-Madison/gmu/pkg/db/handlers"
+	"github.com/DSSD-Madison/gmu/pkg/model/search"
 )
 
-func AddImagesToResults(ctx context.Context, results awskendra.KendraResults, queries *db.Queries) error {
+func AddImagesToResults(ctx context.Context, results search.Results, queries *db.Queries) error {
 	uris := ConvertToS3URIs(results)
 	documentMap, err := handlers.GetDocuments(ctx, queries, uris)
 	if err != nil {
@@ -74,7 +74,7 @@ func AddImagesToResults(ctx context.Context, results awskendra.KendraResults, qu
 	return nil
 }
 
-func ConvertToS3URIs(kendraResults awskendra.KendraResults) []string {
+func ConvertToS3URIs(kendraResults search.Results) []string {
 	s3URIs := []string{}
 	for _, result := range kendraResults.Results {
 		s3URI := ConvertToS3URI(result.Link)

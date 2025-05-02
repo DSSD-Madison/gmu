@@ -1,37 +1,39 @@
-package awskendra
+package kendra
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/DSSD-Madison/gmu/pkg/logger"
+	"github.com/DSSD-Madison/gmu/pkg/core/logger"
+	"github.com/DSSD-Madison/gmu/pkg/queue"
 	"github.com/aws/aws-sdk-go-v2/service/kendra"
+	awskendra "github.com/aws/aws-sdk-go-v2/service/kendra"
 )
 
 type QueryExecutor interface {
-	EnqueueQuery(ctx context.Context, query kendra.QueryInput) QueryResult
+	EnqueueQuery(ctx context.Context, query awskendra.QueryInput) QueryResult
 	Shutdown(ctx context.Context) error
 }
 
 type QueryResult struct {
-	Results KendraResults
+	Results awskendra.QueryOutput
 	Error   error
 }
 
 type kendraQueryExecutor struct {
-	queue Queue[kendra.QueryInput, QueryResult]
+	queue queue.Queue[kendra.QueryInput, QueryResult]
 	log   logger.Logger
 }
 
 func NewKendraQueryQueue(
-	awsClient *kendra.Client,
+	awsClient *awskendra.Client,
 	log logger.Logger,
 	workerCount int,
 	bufferSize int,
 ) QueryExecutor {
 	executorLogger := log.With("component", "KendraQueryExecutor")
 
-	processorFunc := func(ctx context.Context, query kendra.QueryInput) QueryResult {
+	processorFunc := func(ctx context.Context, query awskendra.QueryInput) QueryResult {
 		executorLogger.DebugContext(ctx, "Processing Kendra query job", "query", *query.QueryText)
 
 		output, err := awsClient.Query(ctx, &query)
@@ -40,19 +42,15 @@ func NewKendraQueryQueue(
 			return QueryResult{Error: err}
 		}
 
-		results := queryOutputToResults(*output)
-		executorLogger.DebugContext(ctx, "Finished processing Kendra query job", "result_count", results.Count)
-		return QueryResult{Results: results, Error: nil}
+		return QueryResult{Results: *output, Error: nil}
 	}
 
-	genericQueue := NewGenericQueue(
+	genericQueue := queue.NewGenericQueue(
 		workerCount,
 		bufferSize,
 		executorLogger,
 		processorFunc,
 	)
-
-	executorLogger.Info("Kendra query executor initialized")
 
 	return &kendraQueryExecutor{
 		queue: genericQueue,
@@ -60,14 +58,10 @@ func NewKendraQueryQueue(
 	}
 }
 
-func (q *kendraQueryExecutor) EnqueueQuery(ctx context.Context, query kendra.QueryInput) QueryResult {
+func (q *kendraQueryExecutor) EnqueueQuery(ctx context.Context, query awskendra.QueryInput) QueryResult {
 	resultChan := make(chan QueryResult, 1)
 
-	job := Job[kendra.QueryInput, QueryResult]{
-		Payload:    query,
-		ResultChan: resultChan,
-		ctx:        ctx,
-	}
+	job := queue.NewJob(ctx, query, resultChan)
 
 	q.log.DebugContext(ctx, "Attempting to enqueue Kendra query job", "query", *query.QueryText)
 

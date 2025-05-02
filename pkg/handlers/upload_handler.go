@@ -16,10 +16,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
-	"github.com/DSSD-Madison/gmu/pkg/awskendra"
+	"github.com/DSSD-Madison/gmu/pkg/aws/bedrock"
+	"github.com/DSSD-Madison/gmu/pkg/core/logger"
 	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
 	"github.com/DSSD-Madison/gmu/pkg/db/util"
-	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/DSSD-Madison/gmu/pkg/services"
 	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
@@ -146,7 +146,7 @@ func (uh *UploadHandler) parsePublishDate(ctx context.Context, raw string) sql.N
 	return sql.NullTime{Time: t, Valid: true}
 }
 
-func (uh *UploadHandler) addAndSaveAssociations(ctx context.Context, docID uuid.UUID, m *awskendra.ExtractedMetadata) error {
+func (uh *UploadHandler) addAndSaveAssociations(ctx context.Context, docID uuid.UUID, m *bedrock.ExtractedMetadata) error {
 	uh.addNewToStr(ctx, m.AuthorName)
 	uh.addNewToStr(ctx, m.CategoryName)
 	uh.addNewToStr(ctx, m.KeywordName)

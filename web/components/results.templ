@@ -4,53 +4,50 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/DSSD-Madison/gmu/pkg/awskendra"
+	"github.com/DSSD-Madison/gmu/pkg/model/search"
 )
 
-templ ResultsPage(results awskendra.KendraResults, isAuthorized bool) {
-    <div class="w-full mx-auto py-4">
-         <div id="grid-container" class="md:grid md:grid-cols-[1fr_4fr] md:gap-4 flex flex-col justify-center">
-         @sidecolumn(results)
-            <div id="results-and-pagination">
-                @ResultsAndPagination(results, isAuthorized)
-            </div>
-        </div>
+templ ResultsPage(results search.Results, isAuthorized bool) {
+	<div class="w-full mx-auto py-4">
+		<div id="grid-container" class="md:grid md:grid-cols-[1fr_4fr] md:gap-4 flex flex-col justify-center">
+			@sidecolumn(results)
+			<div id="results-and-pagination">
+				@ResultsAndPagination(results, isAuthorized)
+			</div>
+		</div>
 	</div>
 	<div class="flex flex-col items-center px-4 mt-6">
-      <div class="w-full sm:w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2">
-        @Searchbar(results.UrlData, true)
-        @suggestions_container(true)
-      </div>
-    </div>
+		<div class="w-full sm:w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2">
+			@Searchbar(results.UrlData, true)
+			@suggestions_container(true)
+		</div>
+	</div>
 }
 
-templ ResultsAndPagination(results awskendra.KendraResults, isAuthorized bool) {
+templ ResultsAndPagination(results search.Results, isAuthorized bool) {
 	@ResultsContainer(results, isAuthorized)
-    <div class="col-span-2">
+	<div class="col-span-2">
 		@Pagination(results.PageStatus)
-    </div>
+	</div>
 }
 
-func nonemptyExpand(result awskendra.KendraResult) bool {
+func nonemptyExpand(result search.Result) bool {
 	return len(result.Authors) > 0 || len(result.Regions) > 0 || len(result.Keywords) > 0 || result.PublishDate != "" || len(result.Categories) > 0 || result.Abstract != ""
 }
 
-templ ResultCard(result awskendra.KendraResult, isAuthorized bool) {
+templ ResultCard(result search.Result, isAuthorized bool) {
 	<details class="overflow-hidden transition-shadow duration-150 ease-in-out bg-white rounded-lg shadow-md group dark:bg-gray-800 hover:shadow-lg">
 		<summary class="relative block p-4 pr-12 list-none transition duration-150 ease-in-out cursor-pointer dark:hover:bg-gray-700 hover:bg-gray-100">
-			
 			if isAuthorized {
 				@editResultButton(result)
 			}
-
 			<div class="flex sm:flex-row flex-col items-start space-x-4">
 				@image(result)
 				@cardBody(result)
-
 				// Expansion Arrow
 				<div class="self-center flex-shrink-0 ml-2 text-gray-400 transition-transform duration-300 rotate-90 sm:rotate-0 group-open:rotate-270 sm:group-open:rotate-90">
 					<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
-						<path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+						<path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
 					</svg>
 				</div>
 			</div>
@@ -59,19 +56,21 @@ templ ResultCard(result awskendra.KendraResult, isAuthorized bool) {
 	</details>
 }
 
-templ editResultButton(result awskendra.KendraResult) {
-	<a href={ templ.URL("/edit-metadata/" + result.UUID) }
-	   target="_blank"
-	   title="Edit Result"
-	   aria-label="Edit Result"
-	   class="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500 hover:text-gray-800 dark:hover:text-gray-100 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800">
+templ editResultButton(result search.Result) {
+	<a
+		href={ templ.URL("/edit-metadata/" + result.UUID) }
+		target="_blank"
+		title="Edit Result"
+		aria-label="Edit Result"
+		class="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500 hover:text-gray-800 dark:hover:text-gray-100 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800"
+	>
 		<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-			<path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+			<path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
 		</svg>
 	</a>
 }
 
-templ image(result awskendra.KendraResult) {
+templ image(result search.Result) {
 	if result.Image != "" {
 		<img src={ result.Image } alt="Preview" class="self-center flex-shrink-0 object-cover w-auto h-auto border border-gray-100 rounded-md md:w-24 md:h-24 md:self-start"/>
 	} else {
@@ -81,7 +80,7 @@ templ image(result awskendra.KendraResult) {
 	}
 }
 
-templ cardBody(result awskendra.KendraResult) {
+templ cardBody(result search.Result) {
 	<div class="flex-grow flex-col min-w-0 md:pl-4">
 		@cardTitle(result)
 		<div class="mt-1 space-y-1.5">
@@ -92,13 +91,13 @@ templ cardBody(result awskendra.KendraResult) {
 	</div>
 }
 
-templ cardTitle(result awskendra.KendraResult) {
+templ cardTitle(result search.Result) {
 	<a href={ templ.URL(result.Link) } target="_blank" rel="noopener noreferrer" class="text-lg font-semibold text-blue-700 dark:text-blue-500 dark:hover:text-blue-400 hover:text-blue-900 hover:underline">
 		{ result.Title }
 	</a>
 }
 
-templ cardExcerpt(excerpt awskendra.Excerpt, result awskendra.KendraResult) {
+templ cardExcerpt(excerpt search.Excerpt, result search.Result) {
 	<p class="text-sm leading-normal text-gray-700 dark:text-gray-400">
 		{ excerpt.Text }
 		<a
@@ -114,7 +113,7 @@ templ cardExcerpt(excerpt awskendra.Excerpt, result awskendra.KendraResult) {
 	</p>
 }
 
-templ expand(result awskendra.KendraResult) {
+templ expand(result search.Result) {
 	<div class="px-6 py-4 border-t border-gray-200 dark:border-gray-600 dark:bg-gray-800 bg-gray-50/75">
 		<dl class="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-2.5 text-sm">
 			if nonemptyExpand(result) {
@@ -151,8 +150,7 @@ templ expand(result awskendra.KendraResult) {
 	</div>
 }
 
-
-templ ResultsContainer(results awskendra.KendraResults, isAuthorized bool) {
+templ ResultsContainer(results search.Results, isAuthorized bool) {
 	<div id="results-content-container" class="space-y-6">
 		for _, result := range results.Order {
 			@ResultCard(results.Results[result], isAuthorized)

@@ -1,12 +1,11 @@
 package components
 
 import (
+	"github.com/DSSD-Madison/gmu/pkg/model/search"
 	"strconv"
-
-	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 )
 
-//var searchbar_classes = `relative w-full not-has-[p]:focus-within:[&_input]:rounded-3xl not-has-[p]:focus-within:[&_input]:border-blue-400 has-[p]:focus-within:[&_input]:rounded-t-3xl has-[p]:focus-within:[&_input]:border-blue-400 not-has-[p]:not-focus-within:[&_input]:rounded-3xl has-[p]:not-focus-within:[&_input]:rounded-3xl hover:[&_input]:rounded-t-3xl`
+// var searchbar_classes = `relative w-full not-has-[p]:focus-within:[&_input]:rounded-3xl not-has-[p]:focus-within:[&_input]:border-blue-400 has-[p]:focus-within:[&_input]:rounded-t-3xl has-[p]:focus-within:[&_input]:border-blue-400 not-has-[p]:not-focus-within:[&_input]:rounded-3xl has-[p]:not-focus-within:[&_input]:rounded-3xl hover:[&_input]:rounded-t-3xl`
 var searchbar_classes = `relative
   w-full
   mx-auto
@@ -18,30 +17,39 @@ var searchbar_classes = `relative
   has-[p]:not-focus-within:[&_input]:rounded-3xl
   hover:[&_input]:rounded-t-3xl`
 
-templ SearchbarContainer(results awskendra.KendraResults, oob bool) {
-	<div if oob { hx-swap-oob="true" } id="searchbar" class={ searchbar_classes }>
+templ SearchbarContainer(results search.Results, oob bool) {
+	<div
+		if oob {
+			hx-swap-oob="true"
+		}
+		id="searchbar"
+		class={ searchbar_classes }
+	>
 		@Searchbar(results.UrlData, false)
 		@suggestions_container(false)
 		@indicator()
 	</div>
 }
 
-templ Searchbar(data awskendra.UrlData, oob bool) {
-	<input class="peer border-2 w-full px-4 py-2 outline-none bg-white dark:border-gray-600 dark:bg-gray-800 dark:text-white text-base sm:text-md md:text-lg lg:text-2xl"
-	   id="searchquery"
-	   autocomplete="off"
-	   placeholder="Begin Your Search Here..."
-	   type="search"
-	   enterkeyhint="search"
-       inputmode="search"
-	   name="query"
-	   hx-push-url="false"
-	   hx-post="/search/suggestions"
-	   hx-trigger="input changed delay:250ms"
-	   hx-target="#suggestions"
-	   hx-swap="innerHTML"
-	   if oob { hx-swap-oob="true" }
-	   value={ data.Query }
+templ Searchbar(data search.UrlData, oob bool) {
+	<input
+		class="peer border-2 w-full px-4 py-2 outline-none bg-white dark:border-gray-600 dark:bg-gray-800 dark:text-white text-base sm:text-md md:text-lg lg:text-2xl"
+		id="searchquery"
+		autocomplete="off"
+		placeholder="Begin Your Search Here..."
+		type="search"
+		enterkeyhint="search"
+		inputmode="search"
+		name="query"
+		hx-push-url="false"
+		hx-post="/search/suggestions"
+		hx-trigger="input changed delay:250ms"
+		hx-target="#suggestions"
+		hx-swap="innerHTML"
+		if oob {
+			hx-swap-oob="true"
+		}
+		value={ data.Query }
 	/>
 	if data.IsStoringUrl {
 		for _, filter := range data.Filters {
@@ -49,6 +57,6 @@ templ Searchbar(data awskendra.UrlData, oob bool) {
 				<input type="hidden" name={ filter.Name } value={ str }/>
 			}
 		}
-		<input type="hidden" name="page" value={strconv.Itoa(data.Page)}/>
+		<input type="hidden" name="page" value={ strconv.Itoa(data.Page) }/>
 	}
 }
