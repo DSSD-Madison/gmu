@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/DSSD-Madison/gmu/pkg/core/logger"
+	"github.com/DSSD-Madison/gmu/pkg/logger"
 )
 
 type Job[P, R any] struct {

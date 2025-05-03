@@ -9,7 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/DSSD-Madison/gmu/pkg/model/search"
+	"github.com/DSSD-Madison/gmu/internal/domain/search"
 	"strconv"
 )
 

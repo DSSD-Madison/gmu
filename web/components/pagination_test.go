@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/DSSD-Madison/gmu/pkg/model/search"
+	"github.com/DSSD-Madison/gmu/internal/domain/search"
 )
 
 func Test_getNumberOfButtons(t *testing.T) {

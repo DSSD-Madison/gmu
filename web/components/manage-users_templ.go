@@ -8,9 +8,7 @@ package components
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import (
-	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
-)
+import db "github.com/DSSD-Madison/gmu/internal/infra/database/sqlc/generated"
 
 func ManageUsersForm(csrf string, err string, users []db.ListUsersRow, isAuthorized bool, isMaster bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -57,7 +55,7 @@ func ManageUsersForm(csrf string, err string, users []db.ListUsersRow, isAuthori
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(err)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/manage-users.templ`, Line: 13, Col: 38}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/manage-users.templ`, Line: 10, Col: 38}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -75,7 +73,7 @@ func ManageUsersForm(csrf string, err string, users []db.ListUsersRow, isAuthori
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(csrf)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/manage-users.templ`, Line: 17, Col: 50}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/manage-users.templ`, Line: 13, Col: 50}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -93,7 +91,7 @@ func ManageUsersForm(csrf string, err string, users []db.ListUsersRow, isAuthori
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(u.Username)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/manage-users.templ`, Line: 38, Col: 25}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/manage-users.templ`, Line: 48, Col: 25}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -121,7 +119,7 @@ func ManageUsersForm(csrf string, err string, users []db.ListUsersRow, isAuthori
 					var templ_7745c5c3_Var6 string
 					templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(csrf)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/manage-users.templ`, Line: 45, Col: 54}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/manage-users.templ`, Line: 55, Col: 54}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 					if templ_7745c5c3_Err != nil {
@@ -134,7 +132,7 @@ func ManageUsersForm(csrf string, err string, users []db.ListUsersRow, isAuthori
 					var templ_7745c5c3_Var7 string
 					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(u.Username)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/manage-users.templ`, Line: 46, Col: 63}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/manage-users.templ`, Line: 56, Col: 63}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 					if templ_7745c5c3_Err != nil {

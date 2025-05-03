@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/DSSD-Madison/gmu/pkg/model/search"
+	"github.com/DSSD-Madison/gmu/internal/domain/search"
 )
 
 func ResultsPage(results search.Results, isAuthorized bool) templ.Component {

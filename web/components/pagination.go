@@ -1,6 +1,6 @@
 package components
 
-import "github.com/DSSD-Madison/gmu/pkg/model/search"
+import "github.com/DSSD-Madison/gmu/internal/domain/search"
 
 // max=5 & total=4, show only 4 buttons
 func getNumberOfButtons(totalPages, maxPages int) int {

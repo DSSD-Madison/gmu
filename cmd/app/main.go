@@ -15,16 +15,16 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
-	"github.com/DSSD-Madison/gmu/pkg/aws/bedrock"
-	"github.com/DSSD-Madison/gmu/pkg/aws/kendra"
-	"github.com/DSSD-Madison/gmu/pkg/aws/s3"
-	"github.com/DSSD-Madison/gmu/pkg/core/config"
-	"github.com/DSSD-Madison/gmu/pkg/core/logger"
-	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
-	"github.com/DSSD-Madison/gmu/pkg/handlers"
+	"github.com/DSSD-Madison/gmu/internal/application"
+	"github.com/DSSD-Madison/gmu/internal/infra/aws/bedrock"
+	"github.com/DSSD-Madison/gmu/internal/infra/aws/kendra"
+	"github.com/DSSD-Madison/gmu/internal/infra/aws/s3"
+	db "github.com/DSSD-Madison/gmu/internal/infra/database/sqlc/generated"
+	"github.com/DSSD-Madison/gmu/internal/infra/http/handlers"
+	"github.com/DSSD-Madison/gmu/internal/infra/http/routes"
+	"github.com/DSSD-Madison/gmu/pkg/config"
+	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/DSSD-Madison/gmu/pkg/ratelimiter"
-	"github.com/DSSD-Madison/gmu/pkg/services"
-	"github.com/DSSD-Madison/gmu/routes"
 )
 
 const (
@@ -146,18 +146,18 @@ func main() {
 	userRateLimiter := ratelimiter.NewInMemoryRateLimiter(context.Background(), appLogger, userMaxAttempts, userBlockDuration, userWindow)
 	appLogger.Debug("Rate Limiters initialized")
 
-	sessionManager, err := services.NewGorillaSessionManager(cookieStore, sessionCookieName, appLogger, dbClient)
+	sessionManager, err := application.NewGorillaSessionManager(cookieStore, sessionCookieName, appLogger, dbClient)
 	if err != nil {
 		appLogger.Error("Failed to create session manager", "error", err)
 		os.Exit(1)
 	}
 
-	userService := services.NewUserService(appLogger, dbClient)
-	authenticationService := services.NewLoginService(appLogger, ipRateLimiter, userRateLimiter, userService)
-	searchService := services.NewSearchService(appLogger, kendraClient, dbClient)
-	suggestionService := services.NewSuggestionService(appLogger, kendraClient)
-	bedrockService := services.NewBedrockService(appLogger, *bedrockClient)
-	fileManagerService := services.NewFilemanagerService(appLogger, s3Client)
+	userService := application.NewUserService(appLogger, dbClient)
+	authenticationService := application.NewLoginService(appLogger, ipRateLimiter, userRateLimiter, userService)
+	searchService := application.NewSearchService(appLogger, kendraClient, dbClient)
+	suggestionService := application.NewSuggestionService(appLogger, kendraClient)
+	bedrockService := application.NewBedrockService(appLogger, *bedrockClient)
+	fileManagerService := application.NewFilemanagerService(appLogger, s3Client)
 
 	appLogger.Info("Services initialized")
 

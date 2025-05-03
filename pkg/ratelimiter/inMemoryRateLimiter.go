@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DSSD-Madison/gmu/pkg/core/logger"
+	"github.com/DSSD-Madison/gmu/pkg/logger"
 )
 
 // InMemoryRateLimiter is a simple rate limiter that stores state in memory.
