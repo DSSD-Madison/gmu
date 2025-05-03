@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
+	db "github.com/DSSD-Madison/gmu/internal/infra/database/sqlc/generated"
 )
 
 // Create a testable version of the handler function that accepts an interface
@@ -73,32 +73,32 @@ func (suite *HandlersTestSuite) SetupTest() {
 
 	suite.sampleDocs = []db.Document{
 		{
-			ID:              suite.doc1ID,
-			FileName:        "doc1.pdf",
-			Title:           "Document 1",
-			Abstract:        sql.NullString{String: "Abstract 1", Valid: true},
-			PublishDate:     suite.now,
-			Source:          sql.NullString{String: "Source 1", Valid: true},
-			ToIndex: 		 sql.NullBool{Bool: false, Valid: true},
-			S3File:          "doc1.pdf",
-			S3FilePreview:   sql.NullString{String: "preview1.pdf", Valid: true},
-			PdfLink:         sql.NullString{String: "http://example.com/doc1.pdf", Valid: true},
-			CreatedAt:       suite.now,
-			DeletedAt:       sql.NullTime{Valid: false},
+			ID:            suite.doc1ID,
+			FileName:      "doc1.pdf",
+			Title:         "Document 1",
+			Abstract:      sql.NullString{String: "Abstract 1", Valid: true},
+			PublishDate:   suite.now,
+			Source:        sql.NullString{String: "Source 1", Valid: true},
+			ToIndex:       sql.NullBool{Bool: false, Valid: true},
+			S3File:        "doc1.pdf",
+			S3FilePreview: sql.NullString{String: "preview1.pdf", Valid: true},
+			PdfLink:       sql.NullString{String: "http://example.com/doc1.pdf", Valid: true},
+			CreatedAt:     suite.now,
+			DeletedAt:     sql.NullTime{Valid: false},
 		},
 		{
-			ID:              suite.doc2ID,
-			FileName:        "doc2.pdf",
-			Title:           "Document 2",
-			Abstract:        sql.NullString{String: "Abstract 2", Valid: true},
-			PublishDate:     suite.now,
-			Source:          sql.NullString{String: "Source 2", Valid: true},
-			ToIndex: 		 sql.NullBool{Bool: true, Valid: true},
-			S3File:          "doc2.pdf",
-			S3FilePreview:   sql.NullString{String: "preview2.pdf", Valid: true},
-			PdfLink:         sql.NullString{String: "http://example.com/doc2.pdf", Valid: true},
-			CreatedAt:       suite.now,
-			DeletedAt:       sql.NullTime{Valid: false},
+			ID:            suite.doc2ID,
+			FileName:      "doc2.pdf",
+			Title:         "Document 2",
+			Abstract:      sql.NullString{String: "Abstract 2", Valid: true},
+			PublishDate:   suite.now,
+			Source:        sql.NullString{String: "Source 2", Valid: true},
+			ToIndex:       sql.NullBool{Bool: true, Valid: true},
+			S3File:        "doc2.pdf",
+			S3FilePreview: sql.NullString{String: "preview2.pdf", Valid: true},
+			PdfLink:       sql.NullString{String: "http://example.com/doc2.pdf", Valid: true},
+			CreatedAt:     suite.now,
+			DeletedAt:     sql.NullTime{Valid: false},
 		},
 	}
 }
