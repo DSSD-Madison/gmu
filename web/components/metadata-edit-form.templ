@@ -1,8 +1,6 @@
 package components
 
-import (
-	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
-)
+import db "github.com/DSSD-Madison/gmu/internal/infra/database/sqlc/generated"
 
 templ PDFMetadataEditForm(
 	fileId string,
@@ -28,10 +26,9 @@ templ PDFMetadataEditForm(
 	@Base("Edit PDF Metadata", isAuthorized, isMaster) {
 		<div class="container max-w-2xl p-6 mx-auto mt-10 mb-10 bg-white rounded shadow-md dark:bg-gray-800">
 			<h1 class="mb-4 text-2xl font-bold text-gray-900 dark:text-white">Edit Metadata</h1>
-			
 			<p class="mb-2 text-sm text-gray-600 dark:text-gray-300">
-				Editing metadata for: 
-				<a 
+				Editing metadata for:
+				<a
 					href={ templ.URL(s3Link) }
 					target="_blank"
 					rel="noopener noreferrer"
@@ -39,70 +36,83 @@ templ PDFMetadataEditForm(
 				>
 					{ originalFilename }
 				</a>
-
 				<span class="block text-xs text-gray-400 break-all dark:text-gray-500">
 					File ID: { fileId }
 				</span>
 			</p>
-			<form hx-post="/save-metadata" method="post" hx-target="#flash-messages" hx-swap="innerHTML" hx-credentials="include"
-			hx-on="
+			<form
+				hx-post="/save-metadata"
+				method="post"
+				hx-target="#flash-messages"
+				hx-swap="innerHTML"
+				hx-credentials="include"
+				hx-on="
                 htmx:beforeRequest: document.getElementById('flash-messages').classList.add('invisible');
                 htmx:afterSwap:   document.getElementById('flash-messages').classList.remove('invisible');
               "
 			>
-				<input type="hidden" name="fileId" value={ fileId } />
-				<input type="hidden" name="_csrf" value={ csrf } />
-
+				<input type="hidden" name="fileId" value={ fileId }/>
+				<input type="hidden" name="_csrf" value={ csrf }/>
 				<div class="mb-4">
 					<label for="title" class="block mb-2 text-sm font-bold text-gray-700 dark:text-gray-200">Title</label>
-					<input type="text" id="title" name="title" value={ title }
-						class="w-full px-3 py-2 leading-tight text-gray-700 bg-white border border-gray-300 rounded shadow appearance-none dark:border-gray-600 dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:shadow-outline" />
+					<input
+						type="text"
+						id="title"
+						name="title"
+						value={ title }
+						class="w-full px-3 py-2 leading-tight text-gray-700 bg-white border border-gray-300 rounded shadow appearance-none dark:border-gray-600 dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:shadow-outline"
+					/>
 				</div>
-
 				<div class="mb-4">
 					<label for="abstract" class="block mb-2 text-sm font-bold text-gray-700 dark:text-gray-200">Abstract</label>
-					<textarea id="abstract" name="abstract" rows="4"
-						class="w-full px-3 py-2 leading-tight text-gray-700 bg-white border border-gray-300 rounded shadow appearance-none dark:border-gray-600 dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:shadow-outline">{ abstract }</textarea>
+					<textarea
+						id="abstract"
+						name="abstract"
+						rows="4"
+						class="w-full px-3 py-2 leading-tight text-gray-700 bg-white border border-gray-300 rounded shadow appearance-none dark:border-gray-600 dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:shadow-outline"
+					>{ abstract }</textarea>
 				</div>
-
 				<div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
 					<div>
 						<label for="publish_date" class="block mb-2 text-sm font-bold text-gray-700 dark:text-gray-200">Publish Date</label>
-						<input type="date" id="publish_date" name="publish_date" value={ publishDate }
-							class="w-full px-3 py-2 leading-tight text-gray-700 bg-white border border-gray-300 rounded shadow appearance-none dark:border-gray-600 dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:shadow-outline" />
+						<input
+							type="date"
+							id="publish_date"
+							name="publish_date"
+							value={ publishDate }
+							class="w-full px-3 py-2 leading-tight text-gray-700 bg-white border border-gray-300 rounded shadow appearance-none dark:border-gray-600 dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:shadow-outline"
+						/>
 					</div>
 					<div>
 						<label for="source" class="block mb-2 text-sm font-bold text-gray-700 dark:text-gray-200">Source</label>
-						<input type="text" id="source" name="source" value={ source }
-							class="w-full px-3 py-2 leading-tight text-gray-700 bg-white border border-gray-300 rounded shadow appearance-none dark:border-gray-600 dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:shadow-outline" />
+						<input
+							type="text"
+							id="source"
+							name="source"
+							value={ source }
+							class="w-full px-3 py-2 leading-tight text-gray-700 bg-white border border-gray-300 rounded shadow appearance-none dark:border-gray-600 dark:text-gray-200 dark:bg-gray-700 focus:outline-none focus:shadow-outline"
+						/>
 						<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Internal reference (e.g., bucket name)</p>
 					</div>
 				</div>
-
 				<hr class="my-6 border-gray-300 dark:border-gray-600"/>
-
 				@TagInputJS("categories", "Category Names", "category_names", "/categories", selectedCategories)
 				@TagInputJS("regions", "Region Names", "region_names", "/regions", selectedRegions)
 				@TagInputJS("keywords", "Keyword Names", "keyword_names", "/keywords", selectedKeywords)
 				@TagInputJS("authors", "Author Names", "author_names", "/authors", selectedAuthors)
-
 				<div class="flex items-center justify-start mt-8 space-x-4">
-                  <button
-                    type="submit"
-                    class="px-4 py-2 font-bold text-white bg-blue-500 rounded hover:bg-blue-700 focus:outline-none focus:shadow-outline"
-                  >
-                    Save Metadata
-                  </button>
-
-                  if (toDelete) {
-                    @ToggleDeleteButton(fileId, false, "Undo Delete")
-                  } else {
-                    @ToggleDeleteButton(fileId, true, "Delete")
-                  }
-                </div>
-
-
-
+					<button
+						type="submit"
+						class="px-4 py-2 font-bold text-white bg-blue-500 rounded hover:bg-blue-700 focus:outline-none focus:shadow-outline"
+					>
+						Save Metadata
+					</button>
+					if (toDelete) {
+						@ToggleDeleteButton(fileId, false, "Undo Delete")
+					} else {
+						@ToggleDeleteButton(fileId, true, "Delete")
+					}
+				</div>
 				<div class="pt-2" id="flash-messages"></div>
 			</form>
 		</div>

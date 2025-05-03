@@ -10,7 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"encoding/json"
-	"github.com/DSSD-Madison/gmu/pkg/model/search"
+	"github.com/DSSD-Madison/gmu/internal/domain/search"
 )
 
 func suggestionsJSON(suggestion string) string {

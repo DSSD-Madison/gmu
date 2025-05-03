@@ -12,7 +12,7 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/DSSD-Madison/gmu/pkg/model/search"
+	"github.com/DSSD-Madison/gmu/internal/domain/search"
 )
 
 func paginationJSON(page int) string {
