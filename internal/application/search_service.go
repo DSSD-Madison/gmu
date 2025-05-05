@@ -28,24 +28,31 @@ func NewSearchService(log logger.Logger, kendra kendra.Client, dbQuerier *db.Que
 }
 
 func (s *SearchService) SearchDocuments(ctx context.Context, query string, filters url.Values, pageNum int) (search.Results, error) {
-	s.log.DebugContext(ctx, "Starting document search", "query", query, "page", pageNum)
+	s.log.DebugContext(ctx, "Starting document search",
+		"query", query,
+		"page", pageNum,
+		"filter_count", len(filters))
 
 	kendraFilterMap := convertURLValuesToKendraFilters(filters)
-	s.log.DebugContext(ctx, "Converted filters for Kendra", "filter_map", kendraFilterMap)
 
 	results, err := s.kendraClient.MakeQuery(ctx, query, kendraFilterMap, pageNum)
 	if err != nil {
-		s.log.ErrorContext(ctx, "Kendra MakeQuery failed", "query", query, "page", pageNum, "error", err)
-		return search.Results{}, fmt.Errorf("failed to retrieve search results: %w", err)
+		s.log.ErrorContext(ctx, "Kendra MakeQuery failed",
+			"query", query,
+			"page", pageNum,
+			"filters", filters,
+			"error", err)
+		return search.Results{}, fmt.Errorf("failed to retrieve search results from Kendra: %w", err)
 	}
-	s.log.DebugContext(ctx, "Received results from Kendra", "count", results.Count)
 
 	if len(results.Results) > 0 {
 		s.log.DebugContext(ctx, "Attempting to enrich results from database")
 
 		err = db_util.AddImagesToResults(ctx, results, s.dbQuerier)
 		if err != nil {
-			s.log.WarnContext(ctx, "Failed to enrich results with DB data", "error", err)
+			s.log.WarnContext(ctx, "Failed to enrich results with DB data",
+				"query", query,
+				"error", err)
 		} else {
 			s.log.DebugContext(ctx, "Successfully enriched results from database")
 		}
@@ -53,7 +60,10 @@ func (s *SearchService) SearchDocuments(ctx context.Context, query string, filte
 		s.log.DebugContext(ctx, "No results from Kendra to enrich")
 	}
 
-	s.log.DebugContext(ctx, "Document search completed", "query", query, "page", pageNum, "results_found", results.Count)
+	s.log.DebugContext(ctx, "Document search completed",
+		"query", query,
+		"page", pageNum,
+		"results_found", results.Count)
 	return results, nil
 }
 
