@@ -1,8 +1,8 @@
 version: "1"
 packages:
   - name: "db"
-    path: "./internal/infrastructure/database/sqlc/generated"
-    queries: "./internal/infrastructure/database/sqlc/queries"
+    path: "./internal/infra/database/sqlc/generated"
+    queries: "./internal/infra/database/sqlc/queries"
     engine: "postgresql"
     schema:
       - "schema.sql"
