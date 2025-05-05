@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -35,7 +36,7 @@ func NewGorillaSessionManager(store sessions.Store, sessionName string, log logg
 	if sessionName == "" {
 		return nil, errors.New("session name cannot be empty")
 	}
-	serviceLogger := log.With("Service", "Gorilla Session Manager")
+	serviceLogger := log.With("Service", "GorillaSessionManager")
 	return &GorillaSessionManager{
 		store:       store,
 		sessionName: sessionName,
@@ -47,7 +48,8 @@ func NewGorillaSessionManager(store sessions.Store, sessionName string, log logg
 func (sm *GorillaSessionManager) getSession(r *http.Request) (*sessions.Session, error) {
 	session, err := sm.store.Get(r, sm.sessionName)
 	if err != nil {
-		sm.log.WarnContext(r.Context(), "Error getting session", "error", err)
+		sm.log.WarnContext(r.Context(), "Error getting session from store",
+			"error", err)
 	}
 	return session, err
 }
@@ -55,7 +57,9 @@ func (sm *GorillaSessionManager) getSession(r *http.Request) (*sessions.Session,
 func (sm *GorillaSessionManager) Create(c echo.Context, user db.User) error {
 	session, _ := sm.getSession(c.Request())
 	if session == nil {
-		sm.log.ErrorContext(c.Request().Context(), "Failed to get or create session object", "user", user.Username)
+		sm.log.ErrorContext(c.Request().Context(), "Failed to get or create session object",
+			"user_id", user.ID,
+			"user", user.Username)
 		return errors.New("failed to initialize session")
 	}
 
@@ -67,15 +71,17 @@ func (sm *GorillaSessionManager) Create(c echo.Context, user db.User) error {
 	if err != nil {
 		sm.log.ErrorContext(c.Request().Context(), "Failed to save session after create", "error", err, "user", user.Username)
 	}
-	sm.log.InfoContext(c.Request().Context(), "Session Created", "user_id", user.ID, "username", user.Username)
+	sm.log.InfoContext(c.Request().Context(), "Session Created",
+		"user_id", user.ID,
+		"username", user.Username)
 	return nil
 }
 
 func (sm *GorillaSessionManager) Destroy(c echo.Context) error {
 	session, _ := sm.getSession(c.Request())
 	if session == nil {
-		sm.log.ErrorContext(c.Request().Context(), "Failed to get or create session object for destroy")
-		return errors.New("failed to initialize session for destroy")
+		sm.log.WarnContext(c.Request().Context(), "Failed to get or create session object for destroy")
+		return errors.New("failed to get session for destroy")
 	}
 
 	session.Values[sessionKeyAuthenticated] = false
@@ -85,8 +91,11 @@ func (sm *GorillaSessionManager) Destroy(c echo.Context) error {
 
 	err := session.Save(c.Request(), c.Response())
 	if err != nil {
-		sm.log.ErrorContext(c.Request().Context(), "Failed to save session after destroy", "error", err)
+		sm.log.ErrorContext(c.Request().Context(), "Failed to save session after destroy",
+			"error", err)
+		return fmt.Errorf("Failed to save destroyed session: %w", err)
 	}
+	sm.log.InfoContext(c.Request().Context(), "Session destroyed")
 	return nil
 }
 
@@ -102,6 +111,7 @@ func (sm *GorillaSessionManager) GetUserID(c echo.Context) (string, bool) {
 
 	userID, ok := session.Values[sessionKeyUserID].(string)
 	if !ok || userID == "" {
+		sm.log.WarnContext(c.Request().Context(), "Authenticated session missing user ID", "session_id", session.ID)
 		return "", false
 	}
 
@@ -144,6 +154,7 @@ func (sm *GorillaSessionManager) redirectToLogin(c echo.Context) error {
 
 // forceLogoutAndRedirect destroys the session and redirects the user to login.
 func (sm *GorillaSessionManager) forceLogoutAndRedirect(c echo.Context) error {
+	sm.log.WarnContext(c.Request().Context(), "Forcing user logout and redirecting to login")
 	_ = sm.Destroy(c)
 	return sm.redirectToLogin(c)
 }
@@ -151,7 +162,9 @@ func (sm *GorillaSessionManager) forceLogoutAndRedirect(c echo.Context) error {
 func (sm *GorillaSessionManager) fetchUserByID(ctx context.Context, userID string) (*db.User, error) {
 	parsedID, err := uuid.Parse(userID)
 	if err != nil {
-		sm.log.WarnContext(ctx, "Invalid UUID format for userID", "userID", userID)
+		sm.log.WarnContext(ctx, "Invalid UUID format for userID",
+			"userID", userID,
+			"error", err)
 		return nil, nil
 	}
 
@@ -160,7 +173,9 @@ func (sm *GorillaSessionManager) fetchUserByID(ctx context.Context, userID strin
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, err
+		sm.log.ErrorContext(ctx, "Database error fetching user by ID",
+			"user_id", userID, "error", err)
+		return nil, fmt.Errorf("failed to fetch user by ID %s: %w", userID, err)
 	}
 
 	// Manual conversion
@@ -177,18 +192,24 @@ func (sm *GorillaSessionManager) fetchUserByID(ctx context.Context, userID strin
 
 func (sm *GorillaSessionManager) RequireAuth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		session, _ := sm.getSession(c.Request())
-		auth, ok := session.Values["authenticated"].(bool)
-		sm.log.Info("requireAuth called", "auth", auth, "ok", ok)
-
-		if !ok || !auth {
-			sm.log.Info("requireAuth: Not authenticated or invalid session")
+		session, err := sm.getSession(c.Request())
+		if err != nil || session == nil {
+			sm.log.WarnContext(c.Request().Context(), "RequestAuth: Failed to get session, redirecting to login",
+				"error", err)
 			return sm.redirectToLogin(c)
 		}
 
-		userID, ok := session.Values[sessionKeyUserID].(string)
-		if !ok || userID == "" {
-			sm.log.Warn("requireAuth: Missing or invalid user_id in session")
+		auth, ok := session.Values["authenticated"].(bool)
+		userID, okID := session.Values[sessionKeyUserID].(string)
+		sm.log.Info("requireAuth called", "auth", auth, "ok", ok)
+
+		if !ok || !auth {
+			sm.log.InfoContext(c.Request().Context(), "requireAuth: Not authenticated or invalid session")
+			return sm.redirectToLogin(c)
+		}
+
+		if !okID || userID == "" {
+			sm.log.ErrorContext(c.Request().Context(), "requireAuth: Missing or invalid user_id in session")
 			return sm.forceLogoutAndRedirect(c)
 		}
 
@@ -196,12 +217,15 @@ func (sm *GorillaSessionManager) RequireAuth(next echo.HandlerFunc) echo.Handler
 
 		user, err := sm.fetchUserByID(ctx, userID)
 		if err != nil {
-			sm.log.ErrorContext(ctx, "requireAuth: Error checking user existence in DB", "error", err)
+			sm.log.ErrorContext(ctx, "RequireAuth: Failed during user validation, forcing logout",
+				"user_id", userID,
+				"error", err)
 			return sm.forceLogoutAndRedirect(c)
 		}
 
 		if user == nil {
-			sm.log.WarnContext(ctx, "requireAuth: User ID no longer exists, forcing logout", "user_id", userID)
+			sm.log.WarnContext(ctx, "requireAuth: User ID from session not found in database, forcing logout",
+				"user_id", userID)
 			return sm.forceLogoutAndRedirect(c)
 		}
 
