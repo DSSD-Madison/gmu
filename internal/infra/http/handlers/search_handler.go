@@ -101,7 +101,6 @@ func (h *SearchHandler) Search(c echo.Context) error {
 		return web.Render(c, http.StatusOK, components.Search(search.Results{UrlData: req.urlData}))
 	}
 
-	h.log.InfoContext(ctx, "Performing search", "query", req.query, "page", req.pageNum, "filters", req.filters)
 
 	results, err := selectResultsFromTarget(ctx, h, req)
 	if err != nil {
