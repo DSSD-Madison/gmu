@@ -201,7 +201,7 @@ func (sm *GorillaSessionManager) RequireAuth(next echo.HandlerFunc) echo.Handler
 
 		auth, ok := session.Values["authenticated"].(bool)
 		userID, okID := session.Values[sessionKeyUserID].(string)
-		sm.log.Info("requireAuth called", "auth", auth, "ok", ok)
+		sm.log.DebugContext(c.Request().Context(), "requireAuth called", "auth", auth, "ok", ok)
 
 		if !ok || !auth {
 			sm.log.InfoContext(c.Request().Context(), "requireAuth: Not authenticated or invalid session")

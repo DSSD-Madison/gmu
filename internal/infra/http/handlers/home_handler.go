@@ -25,7 +25,7 @@ func NewHomeHandler(log logger.Logger, sessionManager application.SessionManager
 }
 
 func (h *HomeHandler) Home(c echo.Context) error {
-	h.log.InfoContext(c.Request().Context(), "Rendering home page")
+	h.log.DebugContext(c.Request().Context(), "Rendering home page")
 	isAuthorized := h.sessionManager.IsAuthenticated(c)
 	isMaster := h.sessionManager.IsMaster(c)
 	return web.Render(c, http.StatusOK, components.Home(isAuthorized, isMaster))

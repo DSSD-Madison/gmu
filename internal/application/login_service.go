@@ -50,7 +50,7 @@ func (authsrv *AuthenticationService) HandleLogin(ctx context.Context, ip string
 	if err != nil {
 		// Treat user not found as invalid credentials for security
 		// Log the actual error for debugging
-		authsrv.log.InfoContext(ctx, "User not found during login attempt", "username", username, "error", err)
+		authsrv.log.DebugContext(ctx, "User not found during login attempt", "username", username, "error", err)
 		// Record failed attempts since an attempt was made
 		authsrv.ipLimiter.RecordAttempt(ip, false)
 		authsrv.userLimiter.RecordAttempt(username, false)

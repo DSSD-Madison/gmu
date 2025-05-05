@@ -56,14 +56,14 @@ func (ah *AuthenticationHandler) Login(c echo.Context) error {
 
 		if c.Request().Header.Get("HX-Request") == "true" {
 			c.Response().WriteHeader(httpStatus)
-			ah.log.Info("HX-Request is true")
+			ah.log.DebugContext(ctx, "HX-Request is true")
 			return web.Render(c, httpStatus, components.ErrorMessage(userMessage))
 		}
 
 		isAuthorized := ah.sessionManager.IsAuthenticated(c)
 		isMaster := ah.sessionManager.IsMaster(c)
 
-		ah.log.Info("Rendering login page")
+		ah.log.DebugContext(ctx, "Rendering login page")
 		return web.Render(c, http.StatusOK, components.LoginPage(userMessage, csrf, redirect, isAuthorized, isMaster))
 	}
 

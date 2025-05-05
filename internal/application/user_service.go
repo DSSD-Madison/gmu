@@ -29,7 +29,7 @@ func (us *UserService) GetUser(ctx context.Context, username string) (db.User, e
 	user, err := us.dbQuerier.GetUserByUsername(ctx, username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			us.log.InfoContext(ctx, "User not found",
+			us.log.DebugContext(ctx, "User not found",
 				"username", username, "error", err)
 			return db.User{}, fmt.Errorf("user %s not found: %w", username, err)
 		}
