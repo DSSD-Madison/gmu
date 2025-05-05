@@ -3,11 +3,14 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/sessions"
@@ -37,6 +40,8 @@ const (
 	userMaxAttempts   = 5
 	userBlockDuration = 15 * time.Minute
 	userWindow        = 5 * time.Minute
+
+	shutdownTimeout = 15 * time.Second
 )
 
 func main() {
@@ -236,11 +241,49 @@ func main() {
 	e.Static("/js", "web/assets/js")
 	e.Static("/favicon", "web/assets/favicon")
 
-	// --- Start Server ---
-	address := ":8080"
-	appLogger.Info("Starting Server", "address", address)
-	if err := e.Start(address); err != nil && err != http.ErrServerClosed {
-		appLogger.Error("Server failed to start", "error", err)
-		os.Exit(1)
+	// --- Start Server and Handle Graceful Shutdown ---
+	go func() {
+		address := ":8080"
+		appLogger.Info("Starting Server", "address", address)
+		if err := e.Start(address); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			appLogger.Error("Server failed to start or unexpectedly closed", "error", err)
+			os.Exit(1)
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shutdown the server with a timeout
+	quit := make(chan os.Signal, 1)
+
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	recvdSignal := <-quit // block until a signal is received
+
+	appLogger.Warn("Received OS signal, initiating shutdown...", "signal", recvdSignal.String())
+
+	shutdownCtx, cancelShutdown := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancelShutdown()
+
+	ipRateLimiter.Shutdown()
+	userRateLimiter.Shutdown()
+
+	if shutdownable, ok := kendraClient.(interface {
+		Shutdown(ctx context.Context) error
+	}); ok {
+		appLogger.Info("Shutting down Kendra client")
+		if err := shutdownable.Shutdown(shutdownCtx); err != nil {
+			appLogger.Error("Error during Kendra client shutdown", "error", err)
+		} else {
+			appLogger.Info("Kendra Client shutdown complete")
+		}
+	} else {
+		appLogger.Warn("Kendra Client does not support graceful shutdown")
 	}
+
+	appLogger.Info("Shutting down HTTP server...")
+	if err := e.Shutdown(shutdownCtx); err != nil {
+		appLogger.Error("Error during HTTP server shutdown", "error", err)
+	} else {
+		appLogger.Info("HTTP server shutdown complete.")
+	}
+
+	appLogger.Warn("Application shutdown finished")
 }

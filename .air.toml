@@ -7,6 +7,7 @@ cmd = "./tools/tailwindcss -i web/assets/css/input.css -o web/assets/css/output.
 exclude_dir = ["tmp", "web/assets", "web/components", "web/components/*.go"]
 include_dir = ["cmd", "web", "pkg", "internal", "routes"]
 include_ext = ["go", "templ"]
+kill_delay = 500
 
 [misc]
 clean_on_exit = false
@@ -14,3 +15,8 @@ clean_on_exit = false
 [screen]
 clear_on_rebuild = false
 keep_scroll = true
+
+[proxy]
+enabled = true
+proxy_port = 8090
+app_port = 8080
