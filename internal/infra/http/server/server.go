@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/DSSD-Madison/gmu/internal/application"
@@ -280,6 +281,26 @@ func (s *Server) configureMiddleware() {
 		LogError:    true,
 		LogRemoteIP: true,
 		HandleError: true, // forwards error to the global error handler, so it can decide appropriate status code
+		Skipper: func(c echo.Context) bool {
+			path := c.Request().URL.Path
+			staticPrefixes := []string{
+				"/images/",
+				"/css/",
+				"/svg/",
+				"/js/",
+				"/favicon/",
+			}
+			for _, prefix := range staticPrefixes {
+				if strings.HasPrefix(path, prefix) {
+					return true
+				}
+			}
+			if path == "/favicon.ico" {
+				return true
+			}
+
+			return false
+		},
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
 			if v.Error == nil {
 				s.log.InfoContext(c.Request().Context(), "REQUEST",
