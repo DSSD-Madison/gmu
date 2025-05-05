@@ -179,7 +179,7 @@ func (s *Server) setupAWSClients() error {
 	}
 
 	// TODO: Add DI and make an interface
-	bedrockClient, err := bedrock.NewBedrockClient(*s.config)
+	bedrockClient, err := bedrock.NewBedrockClient(*s.config, s.log)
 	if err != nil {
 		s.log.Error("Could not initialize bedrock client", "error", err)
 		return err

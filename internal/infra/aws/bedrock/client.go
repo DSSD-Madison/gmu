@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/DSSD-Madison/gmu/pkg/config"
+	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 	"github.com/ledongthuc/pdf"
@@ -39,6 +40,7 @@ type Client interface {
 type BedrockClient struct {
 	client     *bedrockruntime.Client
 	config     config.Config
+	log        logger.Logger
 	categories []string
 	regions    []string
 	keywords   []string
@@ -104,13 +106,14 @@ func loadKeywordsFromFile(filepath string) ([]string, error) {
 	return loadedKeywords, nil
 }
 
-func NewBedrockClient(cfg config.Config) (*BedrockClient, error) {
+func NewBedrockClient(cfg config.Config, log logger.Logger) (*BedrockClient, error) {
 	opts := aws.Config{
 		Region:      cfg.AWS.Region,
 		Credentials: cfg.AWS.Credentials,
 	}
 
 	brClient := bedrockruntime.NewFromConfig(opts)
+	clientLogger := log.With("infra", "BedrockClient")
 
 	categories := []string{
 		"article", "background paper", "blog post", "book", "brief", "case study", "dataset", "educational guide",
@@ -135,8 +138,15 @@ func NewBedrockClient(cfg config.Config) (*BedrockClient, error) {
 	keywords, err := loadKeywordsFromFile(cfg.AWS.KeywordsFilePath)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to load keywords from file: %w", err)
+		clientLogger.Error("Failed to load keywords from file",
+			"path", cfg.AWS.KeywordsFilePath,
+			"error", err)
+		return nil, fmt.Errorf("failed to load keywords from file %s: %w", cfg.AWS.KeywordsFilePath, err)
 	}
+
+	clientLogger.Info("Bedrock client initialized",
+		"model_id", cfg.AWS.BedrockModelID,
+		"region", cfg.AWS.Region)
 
 	return &BedrockClient{
 		client:     brClient,
@@ -174,34 +184,36 @@ func cleanText(text string) string {
 }
 
 // extractTextFromPdf extracts text from the first N pages of a PDF.
-func extractTextFromPdf(pdfBytes []byte, maxPages int) (string, error) {
+func (c *BedrockClient) extractTextFromPdf(ctx context.Context, pdfBytes []byte, maxPages int) (string, error) {
 	reader := bytes.NewReader(pdfBytes)
 	pdfReader, err := pdf.NewReader(reader, int64(len(pdfBytes)))
 	if err != nil {
+		c.log.ErrorContext(ctx, "Failed to create PDF reader",
+			"error", err)
 		return "", fmt.Errorf("failed to create PDF reader: %w", err)
 	}
 
 	numPages := pdfReader.NumPage()
 	if numPages == 0 {
+		c.log.WarnContext(ctx, "PDF has no pages")
 		return "", fmt.Errorf("PDF has no pages")
 	}
 
-	pagesToRead := maxPages
-	if numPages < maxPages {
-		pagesToRead = numPages
-	}
+	pagesToRead := min(maxPages, numPages)
 
 	var textBuilder strings.Builder
 	for i := 1; i <= pagesToRead; i++ { // pdf library pages are 1-indexed
 		page := pdfReader.Page(i)
 		if page.V.IsNull() {
-			fmt.Printf("⚠️ Warning: Skipping potentially invalid page %d", i)
+			c.log.WarnContext(ctx, "Skipping potentially invalid PDF page",
+				"page_number", i)
 			continue
 		}
 		content, err := page.GetPlainText(nil)
 		if err != nil {
-			// Log error but try to continue with other pages
-			fmt.Printf("⚠️ Warning: Failed to get text from page %d: %v", i, err)
+			c.log.WarnContext(ctx, "Failed to get text from PDF page, skipping page",
+				"page_number", i,
+				"error", err)
 			continue
 		}
 		textBuilder.WriteString(content)
@@ -211,33 +223,47 @@ func extractTextFromPdf(pdfBytes []byte, maxPages int) (string, error) {
 	return textBuilder.String(), nil
 }
 
-func ExtractTextFromDocxBytes(data []byte) (string, error) {
+func (c *BedrockClient) ExtractTextFromDocxBytes(ctx context.Context, data []byte) (string, error) {
 	tmp, err := os.CreateTemp("", "docx-*.docx")
 	if err != nil {
+		c.log.ErrorContext(ctx, "Failed creating temp file for docx extraction",
+			"error", err)
 		return "", fmt.Errorf("creating temp file: %w", err)
 	}
 	defer func() {
-		_ = os.Remove(tmp.Name())
+		if err := os.Remove(tmp.Name()); err != nil {
+			c.log.WarnContext(ctx, "Failed to remove temp docx file", "error", err)
+		}
 	}()
 
 	if _, err := tmp.Write(data); err != nil {
-		cerr := tmp.Close()
-		if cerr != nil {
-			return "", fmt.Errorf("writing temp docx: %w (also failed to close: %v)", err, cerr)
-		}
+		_ = tmp.Close() // ignore close error as write failed
+		c.log.ErrorContext(ctx, "Failed writing to temp docx file",
+			"path", tmp.Name(),
+			"error", err)
 		return "", fmt.Errorf("writing temp docx: %w", err)
 	}
 
 	if err := tmp.Close(); err != nil {
+		c.log.ErrorContext(ctx, "Failed closing temp docx file",
+			"path", tmp.Name(),
+			"error", err)
 		return "", fmt.Errorf("closing temp docx: %w", err)
 	}
 
 	doc, err := docx.ReadDocxFile(tmp.Name())
 	if err != nil {
+		c.log.ErrorContext(ctx, "Failed reading temp docx file",
+			"path", tmp.Name(),
+			"error", err)
 		return "", fmt.Errorf("reading temp docx: %w", err)
 	}
 	defer func() {
-		_ = doc.Close()
+		if err := doc.Close(); err != nil {
+			c.log.WarnContext(ctx, "Failed to close docx reader",
+				"path", tmp.Name(),
+				"error", err)
+		}
 	}()
 
 	content := doc.Editable().GetContent()
@@ -245,6 +271,9 @@ func ExtractTextFromDocxBytes(data []byte) (string, error) {
 	parts := strings.Split(content, "\f")
 	if len(parts) > maxPagesToParse {
 		parts = parts[:maxPagesToParse]
+		c.log.DebugContext(ctx, "Truncated docx content",
+			"original_parts", len(parts),
+			"parsed_parts", maxPagesToParse)
 	}
 
 	text := strings.Join(parts, "\f")
@@ -253,11 +282,9 @@ func ExtractTextFromDocxBytes(data []byte) (string, error) {
 }
 
 // callClaudeHaiku sends the prompt to Bedrock and gets the response.
-func (c BedrockClient) callClaudeHaiku(prompt string) (string, int, int, error) {
+func (c *BedrockClient) callClaudeHaiku(invokeCtx context.Context, prompt string) (string, int, int, error) {
 	requestBody := ClaudeRequestBody{
-		Messages: []ClaudeMessage{
-			{Role: "user", Content: prompt},
-		},
+		Messages:         []ClaudeMessage{{Role: "user", Content: prompt}},
 		MaxTokens:        maxTokens,
 		Temperature:      temperature,
 		TopP:             topP,
@@ -266,43 +293,57 @@ func (c BedrockClient) callClaudeHaiku(prompt string) (string, int, int, error) 
 
 	jsonBody, err := json.Marshal(requestBody)
 	if err != nil {
+		c.log.ErrorContext(invokeCtx, "Failed to marshal Bedrock request body",
+			"error", err)
 		return "", 0, 0, fmt.Errorf("failed to marshal request body: %w", err)
 	}
 
-	// inputTokens := estimateTokens(prompt) // Estimate before sending if needed
-
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second) // Add a timeout
+	invokeCtx, cancel := context.WithTimeout(context.Background(), 60*time.Second) // Add a timeout
 	defer cancel()
 
-	resp, err := c.client.InvokeModel(ctx, &bedrockruntime.InvokeModelInput{
+	resp, err := c.client.InvokeModel(invokeCtx, &bedrockruntime.InvokeModelInput{
 		Body:        jsonBody,
 		ModelId:     aws.String(c.config.AWS.BedrockModelID),
 		ContentType: aws.String("application/json"),
 		Accept:      aws.String("application/json"),
 	})
 	if err != nil {
-		return "", 0, 0, fmt.Errorf("failed to invoke Bedrock model: %w", err)
+		c.log.ErrorContext(invokeCtx, "Failed to invoke Bedrock model",
+			"model_id", c.config.AWS.BedrockModelID,
+			"error", err)
+		return "", 0, 0, fmt.Errorf("failed to invoke Bedrock model %s: %w", c.config.AWS.BedrockModelID, err)
 	}
 
 	var responseBody ClaudeResponseBody
 	err = json.Unmarshal(resp.Body, &responseBody)
 	if err != nil {
-		// Sometimes the response might not be perfect JSON, try raw output
-		fmt.Printf("⚠️ Failed to unmarshal Bedrock JSON response: %v. Raw response: %s", err, string(resp.Body))
+		rawBodyStr := string(resp.Body)
+		c.log.WarnContext(invokeCtx, "Failed to unmarshal Bedrock JSON response, returning raw body if possible",
+			"error", err,
+			"raw_response", rawBodyStr)
 		// Attempt to return the raw body if unmarshalling fails but content might exist
-		if len(resp.Body) > 0 {
-			return string(resp.Body), 0, 0, fmt.Errorf("failed to unmarshal response, but got raw body")
+		if len(responseBody.Content) > 0 && responseBody.Content[0].Type == "text" && responseBody.Content[0].Text != "" {
+			return strings.TrimSpace(responseBody.Content[0].Text), 0, 0, fmt.Errorf("partially unmarshalled Bedrock response: %w", err)
 		}
 		return "", 0, 0, fmt.Errorf("failed to unmarshal Bedrock response body: %w", err)
 	}
 
 	if len(responseBody.Content) == 0 || responseBody.Content[0].Type != "text" {
+		c.log.ErrorContext(invokeCtx, "Unexpected response format from Bedrock",
+			"response_body", string(resp.Body))
 		return "", responseBody.Usage.InputTokens, responseBody.Usage.OutputTokens, fmt.Errorf("unexpected response format from Bedrock: %s", string(resp.Body))
 	}
 
 	outputText := strings.TrimSpace(responseBody.Content[0].Text)
 	inputTokens := responseBody.Usage.InputTokens
 	outputTokens := responseBody.Usage.OutputTokens
+
+	cost := estimateCost(inputTokens, outputTokens)
+	c.log.DebugContext(invokeCtx, "Bedrock call successful",
+		"model_id", c.config.AWS.BedrockModelID,
+		"input_tokens", inputTokens,
+		"output_tokens", outputTokens,
+		"estimated_cost", fmt.Sprintf("%.6f", cost))
 
 	return outputText, inputTokens, outputTokens, nil
 }
@@ -331,9 +372,11 @@ func DetectFormat(data []byte) (string, error) {
 }
 
 // extractFirstJson tries to find and parse the first JSON object in a string.
-func extractFirstJson(text string) (*ExtractedMetadata, error) {
+func (c *BedrockClient) extractFirstJson(ctx context.Context, text string) (*ExtractedMetadata, error) {
 	match := jsonRegex.FindString(text)
 	if match == "" {
+		c.log.WarnContext(ctx, "No JSON object found in Bedrock response text",
+			"text_prefix", firstNChars(text, 100))
 		return nil, fmt.Errorf("no JSON object found in the text")
 	}
 
@@ -343,11 +386,18 @@ func extractFirstJson(text string) (*ExtractedMetadata, error) {
 
 	err := decoder.Decode(&metadata)
 	if err != nil {
+		c.log.ErrorContext(ctx, "Failed to decode JSON object from Bedrock response",
+			"json_string", match,
+			"error", err)
 		return nil, fmt.Errorf("failed to decode JSON object: %w. Text was: %s", err, match)
 	}
 
-	metadata.PublishDate, err = NormalizeDate(metadata.PublishDate)
-	if err != nil {
+	var normErr error
+	metadata.PublishDate, normErr = NormalizeDate(metadata.PublishDate)
+	if normErr != nil {
+		c.log.WarnContext(ctx, "Failed to normalize publish date, leaving as is or empty",
+			"original_date", metadata.PublishDate,
+			"error", normErr)
 		return &metadata, fmt.Errorf("failed to decode date string: %w. Date was: %s", err, metadata.PublishDate)
 	}
 
@@ -441,44 +491,62 @@ TEXT:
 }
 
 // ProcessDocAndExtractMetadata fetches PDF from S3, extracts text, calls LLM, and parses metadata.
-func (c BedrockClient) ProcessDocAndExtractMetadata(ctx context.Context, docBytes []byte) (*ExtractedMetadata, error) {
+func (c *BedrockClient) ProcessDocAndExtractMetadata(ctx context.Context, docBytes []byte) (*ExtractedMetadata, error) {
 	f, err := DetectFormat(docBytes)
-
 	if err != nil {
-		return nil, err
+		c.log.ErrorContext(ctx, "Failed to detect document format",
+			"error", err)
+		return nil, fmt.Errorf("failed to detect document format: %w", err)
 	}
+	c.log.DebugContext(ctx, "Detected document format", "format", f)
 
 	var rawText string
-
 	if f == "pdf" {
-		rawText, err = extractTextFromPdf(docBytes, maxPagesToParse)
+		rawText, err = c.extractTextFromPdf(ctx, docBytes, maxPagesToParse)
+	} else if f == "docx" {
+		rawText, err = c.ExtractTextFromDocxBytes(ctx, docBytes)
 	} else {
-		rawText, err = ExtractTextFromDocxBytes(docBytes)
+		c.log.ErrorContext(ctx, "Unsupported document format detected after check",
+			"format", f)
+		return nil, fmt.Errorf("unsupported document format: %s", f)
 	}
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract text from PDF: %w", err)
 	}
 	if rawText == "" {
-		return nil, fmt.Errorf("no text could be extracted from the first %d pages", maxPagesToParse)
+		c.log.WarnContext(ctx, "No text could be extracted from document",
+			"format", f,
+			"parsed_pages", maxPagesToParse)
+		return nil, fmt.Errorf("no text could be extracted from the first %d pages of the %s", maxPagesToParse, f)
 	}
 
 	cleanedText := cleanText(rawText)
 	prompt := c.buildPrompt(cleanedText)
 
-	claudeResponseText, actualInputTokens, actualOutputTokens, err := c.callClaudeHaiku(prompt)
+	// callClaudeHaiku logs success/failure (and cost at debug)
+	claudeResponseText, _, _, err := c.callClaudeHaiku(ctx, prompt)
 	if err != nil {
-		return nil, fmt.Errorf("failed to call Claude: %w", err)
+		return nil, fmt.Errorf("failed to get response from language model: %w", err)
 	}
-	fmt.Printf("☁️ Claude response received.")
-	fmt.Printf("📊 Actual Tokens -> Input: %d, Output: %d", actualInputTokens, actualOutputTokens)
-	fmt.Printf("💸 Actual cost for this doc: $%.6f", estimateCost(actualInputTokens, actualOutputTokens))
 
-	metadata, err := extractFirstJson(claudeResponseText)
+	metadata, err := c.extractFirstJson(ctx, claudeResponseText)
 	if err != nil {
-		fmt.Printf("Raw Claude response on JSON parse failure:\n%s", claudeResponseText)
+		c.log.ErrorContext(ctx, "Failed to extract structured metadata from language model response",
+			"error", err)
 		return metadata, fmt.Errorf("error extracting JSON from Claude response: %w", err)
 	}
 
+	c.log.InfoContext(ctx, "Successfully extracted metadata from document",
+		"format", f,
+		"title", metadata.Title)
 	return metadata, nil
+}
+
+// firstNChars gets the first N characters for logging
+func firstNChars(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	return s[:n] + "..."
 }
