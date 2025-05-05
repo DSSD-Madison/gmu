@@ -142,8 +142,8 @@ func main() {
 	appLogger.Info("Initializing services...")
 
 	// Rate Limiters
-	ipRateLimiter := ratelimiter.NewInMemoryRateLimiter(context.Background(), appLogger, ipMaxAttempts, ipBlockDuration, ipWindow)
-	userRateLimiter := ratelimiter.NewInMemoryRateLimiter(context.Background(), appLogger, userMaxAttempts, userBlockDuration, userWindow)
+	ipRateLimiter := ratelimiter.NewInMemoryRateLimiter(appLogger, ipMaxAttempts, ipBlockDuration, ipWindow)
+	userRateLimiter := ratelimiter.NewInMemoryRateLimiter(appLogger, userMaxAttempts, userBlockDuration, userWindow)
 	appLogger.Debug("Rate Limiters initialized")
 
 	sessionManager, err := application.NewGorillaSessionManager(cookieStore, sessionCookieName, appLogger, dbClient)
