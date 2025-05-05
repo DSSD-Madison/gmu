@@ -11,4 +11,6 @@ type RateLimiter interface {
 	// This method should update the internal state of the rate limiter,
 	// potentially triggering a limit if the attempt fails and thresholds are met.
 	RecordAttempt(key string, success bool)
+
+	Shutdown()
 }
