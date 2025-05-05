@@ -153,11 +153,6 @@ func (s *Server) setupDatabase() error {
 		s.log.Error("Unable to initialize sql.DB", "error", err)
 		return err
 	}
-	defer func(sqlDB *sql.DB) {
-		if err := sqlDB.Close(); err != nil {
-			s.log.Error("Failed to close sql.DB", "error", err)
-		}
-	}(sqlDB)
 
 	if err := sqlDB.PingContext(context.Background()); err != nil {
 		s.log.Error("Unable to ping database", "error", err)
@@ -356,6 +351,12 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	} else {
 		s.log.Info("HTTP server shutdown complete")
 	}
+
+	defer func(sqlDB *sql.DB) {
+		if err := sqlDB.Close(); err != nil {
+			s.log.Error("Failed to close sql.DB", "error", err)
+		}
+	}(s.db)
 
 	s.ipRateLimiter.Shutdown()
 	s.userRateLimiter.Shutdown()
