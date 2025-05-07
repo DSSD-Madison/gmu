@@ -9,9 +9,8 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
+	"github.com/DSSD-Madison/gmu/internal/domain/search"
 	"strconv"
-
-	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 )
 
 // var searchbar_classes = `relative w-full not-has-[p]:focus-within:[&_input]:rounded-3xl not-has-[p]:focus-within:[&_input]:border-blue-400 has-[p]:focus-within:[&_input]:rounded-t-3xl has-[p]:focus-within:[&_input]:border-blue-400 not-has-[p]:not-focus-within:[&_input]:rounded-3xl has-[p]:not-focus-within:[&_input]:rounded-3xl hover:[&_input]:rounded-t-3xl`
@@ -26,7 +25,7 @@ var searchbar_classes = `relative
   has-[p]:not-focus-within:[&_input]:rounded-3xl
   hover:[&_input]:rounded-t-3xl`
 
-func SearchbarContainer(results awskendra.KendraResults, oob bool) templ.Component {
+func SearchbarContainer(results search.Results, oob bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -79,7 +78,7 @@ func SearchbarContainer(results awskendra.KendraResults, oob bool) templ.Compone
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = Searchbar(results.UrlData, false).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Searchbar(results.URLData, false).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -99,7 +98,7 @@ func SearchbarContainer(results awskendra.KendraResults, oob bool) templ.Compone
 	})
 }
 
-func Searchbar(data awskendra.UrlData, oob bool) templ.Component {
+func Searchbar(data search.UrlData, oob bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -137,7 +136,7 @@ func Searchbar(data awskendra.UrlData, oob bool) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(data.Query)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/searchbar.templ`, Line: 44, Col: 22}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/searchbar.templ`, Line: 52, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -147,7 +146,7 @@ func Searchbar(data awskendra.UrlData, oob bool) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if data.IsStoringUrl {
+		if data.IsStoringURL {
 			for _, filter := range data.Filters {
 				for _, str := range filter.SelectedFilters {
 					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<input type=\"hidden\" name=\"")
@@ -157,7 +156,7 @@ func Searchbar(data awskendra.UrlData, oob bool) templ.Component {
 					var templ_7745c5c3_Var6 string
 					templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(filter.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/searchbar.templ`, Line: 49, Col: 43}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/searchbar.templ`, Line: 57, Col: 43}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 					if templ_7745c5c3_Err != nil {
@@ -170,7 +169,7 @@ func Searchbar(data awskendra.UrlData, oob bool) templ.Component {
 					var templ_7745c5c3_Var7 string
 					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(str)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/searchbar.templ`, Line: 49, Col: 57}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/searchbar.templ`, Line: 57, Col: 57}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 					if templ_7745c5c3_Err != nil {
@@ -189,7 +188,7 @@ func Searchbar(data awskendra.UrlData, oob bool) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(data.Page))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/searchbar.templ`, Line: 52, Col: 65}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/searchbar.templ`, Line: 60, Col: 66}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {

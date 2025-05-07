@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/DSSD-Madison/gmu/pkg/awskendra"
+	"github.com/DSSD-Madison/gmu/internal/domain/search"
 )
 
 func Test_getNumberOfButtons(t *testing.T) {
@@ -344,7 +344,7 @@ func Test_getLowerOverflow(t *testing.T) {
 
 func Test_getPaginationVM(t *testing.T) {
 	type args struct {
-		status   awskendra.PageStatus
+		status   search.PageStatus
 		maxPages int
 	}
 	tests := []struct {
@@ -355,7 +355,7 @@ func Test_getPaginationVM(t *testing.T) {
 		{
 			name: "Lower end of range",
 			args: args{
-				status: awskendra.PageStatus{
+				status: search.PageStatus{
 					CurrentPage: 1,
 					HasPrev:     false,
 					HasNext:     true,
@@ -366,19 +366,19 @@ func Test_getPaginationVM(t *testing.T) {
 				maxPages: 5,
 			},
 			want: paginationViewModel{
-				sideCount:      2,
-				maxPages:       5,
-				upperPage:      5,
-				lowerPage:      1,
-				buttonCount:    5,
-				lower_overflow: false,
-				upper_overflow: true,
+				sideCount:     2,
+				maxPages:      5,
+				upperPage:     5,
+				lowerPage:     1,
+				buttonCount:   5,
+				lowerOverflow: false,
+				upperOverflow: true,
 			},
 		},
 		{
 			name: "Middle of range",
 			args: args{
-				status: awskendra.PageStatus{
+				status: search.PageStatus{
 					CurrentPage: 10,
 					HasPrev:     true,
 					HasNext:     true,
@@ -389,19 +389,19 @@ func Test_getPaginationVM(t *testing.T) {
 				maxPages: 5,
 			},
 			want: paginationViewModel{
-				sideCount:      2,
-				maxPages:       5,
-				upperPage:      12,
-				lowerPage:      8,
-				buttonCount:    5,
-				lower_overflow: true,
-				upper_overflow: true,
+				sideCount:     2,
+				maxPages:      5,
+				upperPage:     12,
+				lowerPage:     8,
+				buttonCount:   5,
+				lowerOverflow: true,
+				upperOverflow: true,
 			},
 		},
 		{
 			name: "Upper end of range",
 			args: args{
-				status: awskendra.PageStatus{
+				status: search.PageStatus{
 					CurrentPage: 20,
 					HasPrev:     true,
 					HasNext:     false,
@@ -412,13 +412,13 @@ func Test_getPaginationVM(t *testing.T) {
 				maxPages: 5,
 			},
 			want: paginationViewModel{
-				sideCount:      2,
-				maxPages:       5,
-				upperPage:      20,
-				lowerPage:      16,
-				buttonCount:    5,
-				lower_overflow: true,
-				upper_overflow: false,
+				sideCount:     2,
+				maxPages:      5,
+				upperPage:     20,
+				lowerPage:     16,
+				buttonCount:   5,
+				lowerOverflow: true,
+				upperOverflow: false,
 			},
 		},
 	}

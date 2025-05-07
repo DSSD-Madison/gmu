@@ -12,10 +12,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/DSSD-Madison/gmu/pkg/awskendra"
+	"github.com/DSSD-Madison/gmu/internal/domain/search"
 )
 
-func ResultsPage(results awskendra.KendraResults, isAuthorized bool) templ.Component {
+func ResultsPage(results search.Results, isAuthorized bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -56,7 +56,7 @@ func ResultsPage(results awskendra.KendraResults, isAuthorized bool) templ.Compo
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = Searchbar(results.UrlData, true).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = Searchbar(results.URLData, true).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -72,7 +72,7 @@ func ResultsPage(results awskendra.KendraResults, isAuthorized bool) templ.Compo
 	})
 }
 
-func ResultsAndPagination(results awskendra.KendraResults, isAuthorized bool) templ.Component {
+func ResultsAndPagination(results search.Results, isAuthorized bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -113,11 +113,11 @@ func ResultsAndPagination(results awskendra.KendraResults, isAuthorized bool) te
 	})
 }
 
-func nonemptyExpand(result awskendra.KendraResult) bool {
+func nonemptyExpand(result search.Result) bool {
 	return len(result.Authors) > 0 || len(result.Regions) > 0 || len(result.Keywords) > 0 || result.PublishDate != "" || len(result.Categories) > 0 || result.Abstract != ""
 }
 
-func ResultCard(result awskendra.KendraResult, isAuthorized bool) templ.Component {
+func ResultCard(result search.Result, isAuthorized bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -176,7 +176,7 @@ func ResultCard(result awskendra.KendraResult, isAuthorized bool) templ.Componen
 	})
 }
 
-func editResultButton(result awskendra.KendraResult) templ.Component {
+func editResultButton(result search.Result) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -214,7 +214,7 @@ func editResultButton(result awskendra.KendraResult) templ.Component {
 	})
 }
 
-func image(result awskendra.KendraResult) templ.Component {
+func image(result search.Result) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -243,7 +243,7 @@ func image(result awskendra.KendraResult) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(result.Image)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/results.templ`, Line: 76, Col: 25}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/results.templ`, Line: 75, Col: 25}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -263,7 +263,7 @@ func image(result awskendra.KendraResult) templ.Component {
 	})
 }
 
-func cardBody(result awskendra.KendraResult) templ.Component {
+func cardBody(result search.Result) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -310,7 +310,7 @@ func cardBody(result awskendra.KendraResult) templ.Component {
 	})
 }
 
-func cardTitle(result awskendra.KendraResult) templ.Component {
+func cardTitle(result search.Result) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -347,7 +347,7 @@ func cardTitle(result awskendra.KendraResult) templ.Component {
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(result.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/results.templ`, Line: 97, Col: 16}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/results.templ`, Line: 96, Col: 16}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -361,7 +361,7 @@ func cardTitle(result awskendra.KendraResult) templ.Component {
 	})
 }
 
-func cardExcerpt(excerpt awskendra.Excerpt, result awskendra.KendraResult) templ.Component {
+func cardExcerpt(excerpt search.Excerpt, result search.Result) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -389,7 +389,7 @@ func cardExcerpt(excerpt awskendra.Excerpt, result awskendra.KendraResult) templ
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(excerpt.Text)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/results.templ`, Line: 103, Col: 16}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/results.templ`, Line: 102, Col: 16}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -421,7 +421,7 @@ func cardExcerpt(excerpt awskendra.Excerpt, result awskendra.KendraResult) templ
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(excerpt.PageNum))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/results.templ`, Line: 112, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/results.templ`, Line: 111, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -435,7 +435,7 @@ func cardExcerpt(excerpt awskendra.Excerpt, result awskendra.KendraResult) templ
 	})
 }
 
-func expand(result awskendra.KendraResult) templ.Component {
+func expand(result search.Result) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -469,7 +469,7 @@ func expand(result awskendra.KendraResult) templ.Component {
 				var templ_7745c5c3_Var17 string
 				templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(strings.Join(result.Authors, ", "))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/results.templ`, Line: 123, Col: 86}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/results.templ`, Line: 122, Col: 86}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 				if templ_7745c5c3_Err != nil {
@@ -492,7 +492,7 @@ func expand(result awskendra.KendraResult) templ.Component {
 				var templ_7745c5c3_Var18 string
 				templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(strings.Join(result.Regions, ", "))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/results.templ`, Line: 127, Col: 86}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/results.templ`, Line: 126, Col: 86}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 				if templ_7745c5c3_Err != nil {
@@ -515,7 +515,7 @@ func expand(result awskendra.KendraResult) templ.Component {
 				var templ_7745c5c3_Var19 string
 				templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(strings.Join(result.Keywords, ", "))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/results.templ`, Line: 131, Col: 87}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/results.templ`, Line: 130, Col: 87}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 				if templ_7745c5c3_Err != nil {
@@ -538,7 +538,7 @@ func expand(result awskendra.KendraResult) templ.Component {
 				var templ_7745c5c3_Var20 string
 				templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(result.PublishDate)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/results.templ`, Line: 135, Col: 70}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/results.templ`, Line: 134, Col: 70}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 				if templ_7745c5c3_Err != nil {
@@ -561,7 +561,7 @@ func expand(result awskendra.KendraResult) templ.Component {
 				var templ_7745c5c3_Var21 string
 				templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(strings.Join(result.Categories, ", "))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/results.templ`, Line: 139, Col: 89}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/results.templ`, Line: 138, Col: 89}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 				if templ_7745c5c3_Err != nil {
@@ -584,7 +584,7 @@ func expand(result awskendra.KendraResult) templ.Component {
 				var templ_7745c5c3_Var22 string
 				templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(result.Abstract)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/results.templ`, Line: 144, Col: 84}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/results.templ`, Line: 143, Col: 84}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 				if templ_7745c5c3_Err != nil {
@@ -609,7 +609,7 @@ func expand(result awskendra.KendraResult) templ.Component {
 	})
 }
 
-func ResultsContainer(results awskendra.KendraResults, isAuthorized bool) templ.Component {
+func ResultsContainer(results search.Results, isAuthorized bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {

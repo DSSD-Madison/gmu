@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	db "github.com/DSSD-Madison/gmu/pkg/db/generated"
+	db "github.com/DSSD-Madison/gmu/internal/infra/database/sqlc/generated"
 	"github.com/google/uuid"
 )
 
@@ -34,25 +34,25 @@ func getRowID(id uuid.UUID) string {
 
 templ sortAscIcon() {
 	<svg class="w-5 h-5 ml-1 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
-		<path d="M7.247 4.86l-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z"/>
+		<path d="M7.247 4.86l-4.796 5.481c-.566.647-.106 1.659.753 1.659h9.592a1 1 0 0 0 .753-1.659l-4.796-5.48a1 1 0 0 0-1.506 0z"></path>
 	</svg>
 }
 
 templ sortDescIcon() {
 	<svg class="w-5 h-5 ml-1 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
-		<path d="M7.247 11.14l-4.796-5.481c-.566-.647-.106-1.659.753-1.659h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+		<path d="M7.247 11.14l-4.796-5.481c-.566-.647-.106-1.659.753-1.659h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"></path>
 	</svg>
 }
 
 templ sortableIcon() {
 	<svg class="w-5 h-5 ml-1 flex-shrink-0 text-gray-300 dark:text-gray-600 group-hover:text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
-		 <path d="M3.5 2.5a.5.5 0 0 0-1 0v11a.5.5 0 0 0 1 0v-11zm4-1a.5.5 0 0 1 .5.5V14a.5.5 0 0 1-1 0V2a.5.5 0 0 1 .5-.5zm4 1a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-1 0v-11a.5.5 0 0 1 .5-.5z"/>
+		<path d="M3.5 2.5a.5.5 0 0 0-1 0v11a.5.5 0 0 0 1 0v-11zm4-1a.5.5 0 0 1 .5.5V14a.5.5 0 0 1-1 0V2a.5.5 0 0 1 .5-.5zm4 1a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-1 0v-11a.5.5 0 0 1 .5-.5z"></path>
 	</svg>
 }
 
 templ indexedIcon() {
 	<svg class="w-5 h-5 text-green-600 dark:text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-		<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+		<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
 	</svg>
 }
 
@@ -65,13 +65,13 @@ templ pendingIndexIcon() {
 
 templ markedForDeletionIcon() {
 	<svg class="w-5 h-5 text-red-600 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
-		<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
+		<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"></path>
 	</svg>
 }
 
 templ notMarkedForDeletionIcon() {
 	<svg class="w-5 h-5 text-gray-400 dark:text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
-		 <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z"/>
+		<path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z"></path>
 	</svg>
 }
 
@@ -94,10 +94,12 @@ templ SortableHeader(column, label, currentSortBy, currentSortDir string) {
 				document.querySelector('#document-sort-form input[name=offset]').value = '0';
             "
 		>
-			<span class={
-                "mr-1",
-                templ.KV("font-semibold text-indigo-600 dark:text-indigo-400", currentSortBy == column),
-            }>{ label }</span>
+			<span
+				class={
+					"mr-1",
+					templ.KV("font-semibold text-indigo-600 dark:text-indigo-400", currentSortBy == column),
+				}
+			>{ label }</span>
 			if currentSortBy == column {
 				if currentSortDir == SortAsc {
 					@sortAscIcon()
@@ -114,8 +116,10 @@ templ SortableHeader(column, label, currentSortBy, currentSortDir string) {
 templ DocumentTableRow(doc db.Document) {
 	<tr id={ getRowID(doc.ID) } class="hover:bg-gray-50 dark:hover:bg-gray-800">
 		<td class="px-6 py-4 whitespace-nowrap">
-			<a href={ templ.SafeURL(fmt.Sprintf("/edit-metadata/%s", doc.ID)) }
-			   class="block overflow-hidden whitespace-nowrap text-ellipsis max-w-xs font-medium text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
+			<a
+				href={ templ.SafeURL(fmt.Sprintf("/edit-metadata/%s", doc.ID)) }
+				class="block overflow-hidden whitespace-nowrap text-ellipsis max-w-xs font-medium text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+			>
 				{ doc.Title }
 			</a>
 		</td>
@@ -153,11 +157,9 @@ templ DocumentTableBody(documents []db.Document, currentOffset int, limit int) {
 				</td>
 			</tr>
 		}
-
 		for _, doc := range documents {
 			@DocumentTableRow(doc)
 		}
-
 		if len(documents) >= limit {
 			<tr
 				hx-post={ SearchURL }
@@ -165,7 +167,7 @@ templ DocumentTableBody(documents []db.Document, currentOffset int, limit int) {
 				hx-swap="outerHTML"
 				hx-target="this"
 				hx-include="#document-sort-form,#document-search"
-				hx-vals=GetNextOffsetJson(nextOffset)
+				hx-vals="GetNextOffsetJson(nextOffset)"
 			>
 				<td colspan="5" class="py-4 text-center text-gray-500 dark:text-gray-400">
 					<svg class="animate-spin h-5 w-5 text-gray-500 dark:text-gray-400 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -195,14 +197,14 @@ templ DocumentTable(documents []db.Document, sortBy, sortDir string, currentOffs
 }
 
 templ RecentDocumentsView(
-	documents    []db.Document,
-	sortBy       string,
-	sortDir      string,
+	documents []db.Document,
+	sortBy string,
+	sortDir string,
 	currentOffset int,
-	limit        int,
+	limit int,
 	isAuthorized bool,
-	isMaster     bool,
-	csrf         string,
+	isMaster bool,
+	csrf string,
 ) {
 	if sortBy == "" {
 		sortBy = ColCreatedAt
@@ -213,7 +215,6 @@ templ RecentDocumentsView(
 	if limit <= 0 {
 		limit = 25
 	}
-
 	@Base("Recent Documents", isAuthorized, isMaster) {
 		<div class="space-y-4">
 			<div class="relative">
@@ -222,7 +223,7 @@ templ RecentDocumentsView(
 					type="search"
 					id="document-search"
 					autocomplete="off"
-                    spellcheck="false"
+					spellcheck="false"
 					name="query"
 					placeholder="Search by title or filename…"
 					class="focus:outline-none block w-full p-3 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-indigo-500 dark:focus:border-indigo-500"
@@ -235,11 +236,10 @@ templ RecentDocumentsView(
 				/>
 				<div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
 					<svg class="w-5 h-5 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
 					</svg>
 				</div>
 			</div>
-
 			<form id="document-sort-form" class="hidden">
 				<input type="hidden" name="sort_by" value={ sortBy }/>
 				<input type="hidden" name="sort_dir" value={ sortDir }/>
@@ -247,7 +247,6 @@ templ RecentDocumentsView(
 				<input type="hidden" name="limit" value={ fmt.Sprint(limit) }/>
 				<input type="hidden" name="_csrf" value={ csrf }/>
 			</form>
-
 			<div class="overflow-x-auto shadow ring-1 ring-black ring-opacity-5 rounded-lg dark:ring-white dark:ring-opacity-10">
 				@DocumentTable(documents, sortBy, sortDir, currentOffset, limit)
 			</div>
