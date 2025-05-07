@@ -1,0 +1,32 @@
+name: SQLC-Vet
+
+on:
+  pull_request:
+
+jobs:
+  lint:
+    name: Lint
+    uses: ./.github/workflows/lint.yml
+    with:
+      go-version: "1.24"
+
+  test:
+    name: Test
+    uses: ./.github/workflows/test.yml
+    with:
+      go-version: "1.24"
+
+  lint-sqlc:
+    name: SQLC Linting
+    uses: ./.github/workflows/sqlc-lint.yml
+    with:
+      go-version: "1.24"
+      sqlc-version: "1.24.0"
+
+  validate-sqlc:
+    name: Validate Generated SQLC
+    uses: ./.github/workflows/sqlc-diff.yml
+    needs: [lint-sqlc, lint, test]
+    with:
+      go-version: "1.24"
+      sqlc-version: "1.24.0"

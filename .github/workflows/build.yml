@@ -1,0 +1,62 @@
+name: Build Application
+
+on:
+  workflow_call:
+    inputs:
+      go-version:
+        description: "Go version to use"
+        required: false
+        type: string
+        default: "1.24"
+      tailwind-version:
+        description: "Tailwind version to use"
+        required: false
+        type: string
+        default: "v4.0.6"
+
+jobs:
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    outputs:
+      binary_name: gmu
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ inputs.go-version }}
+          cache: true
+
+      - name: Install Templ
+        run: go install github.com/a-h/templ/cmd/templ@v0.3.833
+
+      - name: Install Tailwind CSS
+        env:
+          TAILWIND_VERSION: ${{ inputs.tailwind-version }}
+          TAILWIND_FILE: tailwindcss-linux-x64
+        run: |
+          curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/download/${TAILWIND_VERSION}/${TAILWIND_FILE}
+          chmod +x ${TAILWIND_FILE}
+          mkdir -p ./tools
+          mv ${TAILWIND_FILE} ./tools/tailwindcss
+
+      - name: Build Binary and Assets
+        run: |
+          ./tools/tailwindcss -i ./web/assets/css/input.css -o ./web/assets/css/output.css --minify
+          templ generate
+          go build -o gmu -buildvcs=false ./cmd/app/main.go
+
+      - name: Upload gmu binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gmu-binary
+          path: gmu
+
+      - name: Upload CSS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: css-assets
+          path: ./web/assets/css/output.css

@@ -1,0 +1,38 @@
+name: SQLC-Lint
+
+on:
+  workflow_call:
+    inputs:
+      go-version:
+        description: "Go version to use"
+        required: false
+        type: string
+        default: "1.24"
+      sqlc-version:
+        description: "SQLC version to use"
+        required: false
+        type: string
+        default: "1.24.0"
+
+jobs:
+  vet-sqlc:
+    name: SQLC Vet
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ inputs.go-version }}
+          cache: true
+
+      - name: Set up sqlc
+        uses: sqlc-dev/setup-sqlc@v3
+        with:
+          sqlc-version: ${{ inputs.sqlc-version }}
+
+      - name: Run sqlc vet
+        run: |
+          sqlc vet
