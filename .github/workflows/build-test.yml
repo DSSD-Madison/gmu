@@ -1,7 +1,7 @@
 name: Build and Test
 
-on:
-  pull_request:
+# on:
+#   pull_request:
 
 jobs:
   build-test:
@@ -15,15 +15,15 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y golang postgresql-client
-          
+
       - name: Generate SQLC code (using existing schema.sql)
         run: |
           make install-all-linux
           sqlc generate
-  
+
       - name: Add Go bin to PATH
         run: echo "$HOME/go/bin" >> $GITHUB_PATH
-      
+
       - name: Lint and Unit Test Go Code
         run: |
           golangci-lint run ./...
@@ -34,6 +34,3 @@ jobs:
           ./tools/tailwindcss -i ./web/assets/css/input.css -o ./web/assets/css/output.css --minify
           templ generate
           go build -o gmu -buildvcs=false ./cmd/app/main.go
-  
-          
-

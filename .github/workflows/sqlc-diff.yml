@@ -1,0 +1,43 @@
+name: SQLC-Diff
+
+on:
+  workflow_call:
+    inputs:
+      go-version:
+        description: "Go version to use"
+        required: false
+        type: string
+        default: "1.24"
+      sqlc-version:
+        description: "SQLC version to use"
+        required: false
+        type: string
+        default: "1.24.0"
+
+jobs:
+  check-sqlc-generated-code:
+    name: Check Generated SQLC Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ inputs.go-version }}
+          cache: true
+
+      - uses: sqlc-dev/setup-sqlc@v3
+        with:
+          sqlc-version: ${{ inputs.sqlc-version }}
+
+      - name: Generate SQLC code
+        run: sqlc generate
+      - name: Check for diff
+        run: |
+          if ! git diff --quiet --exit-code; then
+            echo "error -> Detected changes in generated SQLC code. Please run 'sqlc generate' and commit the changes."
+            git diff
+            exit 1
+          fi

@@ -1,0 +1,139 @@
+name: Main CI Pipeline
+
+# on:
+#   push:
+#     branches:
+#       - main
+
+jobs:
+  lint:
+    name: Lint
+    uses: ./.github/workflows/lint.yml
+    with:
+      go-version: "1.24"
+
+  test:
+    name: Test
+    uses: ./.github/workflows/test.yml
+    with:
+      go-version: "1.24"
+
+  lint-sqlc:
+    name: SQLC Linting
+    uses: ./.github/workflows/sqlc-lint.yml
+    with:
+      go-version: "1.24"
+      sqlc-version: "1.24.0"
+
+  validate-sqlc:
+    name: Validate Generated SQLC
+    uses: ./.github/workflows/sqlc-diff.yml
+    needs: [lint-sqlc, lint, test]
+    with:
+      go-version: "1.24"
+      sqlc-version: "1.24.0"
+
+  build:
+    name: Build Application
+    uses: ./.github/workflows/build.yml
+    needs: [lint, test, lint-sqlc]
+    with:
+      go-version: "1.24"
+      tailwind-version: "v4.0.6"
+
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: build
+    environment: production
+    steps:
+      - name: Download gmu binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: gmu-binary
+          path: ./artifacts/gmu-bin
+
+      - name: Download CSS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: css-assets
+          path: ./artifacts/css
+
+      - name: List downloaded files
+        run: ls -R ./artifacts
+
+      - name: Prepare deployment package
+        run: |
+          # Create the base directory structure for the package
+          mkdir -p deploy_package/web/assets/css
+          mkdir -p deploy_package/scripts
+          mkdir -p deploy_package/internal/infra/database/migrations
+          mkdir -p deploy_package/flyway_config
+
+          # Copy build artifacts
+          cp ./artifacts/gmu-bin/gmu deploy_package/gmu
+          cp ./artifacts/css/output.css deploy_package/web/assets/css/output.css
+
+          cp scripts/run-migrations-on-server.sh deploy_package/scripts
+          chmod +x deploy_package/scripts/run-migrations-on-server.sh
+
+          cp flyway.conf deploy_package
+
+          cp -r internal/infra/database/migrations/* deploy_package/internal/infra/database/migrations/
+
+          echo "Contents of deploy_package:"
+          ls -R deploy_package
+          tar -czvf deploy_package.tar.gz -C deploy_package .
+
+      - name: Deploy to EC2 and Run Server-Side Scripts
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.AWS_EC2_HOST }}
+          username: ${{ secrets.AWS_EC2_USERNAME }}
+          key: ${{ secrets.AWS_EC2_SSH_KEY }}
+          source: "deploy_package.tar.gz"
+          target: "/tmp"
+          envs: DB_HOST,DB_USER,DB_NAME,DB_PASSWORD,GITHUB_SHA
+          script: |
+            set -e # Exit on any error
+            APP_DIR="/var/www/go-htmx-app"
+            REMOTE_TAR_PATH="/tmp/deploy_package.tar.gz"
+
+            echo "Ensuring application directory exists: $APP_DIR"
+            sudo mkdir -p $APP_DIR/web/assets/css
+
+            echo "Extracting deployment package to $APP_DIR"
+            sudo tar -xzvf $REMOTE_TAR_PATH -C $APP_DIR
+
+            echo "Setting permissions for executable..."
+            sudo chmod +x $APP_DIR/gmu
+
+            echo "Changing to application directory: $APP_DIR"
+            cd $APP_DIR
+
+            echo "Ensuring Flyway is installed (or install it)"
+            if ! command -v flyway &> /dev/null; then
+              echo "Installing Flyway..."
+              # Consider baking Flyway into your AMI or installing it via user data / config management
+              wget -qO- https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/11.6.0/flyway-commandline-11.6.0-linux-x64.tar.gz | tar xvz
+              sudo mv flyway-11.6.0 /opt/flyway
+              sudo ln -s /opt/flyway/flyway /usr/local/bin/flyway
+            else
+              echo "Flyway is already installed: $(flyway -v)"
+            fi
+
+            echo "Running database migrations using server ENV VARS (DB_HOST, etc.)"
+            if [ -f "scripts/migrate_and_generate.sh" ]; then
+              chmod +x scripts/run-migrations-on-server.sh
+              ./scripts/run-migrations-on-server.sh
+            else
+              echo "Warning: scripts/run-migrations-on-server.sh not found in $APP_DIR"
+            fi
+
+            echo "Restarting application..."
+            sudo systemctl restart goapp
+
+            echo "Cleaning up temporary tarball on server..."
+            sudo rm $REMOTE_TAR_PATH
+
+            echo "Deployment of commit $GITHUB_SHA complete."
