@@ -73,7 +73,7 @@ fi
 echo "Rolling back from version $CURRENT_VERSION to version $TARGET_VERSION..."
 
 for ((version=CURRENT_VERSION; version>TARGET_VERSION; version--)); do
-  ROLLBACK_SCRIPT="pkg/db/rollbacks/R${version}__rollback.sql"
+  ROLLBACK_SCRIPT="internal/infra/database/rollbacks/R${version}__rollback.sql"
   
   if [ ! -f "$ROLLBACK_SCRIPT" ]; then
     echo "Error: Rollback script $ROLLBACK_SCRIPT not found."

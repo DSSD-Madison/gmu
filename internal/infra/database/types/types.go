@@ -1,6 +1,6 @@
 package db_types
 
-import db "github.com/DSSD-Madison/gmu/pkg/db/generated"
+import db "github.com/DSSD-Madison/gmu/internal/infra/database/sqlc/generated"
 
 type PDFMetadata struct {
 	FileId        string
