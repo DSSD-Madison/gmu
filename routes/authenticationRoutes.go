@@ -11,6 +11,5 @@ func RegisterAuthenticationRoutes(e *echo.Echo, authenticationHandler *handlers.
 	e.POST("/login", authenticationHandler.Login)
 
 	// Logout Route
-	e.GET("/logout", authenticationHandler.Logout) // for dev testing, remove when nav bar added
-	e.POST("/logout", authenticationHandler.Logout)
+	e.GET("/logout", authenticationHandler.Logout)
 }

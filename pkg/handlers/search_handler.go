@@ -14,7 +14,6 @@ import (
 
 	"github.com/DSSD-Madison/gmu/pkg/awskendra"
 	"github.com/DSSD-Madison/gmu/pkg/logger"
-	"github.com/DSSD-Madison/gmu/pkg/middleware"
 	"github.com/DSSD-Madison/gmu/pkg/services"
 	"github.com/DSSD-Madison/gmu/web"
 	"github.com/DSSD-Madison/gmu/web/components"
@@ -23,15 +22,17 @@ import (
 const MinQueryLength = 3
 
 type SearchHandler struct {
-	log      logger.Logger
-	searcher services.Searcher
+	log            logger.Logger
+	searcher       services.Searcher
+	sessionManager services.SessionManager
 }
 
-func NewSearchHandler(log logger.Logger, searcher services.Searcher) *SearchHandler {
+func NewSearchHandler(log logger.Logger, searcher services.Searcher, sessionManager services.SessionManager) *SearchHandler {
 	handlerLogger := log.With("Handler", "Search")
 	return &SearchHandler{
-		log:      handlerLogger,
-		searcher: searcher,
+		log:            handlerLogger,
+		sessionManager: sessionManager,
+		searcher:       searcher,
 	}
 }
 
@@ -110,7 +111,8 @@ func (h *SearchHandler) Search(c echo.Context) error {
 
 	results.UrlData = req.urlData
 
-	isAuthorized, isMaster := middleware.GetSessionFlags(c)
+	isAuthorized := h.sessionManager.IsAuthenticated(c)
+	isMaster := h.sessionManager.IsMaster(c)
 
 	component, err := selectComponentTarget(req.target, req, results, isAuthorized, isMaster)
 	if err != nil {

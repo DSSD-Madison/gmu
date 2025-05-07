@@ -7,6 +7,9 @@ package db
 
 import (
 	"context"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 const createUser = `-- name: CreateUser :exec
@@ -34,19 +37,46 @@ func (q *Queries) DeleteUserByUsername(ctx context.Context, username string) err
 	return err
 }
 
-const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, username, password_hash, is_master, created_at FROM users WHERE username = $1
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, username, password_hash, is_master, created_at
+FROM users
+WHERE id = $1
 `
 
-func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
-	var i User
+type GetUserByIDRow struct {
+	ID           uuid.UUID
+	Username     string
+	PasswordHash string
+	IsMaster     bool
+	CreatedAt    time.Time
+}
+
+func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserByID, id)
+	var i GetUserByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
 		&i.PasswordHash,
 		&i.IsMaster,
 		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getUserByUsername = `-- name: GetUserByUsername :one
+SELECT username, password_hash, is_master, created_at, id FROM users WHERE username = $1
+`
+
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
+	var i User
+	err := row.Scan(
+		&i.Username,
+		&i.PasswordHash,
+		&i.IsMaster,
+		&i.CreatedAt,
+		&i.ID,
 	)
 	return i, err
 }
