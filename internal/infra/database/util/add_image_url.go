@@ -29,13 +29,13 @@ func AddImagesToResults(ctx context.Context, results search.Results, queries *db
 
 		document, found := documentMap[s3URI]
 		if !found {
-			return fmt.Errorf("Failed to find document")
+			return fmt.Errorf("failed to find document")
 		}
 
 		if document.S3FilePreview.Valid {
 			image := ConvertS3URIToURL(document.S3FilePreview.String)
 			if image == "" {
-				return fmt.Errorf("Failed to find document")
+				return fmt.Errorf("failed to find document")
 			}
 			kendraResult.Image = image
 		} else {

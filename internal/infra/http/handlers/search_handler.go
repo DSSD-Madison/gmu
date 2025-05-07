@@ -40,7 +40,7 @@ type searchRequest struct {
 	query   string
 	pageNum int
 	filters url.Values
-	urlData search.UrlData
+	URLData search.UrlData
 	target  string
 }
 
@@ -63,7 +63,7 @@ func parseSearchRequest(c echo.Context) (searchRequest, error) {
 		Query:        query,
 		Filters:      kendraFilterList,
 		Page:         pageNum,
-		IsStoringUrl: true,
+		IsStoringURL: true,
 	}
 
 	if query != "" && len(query) < MinQueryLength {
@@ -80,7 +80,7 @@ func parseSearchRequest(c echo.Context) (searchRequest, error) {
 		query:   query,
 		pageNum: pageNum,
 		filters: filters,
-		urlData: urlData,
+		URLData: urlData,
 		target:  target,
 	}, nil
 }
@@ -98,7 +98,7 @@ func (h *SearchHandler) Search(c echo.Context) error {
 	}
 	if req.query == "" {
 		h.log.DebugContext(ctx, "No search query provided, rendering initial search component")
-		return web.Render(c, http.StatusOK, components.Search(search.Results{UrlData: req.urlData}))
+		return web.Render(c, http.StatusOK, components.Search(search.Results{URLData: req.URLData}))
 	}
 
 	h.log.InfoContext(ctx, "Performing search", "query", req.query, "page", req.pageNum, "filters", req.filters)
@@ -109,7 +109,7 @@ func (h *SearchHandler) Search(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Search failed")
 	}
 
-	results.UrlData = req.urlData
+	results.URLData = req.URLData
 
 	isAuthorized := h.sessionManager.IsAuthenticated(c)
 	isMaster := h.sessionManager.IsMaster(c)
@@ -135,11 +135,11 @@ func parsePageNum(pageNumStr string) int {
 
 func selectResultsFromTarget(ctx context.Context, h *SearchHandler, req searchRequest) (search.Results, error) {
 	if h == nil {
-		return search.Results{}, fmt.Errorf("Cannot get results from nil handler")
+		return search.Results{}, fmt.Errorf("cannot get results from nil handler")
 	}
 	switch req.target {
 	case "root", "":
-		return search.Results{UrlData: req.urlData}, nil
+		return search.Results{URLData: req.URLData}, nil
 	case "results-container", "results-content-container", "results-and-pagination":
 		results, err := h.searcher.SearchDocuments(ctx, req.query, req.filters, req.pageNum)
 		if err != nil {
@@ -159,7 +159,7 @@ func selectResultsFromTarget(ctx context.Context, h *SearchHandler, req searchRe
 		return results, nil
 	default:
 		h.log.ErrorContext(ctx, "Failed to select results from target header")
-		return search.Results{}, fmt.Errorf("Failed to select results from target header")
+		return search.Results{}, fmt.Errorf("failed to select results from target header")
 	}
 }
 
@@ -168,7 +168,7 @@ func selectComponentTarget(target string, r searchRequest, results search.Result
 	case "root":
 		return components.Search(results), nil
 	case "":
-		return components.SearchHome(search.Results{UrlData: r.urlData}, isAuthorized, isMaster), nil
+		return components.SearchHome(search.Results{URLData: r.URLData}, isAuthorized, isMaster), nil
 	case "results-container", "results-content-container":
 		return components.ResultsPage(results, isAuthorized), nil
 	case "results-and-pagination":
@@ -184,7 +184,7 @@ func convertFilterstoKendra(filters url.Values) []search.Filter {
 	for key, values := range filters {
 		filterList[i].Name = key
 		filterList[i].SelectedFilters = values
-		i += 1
+		i++
 	}
 	return filterList
 }

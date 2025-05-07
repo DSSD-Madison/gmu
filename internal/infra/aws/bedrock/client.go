@@ -186,10 +186,7 @@ func extractTextFromPdf(pdfBytes []byte, maxPages int) (string, error) {
 		return "", fmt.Errorf("PDF has no pages")
 	}
 
-	pagesToRead := maxPages
-	if numPages < maxPages {
-		pagesToRead = numPages
-	}
+	pagesToRead := min(numPages, maxPages)
 
 	var textBuilder strings.Builder
 	for i := 1; i <= pagesToRead; i++ { // pdf library pages are 1-indexed
@@ -331,7 +328,7 @@ func DetectFormat(data []byte) (string, error) {
 }
 
 // extractFirstJson tries to find and parse the first JSON object in a string.
-func extractFirstJson(text string) (*ExtractedMetadata, error) {
+func extractFirstJSON(text string) (*ExtractedMetadata, error) {
 	match := jsonRegex.FindString(text)
 	if match == "" {
 		return nil, fmt.Errorf("no JSON object found in the text")
@@ -441,7 +438,7 @@ TEXT:
 }
 
 // ProcessDocAndExtractMetadata fetches PDF from S3, extracts text, calls LLM, and parses metadata.
-func (c BedrockClient) ProcessDocAndExtractMetadata(ctx context.Context, docBytes []byte) (*ExtractedMetadata, error) {
+func (c BedrockClient) ProcessDocAndExtractMetadata(_ context.Context, docBytes []byte) (*ExtractedMetadata, error) {
 	f, err := DetectFormat(docBytes)
 
 	if err != nil {
@@ -474,7 +471,7 @@ func (c BedrockClient) ProcessDocAndExtractMetadata(ctx context.Context, docByte
 	fmt.Printf("📊 Actual Tokens -> Input: %d, Output: %d", actualInputTokens, actualOutputTokens)
 	fmt.Printf("💸 Actual cost for this doc: $%.6f", estimateCost(actualInputTokens, actualOutputTokens))
 
-	metadata, err := extractFirstJson(claudeResponseText)
+	metadata, err := extractFirstJSON(claudeResponseText)
 	if err != nil {
 		fmt.Printf("Raw Claude response on JSON parse failure:\n%s", claudeResponseText)
 		return metadata, fmt.Errorf("error extracting JSON from Claude response: %w", err)

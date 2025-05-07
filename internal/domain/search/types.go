@@ -35,14 +35,14 @@ type PageStatus struct {
 }
 
 type Results struct {
-	IsStoringUrl bool
+	IsStoringURL bool
 	Results      map[string]Result
 	Order        []string
 	Query        string
 	Count        int
 	PageStatus   PageStatus
 	Filters      []FilterCategory
-	UrlData      UrlData
+	URLData      UrlData
 }
 
 type FilterOption struct {
@@ -63,7 +63,7 @@ type Filter struct {
 }
 
 type UrlData struct {
-	IsStoringUrl bool
+	IsStoringURL bool
 	Query        string
 	Filters      []Filter
 	Page         int

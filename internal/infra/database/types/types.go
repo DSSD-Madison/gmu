@@ -3,7 +3,7 @@ package db_types
 import db "github.com/DSSD-Madison/gmu/internal/infra/database/sqlc/generated"
 
 type PDFMetadata struct {
-	FileId        string
+	FileID        string
 	Document      db.FindDocumentByIDRow
 	AllAuthors    []db.Author
 	AllKeywords   []db.Keyword

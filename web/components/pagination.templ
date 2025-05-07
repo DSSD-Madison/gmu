@@ -47,7 +47,7 @@ templ mobileNextButton(status search.PageStatus) {
 
 templ mobilePaginationPages(status search.PageStatus, maxPages int) {
 	{{ vm := getPaginationVM(status, maxPages) }}
-	if vm.lower_overflow {
+	if vm.lowerOverflow {
 		@dots()
 	}
 	if vm.buttonCount < maxPages {
@@ -67,7 +67,7 @@ templ mobilePaginationPages(status search.PageStatus, maxPages int) {
 			}
 		}
 	}
-	if vm.upper_overflow {
+	if vm.upperOverflow {
 		@dots()
 	}
 }
@@ -82,7 +82,7 @@ templ mobileCurrentPageButton(pageNum int) {
 
 templ paginationPages(status search.PageStatus, maxPages int) {
 	{{ vm := getPaginationVM(status, maxPages) }}
-	if vm.lower_overflow {
+	if vm.lowerOverflow {
 		@pageNumberButton(1)
 		@dots()
 	}
@@ -103,7 +103,7 @@ templ paginationPages(status search.PageStatus, maxPages int) {
 			}
 		}
 	}
-	if vm.upper_overflow {
+	if vm.upperOverflow {
 		@dots()
 		@pageNumberButton(status.TotalPages)
 	}

@@ -174,12 +174,12 @@ func (uh *UploadHandler) renderError(c echo.Context, code int, format string, ar
 }
 
 func (uh *UploadHandler) PDFMetadataEditPage(c echo.Context) error {
-	fileId := c.Param("fileId")
-	if fileId == "" {
+	fileID := c.Param("fileId")
+	if fileID == "" {
 		uh.log.ErrorContext(c.Request().Context(), "Missing fileId")
 		return c.Redirect(http.StatusTemporaryRedirect, "/upload")
 	}
-	docUUID, err := uuid.Parse(fileId)
+	docUUID, err := uuid.Parse(fileID)
 	if err != nil {
 		return err
 	}
@@ -213,7 +213,7 @@ func (uh *UploadHandler) PDFMetadataEditPage(c echo.Context) error {
 
 	s3Link := util.ConvertS3URIToURL(doc.S3File)
 	return web.Render(c, http.StatusOK, components.PDFMetadataEditForm(
-		fileId,
+		fileID,
 		doc.FileName,
 		doc.Title,
 		doc.Abstract.String,
@@ -239,7 +239,7 @@ func (uh *UploadHandler) PDFMetadataEditPage(c echo.Context) error {
 func (uh *UploadHandler) HandleMetadataSave(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	fileId := c.FormValue("fileId")
+	fileID := c.FormValue("fileId")
 	title := c.FormValue("title")
 	abstract := c.FormValue("abstract")
 	publishDate := c.FormValue("publish_date")
@@ -255,7 +255,7 @@ func (uh *UploadHandler) HandleMetadataSave(c echo.Context) error {
 	categoryStrs := form["category_names"]
 	regionStrs := form["region_names"]
 
-	docID, err := uuid.Parse(fileId)
+	docID, err := uuid.Parse(fileID)
 	if err != nil {
 		uh.log.ErrorContext(c.Request().Context(), "Invalid UUID in form", "error", err)
 		return err
@@ -354,7 +354,7 @@ func (uh *UploadHandler) HandleMetadataSave(c echo.Context) error {
 	return web.Render(c, http.StatusOK, components.SuccessMessage(fmt.Sprintf("Metadata updated successfully for fileId '%s'", docID)))
 }
 
-func (uh *UploadHandler) addNewToStr(ctx context.Context, strs []string) {
+func (uh *UploadHandler) addNewToStr(_ context.Context, strs []string) {
 	for i, s := range strs {
 		strs[i] = "new:" + s
 	}

@@ -203,7 +203,7 @@ func mobilePaginationPages(status search.PageStatus, maxPages int) templ.Compone
 		}
 		ctx = templ.ClearChildren(ctx)
 		vm := getPaginationVM(status, maxPages)
-		if vm.lower_overflow {
+		if vm.lowerOverflow {
 			templ_7745c5c3_Err = dots().Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -238,7 +238,7 @@ func mobilePaginationPages(status search.PageStatus, maxPages int) templ.Compone
 				}
 			}
 		}
-		if vm.upper_overflow {
+		if vm.upperOverflow {
 			templ_7745c5c3_Err = dots().Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -312,7 +312,7 @@ func paginationPages(status search.PageStatus, maxPages int) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		vm := getPaginationVM(status, maxPages)
-		if vm.lower_overflow {
+		if vm.lowerOverflow {
 			templ_7745c5c3_Err = pageNumberButton(1).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -355,7 +355,7 @@ func paginationPages(status search.PageStatus, maxPages int) templ.Component {
 				}
 			}
 		}
-		if vm.upper_overflow {
+		if vm.upperOverflow {
 			templ_7745c5c3_Err = dots().Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

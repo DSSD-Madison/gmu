@@ -6,7 +6,6 @@ import (
 
 	"github.com/DSSD-Madison/gmu/pkg/logger"
 	"github.com/DSSD-Madison/gmu/pkg/queue"
-	"github.com/aws/aws-sdk-go-v2/service/kendra"
 	awskendra "github.com/aws/aws-sdk-go-v2/service/kendra"
 )
 
@@ -21,7 +20,7 @@ type QueryResult struct {
 }
 
 type kendraQueryExecutor struct {
-	queue queue.Queue[kendra.QueryInput, QueryResult]
+	queue queue.Queue[awskendra.QueryInput, QueryResult]
 	log   logger.Logger
 }
 

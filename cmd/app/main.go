@@ -213,10 +213,7 @@ func main() {
 		CookieSecure:   cfg.Mode == "prod", // Only set secure cookies in prod
 		Skipper: func(c echo.Context) bool {
 			path := c.Path()
-			if path == "/search/suggestions" {
-				return true
-			}
-			return false
+			return path == "/search/suggestions"
 		},
 	}))
 

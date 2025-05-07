@@ -25,7 +25,7 @@ templ SearchbarContainer(results search.Results, oob bool) {
 		id="searchbar"
 		class={ searchbar_classes }
 	>
-		@Searchbar(results.UrlData, false)
+		@Searchbar(results.URLData, false)
 		@suggestions_container(false)
 		@indicator()
 	</div>
@@ -51,7 +51,7 @@ templ Searchbar(data search.UrlData, oob bool) {
 		}
 		value={ data.Query }
 	/>
-	if data.IsStoringUrl {
+	if data.IsStoringURL {
 		for _, filter := range data.Filters {
 			for _, str := range filter.SelectedFilters {
 				<input type="hidden" name={ filter.Name } value={ str }/>

@@ -109,7 +109,7 @@ func (suite *HandlersTestSuite) TestGetDocumentsSuccessful() {
 	uris := []string{"doc1.pdf", "doc2.pdf"}
 
 	// Setup expectations
-	suite.mockQuery.GetDocumentsByURIsFunc = func(ctx context.Context, u []string) ([]db.Document, error) {
+	suite.mockQuery.GetDocumentsByURIsFunc = func(_ context.Context, u []string) ([]db.Document, error) {
 		assert.Equal(suite.T(), uris, u, "URIs should match")
 		return suite.sampleDocs, nil
 	}
@@ -135,7 +135,7 @@ func (suite *HandlersTestSuite) TestGetDocumentsDatabaseError() {
 	expectedErr := errors.New("database error")
 
 	// Setup expectations
-	suite.mockQuery.GetDocumentsByURIsFunc = func(ctx context.Context, u []string) ([]db.Document, error) {
+	suite.mockQuery.GetDocumentsByURIsFunc = func(_ context.Context, u []string) ([]db.Document, error) {
 		assert.Equal(suite.T(), uris, u, "URIs should match")
 		return nil, expectedErr
 	}
@@ -155,7 +155,7 @@ func (suite *HandlersTestSuite) TestGetDocumentsEmptyURIs() {
 	uris := []string{}
 
 	// Setup expectations
-	suite.mockQuery.GetDocumentsByURIsFunc = func(ctx context.Context, u []string) ([]db.Document, error) {
+	suite.mockQuery.GetDocumentsByURIsFunc = func(_ context.Context, u []string) ([]db.Document, error) {
 		assert.Equal(suite.T(), uris, u, "URIs should match")
 		return []db.Document{}, nil
 	}
@@ -189,7 +189,7 @@ func (suite *HandlersTestSuite) TestGetDocumentsMappingLogic() {
 	uris := []string{"same-key.pdf"}
 
 	// Setup expectations
-	suite.mockQuery.GetDocumentsByURIsFunc = func(ctx context.Context, u []string) ([]db.Document, error) {
+	suite.mockQuery.GetDocumentsByURIsFunc = func(_ context.Context, u []string) ([]db.Document, error) {
 		assert.Equal(suite.T(), uris, u, "URIs should match")
 		return docs, nil
 	}
